@@ -6,3 +6,5 @@
 octave-workspace
 *.o
 *.oct
+__pycache__/
+*.pyc
