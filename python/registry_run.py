@@ -218,18 +218,25 @@ def eval_potential(e: dict) -> dict:
             rel = abs(vmin - val) / max(abs(val), np.finfo(float).eps)
             checks.append(mkcheck("V_min", vmin, val, tol, rel, abs(vmin - val) <= tol))
 
-    elif name in ("harmonic", "hydrogen"):
+    elif name in ("harmonic", "hydrogen", "poschl_teller"):
         if name == "harmonic":
             g = np.linspace(e["x_grid"]["xmin"], e["x_grid"]["xmax"], e["x_grid"]["n"])
             Vg = 0.5 * e["params"]["k"] * g ** 2
             sigma = 0.0
-        else:
+        elif name == "hydrogen":
             n = e["x_grid"]["n"]
             rmax = e["x_grid"]["xmax"]
             h = rmax / (n + 1)
             g = h * np.arange(1, n + 1, dtype=float)
             Vg = -1.0 / g
             sigma = -1.0
+        else:  # poschl_teller: full-line smooth well, no cusp
+            g = np.linspace(e["x_grid"]["xmin"], e["x_grid"]["xmax"], e["x_grid"]["n"])
+            lam = e["params"]["lambda"]
+            Vg = -0.5 * lam * (lam + 1.0) / np.cosh(g) ** 2
+            # bound states E_n = -(lambda-n)^2/2 < 0; continuum starts ~0.
+            # Shift by -depth-ish so eigsh gets lowest bound states first.
+            sigma = -0.5 * lam * (lam + 1.0) - 1.0
         k = len(e["eigen_n"])
         ev = fd_eigenvalues(g, Vg, k, sigma)
         eig_ref = ref["eigenvalues"]

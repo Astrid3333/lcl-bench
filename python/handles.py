@@ -46,4 +46,14 @@ def rhs(name, p):
             np.sin(x[2]) - b * x[1],
             np.sin(x[0]) - b * x[2],
         ])
+    if name == "aizawa":
+        a, b, c, d = p["a"], p["b"], p["c"], p["d"]
+        e_, f_ = p["e"], p["f"]
+        return lambda x: np.array([
+            (x[2] - b) * x[0] - d * x[1],
+            d * x[0] + (x[2] - b) * x[1],
+            c + a * x[2] - x[2] ** 3 / 3.0
+            - (x[0] ** 2 + x[1] ** 2) * (1.0 + e_ * x[2])
+            + f_ * x[2] * x[0] ** 3,
+        ])
     raise KeyError(name)

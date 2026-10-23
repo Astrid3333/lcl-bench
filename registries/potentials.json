@@ -122,6 +122,23 @@
         }
       },
       "notes": "No finite minimum for A>0; invariant tested is central-difference force vs analytic force at r_check points (h=1e-5, central)."
+    },
+    {
+      "name": "poschl_teller",
+      "family": "potential",
+      "dim": 1,
+      "equations": "Symmetric Pöschl-Teller well: V(x) = -lambda*(lambda+1)/2 * sech^2(x); quantum: -1/2 d^2/dx^2 + V (m=hbar=1); bound states E_n = -(lambda - n)^2 / 2 for n = 0..floor(lambda)-1.",
+      "params": { "lambda": 3.0, "m": 1.0, "hbar": 1.0 },
+      "x_grid": { "xmin": -20.0, "xmax": 20.0, "n": 4000 },
+      "eigen_n": [0, 1, 2],
+      "ref": {
+        "eigenvalues": {
+          "value": [-4.5, -2.0, -0.5],
+          "rel_tol": 0.002,
+          "source": "Analytic (m=hbar=1): E_n = -(lambda-n)^2/2 with lambda=3; V well depth lambda(lambda+1)/2 = 6."
+        }
+      },
+      "notes": "Full-line FD on [-20,20], n=4000 (h=0.01): sech^2 is smooth (no cusp), O(h^2) error, rel_tol 2e-3 budget. Bound states n=0,1,2 for lambda=3; continuum starts near 0."
     }
   ]
 }

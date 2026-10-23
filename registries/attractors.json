@@ -177,6 +177,21 @@
       "notes": "Thomas attractor is chaotic for b near 0.208186 (Sprott attractor catalogue); lambda1 pending a citable numerical source; trajectory + divergence diagnostics only."
     },
     {
+      "name": "aizawa",
+      "family": "ode",
+      "dim": 3,
+      "equations": "dx/dt = (z - b)*x - d*y; dy/dt = d*x + (z - b)*y; dz/dt = c + a*z - z^3/3 - (x^2 + y^2)*(1 + e*z) + f*z*x^3",
+      "params": { "a": 0.95, "b": 0.7, "c": 0.6, "d": 3.5, "e": 0.25, "f": 0.1 },
+      "x0": [0.1, 0.0, 0.0],
+      "dt_lyap": 0.01,
+      "t_transient": 100.0,
+      "t_lyap": 2000.0,
+      "ref": {
+        "lyap1": null
+      },
+      "notes": "Aizawa attractor, standard parameters a=0.95 b=0.7 c=0.6 d=3.5 e=0.25 f=0.1 (widely reproduced); lambda1 observed-only pending a citable high-precision numerical source."
+    },
+    {
       "name": "hopfield_4",
       "family": "neural",
       "dim": 4,

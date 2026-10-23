@@ -17,6 +17,14 @@ function f = registry_rhs(name, params)
       f = @(x) [sin(x(2)) - b * x(1);
                 sin(x(3)) - b * x(2);
                 sin(x(1)) - b * x(3)];
+    case 'aizawa'
+      a = params.a; b = params.b; c = params.c; d = params.d;
+      e = params.e; fz = params.f;
+      f = @(x) [(x(3) - b) * x(1) - d * x(2);
+                d * x(1) + (x(3) - b) * x(2);
+                c + a * x(3) - x(3).^3 / 3 ...
+                - (x(1).^2 + x(2).^2) .* (1 + e * x(3)) ...
+                + fz * x(3) * x(1).^3];
     otherwise
       error('registry_rhs:unknown', 'Unknown ODE attractor: %s', name);
   end

@@ -1,9 +1,16 @@
 {
-  "octave_file": "registry_run_20261023T022423.json",
-  "python_file": "registry_run_py_20261023T185848.json",
-  "n_entries": 16,
-  "both_pass": 16,
+  "octave_file": "registry_run_20261023T191327.json",
+  "python_file": "registry_run_py_20261023T191010.json",
+  "n_entries": 18,
+  "both_pass": 18,
   "rows": [
+    {
+      "name": "aizawa",
+      "status": "BOTH_PASS",
+      "octave_pass": true,
+      "python_pass": true,
+      "obs_rel_diff": 4.396134136781698e-15
+    },
     {
       "name": "barnsley_fern",
       "status": "BOTH_PASS",
@@ -76,6 +83,13 @@
     },
     {
       "name": "morse",
+      "status": "BOTH_PASS",
+      "octave_pass": true,
+      "python_pass": true,
+      "obs_rel_diff": null
+    },
+    {
+      "name": "poschl_teller",
       "status": "BOTH_PASS",
       "octave_pass": true,
       "python_pass": true,

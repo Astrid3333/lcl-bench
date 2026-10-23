@@ -36,7 +36,7 @@ function res = registry_eval_potential(e)
         rel = abs(vmin - val) / max(abs(val), eps);
         checks(end + 1) = mkcheck('V_min', vmin, val, tol, rel, abs(vmin - val) <= tol);
       end
-    case {'harmonic', 'hydrogen'}
+    case {'harmonic', 'hydrogen', 'poschl_teller'}
       switch lower(e.name)
         case 'harmonic'
           g = linspace(e.x_grid.xmin, e.x_grid.xmax, e.x_grid.n)';
@@ -51,6 +51,13 @@ function res = registry_eval_potential(e)
           g = h * (1:n)';
           Vg = -1 ./ g;
           sigma = -1;  % bound states negative; shift -1 -> ground state
+        case 'poschl_teller'
+          % Full-line smooth well; no cusp, standard linspace grid.
+          g = linspace(e.x_grid.xmin, e.x_grid.xmax, e.x_grid.n)';
+          lam = e.params.lambda;
+          Vg = -0.5 * lam * (lam + 1) ./ cosh(g).^2;
+          % Bound states E_n < 0; continuum near 0. Shift well below.
+          sigma = -0.5 * lam * (lam + 1) - 1;
       end
       k = numel(e.eigen_n);
       ev = fd_eigenvalues(g, Vg, k, sigma);
