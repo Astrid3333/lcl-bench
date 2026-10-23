@@ -41,6 +41,8 @@
 8. Do not present inference as verified fact.
 9. Close completed work instead of leaving it hanging.
 10. Capture one reusable lesson in each review.
+11. Numerical benchmarks need the scaling range calibrated to the data size: too-fine box sizes or grids saturate and silently corrupt slopes/eigenvalues. Size the range from n_points and budget an honest error tolerance.
+12. Verify published equations/parameters against a canonical source before debugging the numerics; a wrong equation masquerades as an integrator bug and wastes the cycle.
 
 ## Self-Evolution Loop
 - At the end of each cycle, ask: what could be better?
