@@ -16,7 +16,8 @@ import numpy as np
 from scipy.optimize import minimize_scalar
 
 from handles import map_step, rhs
-from kernels import box_counting_dim, fd_eigenvalues, lyap_map, lyap_ode
+from kernels import (box_counting_dim, corr_dim_grassberger, fd_eigenvalues,
+                     lyap_map, lyap_ode)
 
 ROOT = Path(__file__).resolve().parent.parent
 REG_ATTRA = ROOT / "registries" / "attractors.json"
@@ -61,6 +62,15 @@ def eval_map(e: dict, outdir: Path) -> dict:
                    e["n_lyap"], e["transient"])
     checks = []
     ref = e.get("ref") or {}
+    # bit-exactness: first n iterates vs frozen reference sequence
+    oh = ref.get("orbit_head")
+    if oh is not None:
+        ref_vals = np.asarray(oh["values"], dtype=float)
+        head = orbit[: oh["n"]]
+        md = float(np.max(np.abs(head - ref_vals)))
+        tol = float(oh["abs_tol"])
+        checks.append(mkcheck("orbit_head_maxabs", md, 0.0, tol, md,
+                              md <= tol))
     lyap_ref = ref.get("lyap1")
     if lyap_ref is not None:
         val = lyap_ref["value"]
@@ -69,6 +79,24 @@ def eval_map(e: dict, outdir: Path) -> dict:
         checks.append(mkcheck("lyap1", lam, val, tol, rel, abs(lam - val) <= tol))
     else:
         checks.append(mkcheck("lyap1_observed", lam, None, None, None, True))
+    # Grassberger-Procaccia correlation dimension (protocol fixed in registry)
+    cd_ref = ref.get("corr_dim")
+    if cd_ref is not None:
+        proto = cd_ref["protocol"]
+        x = np.asarray(e["x0"], dtype=float)
+        for _ in range(proto["transient"]):
+            x = f(x)
+        pts = np.zeros((proto["n_points"], e["dim"]))
+        for i in range(proto["n_points"]):
+            x = f(x)
+            pts[i, :] = x
+        dim = corr_dim_grassberger(pts, proto["n_radii"],
+                                   proto["c_lo"], proto["c_hi"])
+        val = cd_ref["value"]
+        tol = cd_ref["rel_tol"] * abs(val)
+        rel = abs(dim - val) / abs(val)
+        checks.append(mkcheck("corr_dim", dim, val, tol, rel,
+                              rel <= cd_ref["rel_tol"]))
     return {
         "name": e["name"], "family": e["family"],
         "pass": all(c["pass"] for c in checks),

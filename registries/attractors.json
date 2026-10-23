@@ -14,8 +14,12 @@
       "family": "map",
       "dim": 1,
       "equations": "x_{n+1} = r * x_n * (1 - x_n)",
-      "params": { "r": 4.0 },
-      "x0": [0.1],
+      "params": {
+        "r": 4.0
+      },
+      "x0": [
+        0.1
+      ],
       "n_orbit": 20,
       "n_lyap": 50000,
       "transient": 1000,
@@ -24,6 +28,73 @@
           "value": 0.6931471805599453,
           "abs_tol": 0.002,
           "source": "Analytic: for r=4 the logistic map has lambda = ln(2) exactly (standard result; e.g. Ott, Chaos in Dynamical Systems, CUP)."
+        },
+        "orbit_head": {
+          "n": 20,
+          "values": [
+            [
+              0.36000000000000004
+            ],
+            [
+              0.9216
+            ],
+            [
+              0.28901376000000006
+            ],
+            [
+              0.8219392261226498
+            ],
+            [
+              0.5854205387341974
+            ],
+            [
+              0.970813326249438
+            ],
+            [
+              0.11333924730376121
+            ],
+            [
+              0.4019738492975123
+            ],
+            [
+              0.9615634951138128
+            ],
+            [
+              0.1478365599132853
+            ],
+            [
+              0.5039236458651636
+            ],
+            [
+              0.9999384200124991
+            ],
+            [
+              0.0002463047816241282
+            ],
+            [
+              0.0009849764623147091
+            ],
+            [
+              0.00393602513473358
+            ],
+            [
+              0.015682131363489303
+            ],
+            [
+              0.061744808477550275
+            ],
+            [
+              0.23172954841448365
+            ],
+            [
+              0.7121238592244125
+            ],
+            [
+              0.8200138733909665
+            ]
+          ],
+          "abs_tol": 1e-12,
+          "source": "Frozen float64 iterate sequence of the registry equations from x0; cross-checked Octave vs Python to <=1e-15 before freezing (bit-exactness guard against formula drift)."
         }
       },
       "notes": "Primary cross-language check: first n_orbit iterates from x0 at 1e-12."
@@ -33,8 +104,14 @@
       "family": "map",
       "dim": 2,
       "equations": "x_{n+1} = 1 - a*x_n^2 + y_n; y_{n+1} = b*x_n",
-      "params": { "a": 1.4, "b": 0.3 },
-      "x0": [0.1, 0.1],
+      "params": {
+        "a": 1.4,
+        "b": 0.3
+      },
+      "x0": [
+        0.1,
+        0.1
+      ],
       "n_orbit": 20,
       "n_lyap": 20000,
       "transient": 2000,
@@ -44,22 +121,216 @@
           "abs_tol": 0.02,
           "source": "Widely cited value for a=1.4, b=0.3 (e.g. Grassberger-Procaccia analyses; Benettin et al. algorithm family). Method-dependent at the 1e-2 level."
         },
-        "corr_dim": null
+        "corr_dim": {
+          "value": 1.22,
+          "rel_tol": 0.08,
+          "protocol": {
+            "n_points": 4000,
+            "transient": 1000,
+            "n_radii": 30,
+            "c_lo": 0.01,
+            "c_hi": 0.5,
+            "metric": "pairwise euclidean on the raw 2D orbit (no embedding; map is already 2D)"
+          },
+          "source": "Grassberger-Procaccia correlation dimension of the H\u00e9non attractor at a=1.4, b=0.3 is widely quoted near 1.2 (e.g. Grassberger & Procaccia 1983; wide spread 1.15-1.25 across estimators). Fixed protocol in this registry; rel_tol 8% covers estimator spread."
+        },
+        "orbit_head": {
+          "n": 20,
+          "values": [
+            [
+              1.086,
+              0.03
+            ],
+            [
+              -0.6211544,
+              0.32580000000000003
+            ],
+            [
+              0.7856340959048962,
+              -0.18634631999999998
+            ],
+            [
+              -0.05045562570762499,
+              0.23569022877146883
+            ],
+            [
+              1.2321261505397016,
+              -0.015136687712287496
+            ],
+            [
+              -1.1405254788935846,
+              0.3696378451619105
+            ],
+            [
+              -0.45147987004570606,
+              -0.3421576436680754
+            ],
+            [
+              0.372474654052842,
+              -0.1354439610137118
+            ],
+            [
+              0.6703237239097901,
+              0.11174239621585261
+            ],
+            [
+              0.4826749434450487,
+              0.20109711717293702
+            ],
+            [
+              0.8749319757313837,
+              0.1448024830335146
+            ],
+            [
+              0.07309413601340317,
+              0.2624795927194151
+            ],
+            [
+              1.2549997389120509,
+              0.021928240804020952
+            ],
+            [
+              -1.1831058417330211,
+              0.37649992167361523
+            ],
+            [
+              -0.5831352841663054,
+              -0.35493175251990633
+            ],
+            [
+              0.1690027839844887,
+              -0.17494058524989162
+            ],
+            [
+              0.7850726973577975,
+              0.05070083519534661
+            ],
+            [
+              0.18782603900403957,
+              0.23552180920733923
+            ],
+            [
+              1.1861317399082134,
+              0.05634781170121187
+            ],
+            [
+              -0.913324094483548,
+              0.355839521972464
+            ]
+          ],
+          "abs_tol": 1e-12,
+          "source": "Frozen float64 iterate sequence of the registry equations from x0; cross-checked Octave vs Python to <=1e-15 before freezing (bit-exactness guard against formula drift)."
+        }
       },
-      "notes": "corr_dim ~1.22 often quoted but estimator-dependent; omitted until a protocol is fixed (Grassberger-Procaccia with specified embedding)."
+      "notes": "corr_dim protocol fixed in ref.corr_dim.protocol (Grassberger-Procaccia, pairwise euclidean, scaling window C in [0.01,0.5])."
     },
     {
       "name": "clifford",
       "family": "map",
       "dim": 2,
       "equations": "x_{n+1} = sin(a*y_n) + c*cos(a*x_n); y_{n+1} = sin(b*x_n) + d*cos(b*y_n)",
-      "params": { "a": -1.4, "b": 1.6, "c": 1.0, "d": 0.7 },
-      "x0": [0.1, 0.1],
+      "params": {
+        "a": -1.4,
+        "b": 1.6,
+        "c": 1.0,
+        "d": 0.7
+      },
+      "x0": [
+        0.1,
+        0.1
+      ],
       "n_orbit": 20,
       "n_lyap": 20000,
       "transient": 2000,
       "ref": {
-        "lyap1": null
+        "lyap1": null,
+        "orbit_head": {
+          "n": 20,
+          "values": [
+            [
+              0.8506728815684008,
+              0.8503773049771848
+            ],
+            [
+              -0.5577800063233311,
+              1.1241431161185333
+            ],
+            [
+              -0.289709564090039,
+              -0.9367169304443297
+            ],
+            [
+              1.8854143730665562,
+              -0.39672229974688156
+            ],
+            [
+              -0.3493231750150898,
+              0.6882565570720396
+            ],
+            [
+              0.061550770198845695,
+              -0.21350648373428238
+            ],
+            [
+              1.2907674021423754,
+              0.7578736049988456
+            ],
+            [
+              -1.106940868410626,
+              1.1256500048649714
+            ],
+            [
+              -0.978909375121916,
+              -1.1397554762901188
+            ],
+            [
+              1.1986770523269494,
+              -1.1750792746655498
+            ],
+            [
+              0.8900944640544075,
+              0.7272729068394784
+            ],
+            [
+              -0.5321647412497503,
+              1.2664688124206775
+            ],
+            [
+              -0.24454795000898022,
+              -1.060217317654886
+            ],
+            [
+              1.9382245087943613,
+              -0.4690242105122393
+            ],
+            [
+              -0.2993109678303534,
+              0.5523952401383516
+            ],
+            [
+              0.21494314353740662,
+              -0.016866132798534827
+            ],
+            [
+              0.9786744791964909,
+              1.0369149243223972
+            ],
+            [
+              -0.7936057941938485,
+              0.9382808255056361
+            ],
+            [
+              -0.5233827275980752,
+              -0.9063888006056362
+            ],
+            [
+              1.6981347274336343,
+              -0.6587158655406719
+            ]
+          ],
+          "abs_tol": 1e-12,
+          "source": "Frozen float64 iterate sequence of the registry equations from x0; cross-checked Octave vs Python to <=1e-15 before freezing (bit-exactness guard against formula drift)."
+        }
       },
       "notes": "lambda1 pending a citable source for this parameter set; orbit reproducibility only."
     },
@@ -68,13 +339,108 @@
       "family": "map",
       "dim": 2,
       "equations": "x_{n+1} = x_n^2 - y_n^2 + a*x_n + b*y_n; y_{n+1} = 2*x_n*y_n + c*x_n + d*y_n",
-      "params": { "a": 0.9, "b": -0.6013, "c": 2.0, "d": 0.5 },
-      "x0": [-0.72, -0.64],
+      "params": {
+        "a": 0.9,
+        "b": -0.6013,
+        "c": 2.0,
+        "d": 0.5
+      },
+      "x0": [
+        -0.72,
+        -0.64
+      ],
       "n_orbit": 20,
       "n_lyap": 20000,
       "transient": 2000,
       "ref": {
-        "lyap1": null
+        "lyap1": null,
+        "orbit_head": {
+          "n": 20,
+          "values": [
+            [
+              -0.15436800000000017,
+              -0.8384
+            ],
+            [
+              -0.31388636057600017,
+              -0.46909173760000006
+            ],
+            [
+              -0.12195527362846065,
+              -0.5678355933689282
+            ],
+            [
+              -0.07588437630372818,
+              -0.3893272536108115
+            ],
+            [
+              0.019989267085694262,
+              -0.28734466777626244
+            ],
+            [
+              0.108603301810164,
+              -0.11518141833640229
+            ],
+            [
+              0.16552947650891056,
+              0.13459772977510476
+            ],
+            [
+              0.07732637267695087,
+              0.4429176014032953
+            ],
+            [
+              -0.3869292520360193,
+              0.44460996907813416
+            ],
+            [
+              -0.6635440797616055,
+              -0.8956187250992919
+            ],
+            [
+              -0.42049628734504585,
+              -0.5863325165463131
+            ],
+            [
+              -0.1928536086998084,
+              -0.6410575402484435
+            ],
+            [
+              -0.1618626043992844,
+              -0.4589754674815686
+            ],
+            [
+              -0.05415337240969398,
+              -0.4046310134954616
+            ],
+            [
+              0.033772923907075036,
+              -0.26679798364245544
+            ],
+            [
+              0.12078070539412913,
+              -0.08387424000731304
+            ],
+            [
+              0.1666893060298126,
+              0.17936351103964224
+            ],
+            [
+              0.03778315189092715,
+              0.48285632594398353
+            ],
+            [
+              -0.48805933702559245,
+              0.35348213456311917
+            ],
+            [
+              -0.538549913833275,
+              -1.14441811926016
+            ]
+          ],
+          "abs_tol": 1e-12,
+          "source": "Frozen float64 iterate sequence of the registry equations from x0; cross-checked Octave vs Python to <=1e-15 before freezing (bit-exactness guard against formula drift)."
+        }
       },
       "notes": "lambda1 pending a citable source for this parameter set; orbit reproducibility only."
     },
@@ -84,13 +450,39 @@
       "dim": 2,
       "equations": "Chaos game on the 3 vertices of the triangle; w_i(p) = v_i/2 (contraction 1/2), equal probability.",
       "params": {
-        "vertices": [[0.0, 0.0], [1.0, 0.0], [0.5, 0.8660254037844386]],
-        "p": [0.3333333333333333, 0.3333333333333333, 0.3333333333333333]
+        "vertices": [
+          [
+            0.0,
+            0.0
+          ],
+          [
+            1.0,
+            0.0
+          ],
+          [
+            0.5,
+            0.8660254037844386
+          ]
+        ],
+        "p": [
+          0.3333333333333333,
+          0.3333333333333333,
+          0.3333333333333333
+        ]
       },
-      "x0": [0.5, 0.5],
+      "x0": [
+        0.5,
+        0.5
+      ],
       "n_points": 20000,
       "burn_in": 200,
-      "box_sizes": [0.1, 0.05, 0.02, 0.01, 0.005],
+      "box_sizes": [
+        0.1,
+        0.05,
+        0.02,
+        0.01,
+        0.005
+      ],
       "ref": {
         "dim": {
           "value": 1.584962500721156,
@@ -106,16 +498,56 @@
       "equations": "Barnsley fern: 8 affine maps with classic probabilities (Barnsley, Fractals Everywhere).",
       "params": {
         "maps": [
-          { "a": 0.0, "b": 0.0, "c": 0.0, "d": 0.16, "e": 0.0, "f": 0.0, "p": 0.01 },
-          { "a": 0.85, "b": 0.04, "c": -0.04, "d": 0.85, "e": 0.0, "f": 1.6, "p": 0.85 },
-          { "a": 0.2, "b": -0.26, "c": 0.23, "d": 0.22, "e": 0.0, "f": 1.6, "p": 0.07 },
-          { "a": -0.15, "b": 0.28, "c": 0.26, "d": 0.24, "e": 0.0, "f": 0.44, "p": 0.07 }
+          {
+            "a": 0.0,
+            "b": 0.0,
+            "c": 0.0,
+            "d": 0.16,
+            "e": 0.0,
+            "f": 0.0,
+            "p": 0.01
+          },
+          {
+            "a": 0.85,
+            "b": 0.04,
+            "c": -0.04,
+            "d": 0.85,
+            "e": 0.0,
+            "f": 1.6,
+            "p": 0.85
+          },
+          {
+            "a": 0.2,
+            "b": -0.26,
+            "c": 0.23,
+            "d": 0.22,
+            "e": 0.0,
+            "f": 1.6,
+            "p": 0.07
+          },
+          {
+            "a": -0.15,
+            "b": 0.28,
+            "c": 0.26,
+            "d": 0.24,
+            "e": 0.0,
+            "f": 0.44,
+            "p": 0.07
+          }
         ]
       },
-      "x0": [0.0, 0.0],
+      "x0": [
+        0.0,
+        0.0
+      ],
       "n_points": 200000,
       "burn_in": 100,
-      "box_sizes": [0.4, 0.2, 0.1, 0.05],
+      "box_sizes": [
+        0.4,
+        0.2,
+        0.1,
+        0.05
+      ],
       "ref": {
         "dim": {
           "value": 1.85,
@@ -130,8 +562,16 @@
       "family": "ode",
       "dim": 3,
       "equations": "dx/dt = sigma*(y - x); dy/dt = x*(rho - z) - y; dz/dt = x*y - beta*z",
-      "params": { "sigma": 10.0, "rho": 28.0, "beta": 2.6666666666666665 },
-      "x0": [1.0, 1.0, 1.0],
+      "params": {
+        "sigma": 10.0,
+        "rho": 28.0,
+        "beta": 2.6666666666666665
+      },
+      "x0": [
+        1.0,
+        1.0,
+        1.0
+      ],
       "dt_lyap": 0.01,
       "t_transient": 50.0,
       "t_lyap": 1000.0,
@@ -148,8 +588,16 @@
       "family": "ode",
       "dim": 3,
       "equations": "dx/dt = -y - z; dy/dt = x + a*y; dz/dt = b + z*(x - c)",
-      "params": { "a": 0.2, "b": 0.2, "c": 5.7 },
-      "x0": [1.0, 1.0, 1.0],
+      "params": {
+        "a": 0.2,
+        "b": 0.2,
+        "c": 5.7
+      },
+      "x0": [
+        1.0,
+        1.0,
+        1.0
+      ],
       "dt_lyap": 0.01,
       "t_transient": 100.0,
       "t_lyap": 2000.0,
@@ -166,8 +614,14 @@
       "family": "ode",
       "dim": 3,
       "equations": "dx/dt = sin(y) - b*x; dy/dt = sin(z) - b*y; dz/dt = sin(x) - b*z",
-      "params": { "b": 0.208186 },
-      "x0": [0.1, 0.0, 0.0],
+      "params": {
+        "b": 0.208186
+      },
+      "x0": [
+        0.1,
+        0.0,
+        0.0
+      ],
       "dt_lyap": 0.01,
       "t_transient": 100.0,
       "t_lyap": 2000.0,
@@ -181,8 +635,19 @@
       "family": "ode",
       "dim": 3,
       "equations": "dx/dt = (z - b)*x - d*y; dy/dt = d*x + (z - b)*y; dz/dt = c + a*z - z^3/3 - (x^2 + y^2)*(1 + e*z) + f*z*x^3",
-      "params": { "a": 0.95, "b": 0.7, "c": 0.6, "d": 3.5, "e": 0.25, "f": 0.1 },
-      "x0": [0.1, 0.0, 0.0],
+      "params": {
+        "a": 0.95,
+        "b": 0.7,
+        "c": 0.6,
+        "d": 3.5,
+        "e": 0.25,
+        "f": 0.1
+      },
+      "x0": [
+        0.1,
+        0.0,
+        0.0
+      ],
       "dt_lyap": 0.01,
       "t_transient": 100.0,
       "t_lyap": 2000.0,
@@ -198,7 +663,20 @@
       "equations": "Continuous-time Hopfield net: dx/dt = -x + W*tanh(x); stored patterns must be fixed points of sign(W p) (Hebbian W with zero diagonal, patterns bipolar).",
       "params": {
         "n": 4,
-        "patterns": [[1, 1, 1, 1], [1, -1, 1, -1]],
+        "patterns": [
+          [
+            1,
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            -1,
+            1,
+            -1
+          ]
+        ],
         "coupling": "hebb"
       },
       "x0": null,

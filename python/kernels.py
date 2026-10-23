@@ -69,6 +69,29 @@ def box_counting_dim(pts, sizes):
     return float(p[0])
 
 
+def corr_dim_grassberger(pts, n_radii=30, c_lo=0.01, c_hi=0.5):
+    """Grassberger-Procaccia correlation dimension of a point cloud.
+
+    C(r) = fraction of pairs closer than r; slope of log C vs log r in the
+    scaling window c_lo <= C <= c_hi. Pairwise Euclidean distances.
+    """
+    from scipy.spatial.distance import pdist
+    pts = np.asarray(pts, dtype=float)
+    d = pdist(pts)
+    d = d[d > 0]
+    if d.size < 10:
+        raise RuntimeError("corr_dim: too few nonzero pairs")
+    r = np.geomspace(d.min(), d.max(), n_radii)
+    ds = np.sort(d)
+    counts = np.searchsorted(ds, r, side="right")
+    C = counts / float(ds.size)
+    mask = (C >= c_lo) & (C <= c_hi)
+    if int(mask.sum()) < 3:
+        raise RuntimeError("corr_dim: empty scaling window")
+    p = np.polyfit(np.log(r[mask]), np.log(C[mask]), 1)
+    return float(p[0])
+
+
 def fd_eigenvalues(g, V, k, sigma):
     """Lowest k eigenvalues of -1/2 d2/dx2 + V on grid g via sparse FD (Dirichlet)."""
     g = np.asarray(g, dtype=float)
