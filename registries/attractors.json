@@ -1,0 +1,199 @@
+{
+  "schema_version": 1,
+  "description": "Cross-language benchmark registry of chaotic/neural dynamical systems. Each entry: family, equations (human-readable), params, initial state, and reference invariants with per-invariant absolute/relative tolerances and literature sources. null refs = pending literature source; orbit-reproducibility only.",
+  "tolerance_defaults": {
+    "map_orbit": 1e-12,
+    "map_lyap_abs": 0.02,
+    "ode_lyap_rel": 0.05,
+    "ifs_dim_rel": 0.01,
+    "neural_fixed_abs": 0
+  },
+  "entries": [
+    {
+      "name": "logistic",
+      "family": "map",
+      "dim": 1,
+      "equations": "x_{n+1} = r * x_n * (1 - x_n)",
+      "params": { "r": 4.0 },
+      "x0": [0.1],
+      "n_orbit": 20,
+      "n_lyap": 50000,
+      "transient": 1000,
+      "ref": {
+        "lyap1": {
+          "value": 0.6931471805599453,
+          "abs_tol": 0.002,
+          "source": "Analytic: for r=4 the logistic map has lambda = ln(2) exactly (standard result; e.g. Ott, Chaos in Dynamical Systems, CUP)."
+        }
+      },
+      "notes": "Primary cross-language check: first n_orbit iterates from x0 at 1e-12."
+    },
+    {
+      "name": "henon",
+      "family": "map",
+      "dim": 2,
+      "equations": "x_{n+1} = 1 - a*x_n^2 + y_n; y_{n+1} = b*x_n",
+      "params": { "a": 1.4, "b": 0.3 },
+      "x0": [0.1, 0.1],
+      "n_orbit": 20,
+      "n_lyap": 20000,
+      "transient": 2000,
+      "ref": {
+        "lyap1": {
+          "value": 0.4192,
+          "abs_tol": 0.02,
+          "source": "Widely cited value for a=1.4, b=0.3 (e.g. Grassberger-Procaccia analyses; Benettin et al. algorithm family). Method-dependent at the 1e-2 level."
+        },
+        "corr_dim": null
+      },
+      "notes": "corr_dim ~1.22 often quoted but estimator-dependent; omitted until a protocol is fixed (Grassberger-Procaccia with specified embedding)."
+    },
+    {
+      "name": "clifford",
+      "family": "map",
+      "dim": 2,
+      "equations": "x_{n+1} = sin(a*y_n) + c*cos(a*x_n); y_{n+1} = sin(b*x_n) + d*cos(b*y_n)",
+      "params": { "a": -1.4, "b": 1.6, "c": 1.0, "d": 0.7 },
+      "x0": [0.1, 0.1],
+      "n_orbit": 20,
+      "n_lyap": 20000,
+      "transient": 2000,
+      "ref": {
+        "lyap1": null
+      },
+      "notes": "lambda1 pending a citable source for this parameter set; orbit reproducibility only."
+    },
+    {
+      "name": "tinkerbell",
+      "family": "map",
+      "dim": 2,
+      "equations": "x_{n+1} = x_n^2 - y_n^2 + a*x_n + b*y_n; y_{n+1} = 2*x_n*y_n + c*x_n + d*y_n",
+      "params": { "a": 0.9, "b": -0.6013, "c": 2.0, "d": 0.5 },
+      "x0": [-0.72, -0.64],
+      "n_orbit": 20,
+      "n_lyap": 20000,
+      "transient": 2000,
+      "ref": {
+        "lyap1": null
+      },
+      "notes": "lambda1 pending a citable source for this parameter set; orbit reproducibility only."
+    },
+    {
+      "name": "sierpinski",
+      "family": "ifs",
+      "dim": 2,
+      "equations": "Chaos game on the 3 vertices of the triangle; w_i(p) = v_i/2 (contraction 1/2), equal probability.",
+      "params": {
+        "vertices": [[0.0, 0.0], [1.0, 0.0], [0.5, 0.8660254037844386]],
+        "p": [0.3333333333333333, 0.3333333333333333, 0.3333333333333333]
+      },
+      "x0": [0.5, 0.5],
+      "n_points": 20000,
+      "burn_in": 200,
+      "box_sizes": [0.1, 0.05, 0.02, 0.01, 0.005],
+      "ref": {
+        "dim": {
+          "value": 1.584962500721156,
+          "rel_tol": 0.01,
+          "source": "Exact: Hausdorff and box dimension of the Sierpinski triangle = log(3)/log(2)."
+        }
+      }
+    },
+    {
+      "name": "barnsley_fern",
+      "family": "ifs",
+      "dim": 2,
+      "equations": "Barnsley fern: 8 affine maps with classic probabilities (Barnsley, Fractals Everywhere).",
+      "params": {
+        "maps": [
+          { "a": 0.0, "b": 0.0, "c": 0.0, "d": 0.16, "e": 0.0, "f": 0.0, "p": 0.01 },
+          { "a": 0.85, "b": 0.04, "c": -0.04, "d": 0.85, "e": 0.0, "f": 1.6, "p": 0.85 },
+          { "a": 0.2, "b": -0.26, "c": 0.23, "d": 0.22, "e": 0.0, "f": 1.6, "p": 0.07 },
+          { "a": -0.15, "b": 0.28, "c": 0.26, "d": 0.24, "e": 0.0, "f": 0.44, "p": 0.07 }
+        ]
+      },
+      "x0": [0.0, 0.0],
+      "n_points": 200000,
+      "burn_in": 100,
+      "box_sizes": [0.4, 0.2, 0.1, 0.05],
+      "ref": {
+        "dim": {
+          "value": 1.85,
+          "rel_tol": 0.05,
+          "source": "Literature box-counting estimates cluster near 1.85 (range ~1.84-1.86); method- and resolution-dependent."
+        }
+      },
+      "notes": "Chaos game n=2e5, box sizes eps in [0.05, 0.4] (finer eps saturates: N_boxes approaches n_points). Run-to-run slope spread ~1.78-1.83; rel_tol 0.05 covers that honest method spread."
+    },
+    {
+      "name": "lorenz",
+      "family": "ode",
+      "dim": 3,
+      "equations": "dx/dt = sigma*(y - x); dy/dt = x*(rho - z) - y; dz/dt = x*y - beta*z",
+      "params": { "sigma": 10.0, "rho": 28.0, "beta": 2.6666666666666665 },
+      "x0": [1.0, 1.0, 1.0],
+      "dt_lyap": 0.01,
+      "t_transient": 50.0,
+      "t_lyap": 1000.0,
+      "ref": {
+        "lyap1": {
+          "value": 0.9056,
+          "rel_tol": 0.05,
+          "source": "Eckhardt & Balsley, Phys. Rev. E 78, 016208 (2008): lambda1 = 0.9056 for sigma=10, rho=28, beta=8/3 (high-precision reference)."
+        }
+      }
+    },
+    {
+      "name": "rossler",
+      "family": "ode",
+      "dim": 3,
+      "equations": "dx/dt = -y - z; dy/dt = x + a*y; dz/dt = b + z*(x - c)",
+      "params": { "a": 0.2, "b": 0.2, "c": 5.7 },
+      "x0": [1.0, 1.0, 1.0],
+      "dt_lyap": 0.01,
+      "t_transient": 100.0,
+      "t_lyap": 2000.0,
+      "ref": {
+        "lyap1": {
+          "value": 0.0714,
+          "abs_tol": 0.01,
+          "source": "Commonly cited value for a=b=0.2, c=5.7 across chaos texts and tool comparisons; method-dependent at the ~0.005 level. Reported as abs_tol to avoid false precision on a small exponent."
+        }
+      }
+    },
+    {
+      "name": "thomas",
+      "family": "ode",
+      "dim": 3,
+      "equations": "dx/dt = sin(y) - b*x; dy/dt = sin(z) - b*y; dz/dt = sin(x) - b*z",
+      "params": { "b": 0.208186 },
+      "x0": [0.1, 0.0, 0.0],
+      "dt_lyap": 0.01,
+      "t_transient": 100.0,
+      "t_lyap": 2000.0,
+      "ref": {
+        "lyap1": null
+      },
+      "notes": "Thomas attractor is chaotic for b near 0.208186 (Sprott attractor catalogue); lambda1 pending a citable numerical source; trajectory + divergence diagnostics only."
+    },
+    {
+      "name": "hopfield_4",
+      "family": "neural",
+      "dim": 4,
+      "equations": "Continuous-time Hopfield net: dx/dt = -x + W*tanh(x); stored patterns must be fixed points of sign(W p) (Hebbian W with zero diagonal, patterns bipolar).",
+      "params": {
+        "n": 4,
+        "patterns": [[1, 1, 1, 1], [1, -1, 1, -1]],
+        "coupling": "hebb"
+      },
+      "x0": null,
+      "ref": {
+        "fixed_points": {
+          "check": "sign(W * p) == p for each stored pattern p (zero diagonal, W = (1/n) * sum p p^T with diag zeroed)",
+          "abs_tol": 0,
+          "source": "Analytic property of Hebbian Hopfield weights with zero diagonal for stored bipolar patterns."
+        }
+      }
+    }
+  ]
+}

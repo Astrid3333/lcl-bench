@@ -1,0 +1,127 @@
+{
+  "schema_version": 1,
+  "description": "Cross-language registry of physical potentials with analytic ground truth (minima, exact eigenvalues, analytic forces). Reference values come from closed-form derivations, not from another code.",
+  "tolerance_defaults": {
+    "r_min_abs": 1e-06,
+    "V_min_abs": 1e-06,
+    "eigen_rel": 0.002,
+    "force_abs": 1e-06
+  },
+  "entries": [
+    {
+      "name": "lennard_jones",
+      "family": "potential",
+      "dim": 1,
+      "equations": "V(r) = 4*eps*((sigma/r)^12 - (sigma/r)^6)",
+      "params": { "eps": 1.0, "sigma": 1.0 },
+      "r_range": [0.8, 3.0],
+      "ref": {
+        "r_min": {
+          "value": 1.122462048309373,
+          "abs_tol": 1e-06,
+          "source": "Analytic: r_min = 2^(1/6) * sigma."
+        },
+        "V_min": {
+          "value": -1.0,
+          "abs_tol": 1e-06,
+          "source": "Analytic: V(r_min) = -eps."
+        }
+      }
+    },
+    {
+      "name": "morse",
+      "family": "potential",
+      "dim": 1,
+      "equations": "V(r) = De*(1 - exp(-a*(r - re)))^2 - De",
+      "params": { "De": 1.0, "a": 1.0, "re": 1.0 },
+      "r_range": [0.2, 4.0],
+      "ref": {
+        "r_min": {
+          "value": 1.0,
+          "abs_tol": 1e-06,
+          "source": "Analytic: minimum at r = re."
+        },
+        "V_min": {
+          "value": -1.0,
+          "abs_tol": 1e-06,
+          "source": "Analytic: V(re) = -De."
+        }
+      }
+    },
+    {
+      "name": "double_well",
+      "family": "potential",
+      "dim": 1,
+      "equations": "V(x) = a*x^4 - b*x^2",
+      "params": { "a": 1.0, "b": 1.0 },
+      "r_range": [-2.0, 2.0],
+      "ref": {
+        "r_min_abs": {
+          "value": 0.7071067811865476,
+          "abs_tol": 1e-06,
+          "source": "Analytic: |x_min| = sqrt(b/(2a))."
+        },
+        "V_min": {
+          "value": -0.25,
+          "abs_tol": 1e-06,
+          "source": "Analytic: V(x_min) = -b^2/(4a)."
+        }
+      }
+    },
+    {
+      "name": "harmonic",
+      "family": "potential",
+      "dim": 1,
+      "equations": "V(x) = 0.5*k*x^2; quantum: -hbar^2/(2m) d^2/dx^2 + V",
+      "params": { "k": 1.0, "m": 1.0, "hbar": 1.0 },
+      "x_grid": { "xmin": -8.0, "xmax": 8.0, "n": 3000 },
+      "eigen_n": [0, 1, 2],
+      "ref": {
+        "eigenvalues": {
+          "value": [0.5, 1.5, 2.5],
+          "rel_tol": 0.001,
+          "source": "Analytic: E_n = hbar*omega*(n + 1/2), omega = sqrt(k/m) = 1."
+        },
+        "omega": {
+          "value": 1.0,
+          "abs_tol": 1e-08,
+          "source": "Analytic: omega = sqrt(k/m)."
+        }
+      },
+      "notes": "Eigenvalues from finite differences; rel_tol covers O(h^2) discretization error on [-8,8] with n=3000."
+    },
+    {
+      "name": "hydrogen",
+      "family": "potential",
+      "dim": 1,
+      "equations": "Atomic units, radial form: u(r) = r R(r) satisfies -1/2 u'' - u/r = E u with u(0)=u(rmax)=0; s-state energies E_n = -1/(2 n^2)",
+      "params": { "hbar": 1.0, "m": 1.0, "e2": 1.0 },
+      "x_grid": { "xmin": 0.0, "xmax": 40.0, "n": 8000 },
+      "eigen_n": [1, 2],
+      "ref": {
+        "eigenvalues": {
+          "value": [-0.5, -0.125],
+          "rel_tol": 0.002,
+          "source": "Analytic (atomic units): E_n = -1/(2 n^2) Hartree."
+        }
+      },
+      "notes": "Half-line FD on r_i = i*h for u=rR avoids the r=0 cusp (Dirichlet at both ends); O(h^2) error, rel_tol 2e-3 budget."
+    },
+    {
+      "name": "yukawa",
+      "family": "potential",
+      "dim": 1,
+      "equations": "V(r) = A * exp(-kappa*r) / r; force F(r) = -dV/dr = A*exp(-kappa*r)*(1/r^2 + kappa/r)",
+      "params": { "A": 1.0, "kappa": 1.0 },
+      "r_check": [0.5, 1.0, 2.0],
+      "ref": {
+        "force": {
+          "value_at_r1": 0.7357588823428847,
+          "abs_tol": 1e-06,
+          "source": "Analytic: F(r) = A*exp(-kappa*r)*(1/r^2 + kappa/r); at r=1, A=kappa=1: F = 2/e."
+        }
+      },
+      "notes": "No finite minimum for A>0; invariant tested is central-difference force vs analytic force at r_check points (h=1e-5, central)."
+    }
+  ]
+}
