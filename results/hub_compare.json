@@ -1,0 +1,120 @@
+{
+  "octave_file": "registry_run_20261023T022423.json",
+  "python_file": "registry_run_py_20261023T185848.json",
+  "n_entries": 16,
+  "both_pass": 16,
+  "rows": [
+    {
+      "name": "barnsley_fern",
+      "status": "BOTH_PASS",
+      "octave_pass": true,
+      "python_pass": true,
+      "obs_rel_diff": null
+    },
+    {
+      "name": "clifford",
+      "status": "BOTH_PASS",
+      "octave_pass": true,
+      "python_pass": true,
+      "obs_rel_diff": 1.9114129936830205e-16
+    },
+    {
+      "name": "double_well",
+      "status": "BOTH_PASS",
+      "octave_pass": true,
+      "python_pass": true,
+      "obs_rel_diff": null
+    },
+    {
+      "name": "harmonic",
+      "status": "BOTH_PASS",
+      "octave_pass": true,
+      "python_pass": true,
+      "obs_rel_diff": null
+    },
+    {
+      "name": "henon",
+      "status": "BOTH_PASS",
+      "octave_pass": true,
+      "python_pass": true,
+      "obs_rel_diff": null
+    },
+    {
+      "name": "hopfield_4",
+      "status": "BOTH_PASS",
+      "octave_pass": true,
+      "python_pass": true,
+      "obs_rel_diff": null
+    },
+    {
+      "name": "hydrogen",
+      "status": "BOTH_PASS",
+      "octave_pass": true,
+      "python_pass": true,
+      "obs_rel_diff": null
+    },
+    {
+      "name": "lennard_jones",
+      "status": "BOTH_PASS",
+      "octave_pass": true,
+      "python_pass": true,
+      "obs_rel_diff": null
+    },
+    {
+      "name": "logistic",
+      "status": "BOTH_PASS",
+      "octave_pass": true,
+      "python_pass": true,
+      "obs_rel_diff": null
+    },
+    {
+      "name": "lorenz",
+      "status": "BOTH_PASS",
+      "octave_pass": true,
+      "python_pass": true,
+      "obs_rel_diff": null
+    },
+    {
+      "name": "morse",
+      "status": "BOTH_PASS",
+      "octave_pass": true,
+      "python_pass": true,
+      "obs_rel_diff": null
+    },
+    {
+      "name": "rossler",
+      "status": "BOTH_PASS",
+      "octave_pass": true,
+      "python_pass": true,
+      "obs_rel_diff": null
+    },
+    {
+      "name": "sierpinski",
+      "status": "BOTH_PASS",
+      "octave_pass": true,
+      "python_pass": true,
+      "obs_rel_diff": null
+    },
+    {
+      "name": "thomas",
+      "status": "BOTH_PASS",
+      "octave_pass": true,
+      "python_pass": true,
+      "obs_rel_diff": 2.079026660134488e-14
+    },
+    {
+      "name": "tinkerbell",
+      "status": "BOTH_PASS",
+      "octave_pass": true,
+      "python_pass": true,
+      "obs_rel_diff": 0.0
+    },
+    {
+      "name": "yukawa",
+      "status": "BOTH_PASS",
+      "octave_pass": true,
+      "python_pass": true,
+      "obs_rel_diff": null
+    }
+  ]
+}
