@@ -13,3 +13,4 @@ fortran/f_runner
 fortran/f_runner_dbg
 fortran/f_runner_asan
 fortran/results/
+.venv/

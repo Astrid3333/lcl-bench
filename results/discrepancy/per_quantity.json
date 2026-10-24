@@ -1,0 +1,813 @@
+{
+  "files": {
+    "octave": "registry_run_20261023T230731.json",
+    "python": "registry_run_py_20261023T230822.json",
+    "fortran": "registry_run_f_20261023T230828.json"
+  },
+  "n_quantities": 36,
+  "n_reference_backed": 32,
+  "n_observed_only": 4,
+  "reference_backed_spread": {
+    "max": 0.0032832578129537104,
+    "median": 1.7849478563991956e-12
+  },
+  "observed_spread": {
+    "max": 0.14548938087760846,
+    "median": 0.00643644124787795
+  },
+  "residual_abs_max": 2.220446049250313e-16,
+  "rows": [
+    {
+      "quantity": "box_dim",
+      "entry": "barnsley_fern",
+      "family": "ifs",
+      "computed": {
+        "octave": 1.8257099201223628,
+        "python": 1.8263095998481238,
+        "fortran": 1.8261122632381768
+      },
+      "passes": {
+        "octave": true,
+        "python": true,
+        "fortran": true
+      },
+      "reference": 1.85,
+      "tol": 0.09250000000000001,
+      "spread": 0.00032835600590989386,
+      "spread_abs": 0.0005996797257610265,
+      "metric": "rel",
+      "observed_only": false,
+      "all_pass": true
+    },
+    {
+      "quantity": "box_dim",
+      "entry": "sierpinski",
+      "family": "ifs",
+      "computed": {
+        "octave": 1.5732913821954948,
+        "python": 1.5757773820998016,
+        "fortran": 1.5715921299171587
+      },
+      "passes": {
+        "octave": true,
+        "python": true,
+        "fortran": true
+      },
+      "reference": 1.584962500721156,
+      "tol": 0.01584962500721156,
+      "spread": 0.002655992039348742,
+      "spread_abs": 0.0041852521826428735,
+      "metric": "rel",
+      "observed_only": false,
+      "all_pass": true
+    },
+    {
+      "quantity": "lyap1_observed",
+      "entry": "clifford",
+      "family": "map",
+      "computed": {
+        "octave": 0.29041945102767003,
+        "python": 0.2904194510276701,
+        "fortran": 0.2904194510276701
+      },
+      "passes": {
+        "octave": true,
+        "python": true,
+        "fortran": true
+      },
+      "reference": null,
+      "tol": null,
+      "spread": 1.9114129936830205e-16,
+      "spread_abs": 5.551115123125783e-17,
+      "metric": "rel",
+      "observed_only": true,
+      "all_pass": true
+    },
+    {
+      "quantity": "orbit_head_maxabs",
+      "entry": "clifford",
+      "family": "map",
+      "computed": {
+        "octave": 2.220446049250313e-16,
+        "python": 0.0,
+        "fortran": 0
+      },
+      "passes": {
+        "octave": true,
+        "python": true,
+        "fortran": true
+      },
+      "reference": 0,
+      "tol": 1e-12,
+      "spread": null,
+      "spread_abs": 2.220446049250313e-16,
+      "metric": "abs_residual",
+      "observed_only": false,
+      "all_pass": true
+    },
+    {
+      "quantity": "corr_dim",
+      "entry": "henon",
+      "family": "map",
+      "computed": {
+        "octave": 1.207808024193856,
+        "python": 1.2078080241938554,
+        "fortran": 1.2038424790618734
+      },
+      "passes": {
+        "octave": true,
+        "python": true,
+        "fortran": true
+      },
+      "reference": 1.22,
+      "tol": 0.0976,
+      "spread": 0.0032832578129537104,
+      "spread_abs": 0.003965545131982662,
+      "metric": "rel",
+      "observed_only": false,
+      "all_pass": true
+    },
+    {
+      "quantity": "lyap1",
+      "entry": "henon",
+      "family": "map",
+      "computed": {
+        "octave": 0.4191904597180581,
+        "python": 0.419190459718058,
+        "fortran": 0.4191740039524238
+      },
+      "passes": {
+        "octave": true,
+        "python": true,
+        "fortran": true
+      },
+      "reference": 0.4192,
+      "tol": 0.02,
+      "spread": 3.925605951365622e-05,
+      "spread_abs": 1.6455765634248998e-05,
+      "metric": "rel",
+      "observed_only": false,
+      "all_pass": true
+    },
+    {
+      "quantity": "orbit_head_maxabs",
+      "entry": "henon",
+      "family": "map",
+      "computed": {
+        "octave": 0,
+        "python": 0.0,
+        "fortran": 0
+      },
+      "passes": {
+        "octave": true,
+        "python": true,
+        "fortran": true
+      },
+      "reference": 0,
+      "tol": 1e-12,
+      "spread": null,
+      "spread_abs": 0,
+      "metric": "abs_residual",
+      "observed_only": false,
+      "all_pass": true
+    },
+    {
+      "quantity": "lyap1",
+      "entry": "logistic",
+      "family": "map",
+      "computed": {
+        "octave": 0.6931294182219604,
+        "python": 0.6931294182219604,
+        "fortran": 0.6931294182219604
+      },
+      "passes": {
+        "octave": true,
+        "python": true,
+        "fortran": true
+      },
+      "reference": 0.6931471805599453,
+      "tol": 0.002,
+      "spread": 0.0,
+      "spread_abs": 0.0,
+      "metric": "rel",
+      "observed_only": false,
+      "all_pass": true
+    },
+    {
+      "quantity": "orbit_head_maxabs",
+      "entry": "logistic",
+      "family": "map",
+      "computed": {
+        "octave": 0,
+        "python": 0.0,
+        "fortran": 0
+      },
+      "passes": {
+        "octave": true,
+        "python": true,
+        "fortran": true
+      },
+      "reference": 0,
+      "tol": 1e-12,
+      "spread": null,
+      "spread_abs": 0,
+      "metric": "abs_residual",
+      "observed_only": false,
+      "all_pass": true
+    },
+    {
+      "quantity": "lyap1_observed",
+      "entry": "tinkerbell",
+      "family": "map",
+      "computed": {
+        "octave": 0.19947732135732588,
+        "python": 0.19947732135732588,
+        "fortran": 0.19819339729812538
+      },
+      "passes": {
+        "octave": true,
+        "python": true,
+        "fortran": true
+      },
+      "reference": null,
+      "tol": null,
+      "spread": 0.00643644124787795,
+      "spread_abs": 0.0012839240592004975,
+      "metric": "rel",
+      "observed_only": true,
+      "all_pass": true
+    },
+    {
+      "quantity": "orbit_head_maxabs",
+      "entry": "tinkerbell",
+      "family": "map",
+      "computed": {
+        "octave": 0,
+        "python": 0.0,
+        "fortran": 0
+      },
+      "passes": {
+        "octave": true,
+        "python": true,
+        "fortran": true
+      },
+      "reference": 0,
+      "tol": 1e-12,
+      "spread": null,
+      "spread_abs": 0,
+      "metric": "abs_residual",
+      "observed_only": false,
+      "all_pass": true
+    },
+    {
+      "quantity": "fixed_point_pattern_1",
+      "entry": "hopfield_4",
+      "family": "neural",
+      "computed": {
+        "octave": 1,
+        "python": 1.0,
+        "fortran": 1
+      },
+      "passes": {
+        "octave": true,
+        "python": true,
+        "fortran": true
+      },
+      "reference": 1,
+      "tol": 0,
+      "spread": 0.0,
+      "spread_abs": 0,
+      "metric": "rel",
+      "observed_only": false,
+      "all_pass": true
+    },
+    {
+      "quantity": "fixed_point_pattern_2",
+      "entry": "hopfield_4",
+      "family": "neural",
+      "computed": {
+        "octave": 1,
+        "python": 1.0,
+        "fortran": 1
+      },
+      "passes": {
+        "octave": true,
+        "python": true,
+        "fortran": true
+      },
+      "reference": 1,
+      "tol": 0,
+      "spread": 0.0,
+      "spread_abs": 0,
+      "metric": "rel",
+      "observed_only": false,
+      "all_pass": true
+    },
+    {
+      "quantity": "lyap1_observed",
+      "entry": "aizawa",
+      "family": "ode",
+      "computed": {
+        "octave": 0.10733175348719398,
+        "python": 0.10733175348719351,
+        "fortran": 0.09171612312383404
+      },
+      "passes": {
+        "octave": true,
+        "python": true,
+        "fortran": true
+      },
+      "reference": null,
+      "tol": null,
+      "spread": 0.14548938087760846,
+      "spread_abs": 0.015615630363359945,
+      "metric": "rel",
+      "observed_only": true,
+      "all_pass": true
+    },
+    {
+      "quantity": "lyap1",
+      "entry": "lorenz",
+      "family": "ode",
+      "computed": {
+        "octave": 0.9039961674460056,
+        "python": 0.9039961674460054,
+        "fortran": 0.9039961674460054
+      },
+      "passes": {
+        "octave": true,
+        "python": true,
+        "fortran": true
+      },
+      "reference": 0.9056,
+      "tol": 0.04528,
+      "spread": 2.4562560431241396e-16,
+      "spread_abs": 2.220446049250313e-16,
+      "metric": "rel",
+      "observed_only": false,
+      "all_pass": true
+    },
+    {
+      "quantity": "lyap1",
+      "entry": "rossler",
+      "family": "ode",
+      "computed": {
+        "octave": 0.07470398697628436,
+        "python": 0.07470398697628437,
+        "fortran": 0.07470398697628437
+      },
+      "passes": {
+        "octave": true,
+        "python": true,
+        "fortran": true
+      },
+      "reference": 0.0714,
+      "tol": 0.01,
+      "spread": 1.8577037678350578e-16,
+      "spread_abs": 1.3877787807814457e-17,
+      "metric": "rel",
+      "observed_only": false,
+      "all_pass": true
+    },
+    {
+      "quantity": "lyap1_observed",
+      "entry": "thomas",
+      "family": "ode",
+      "computed": {
+        "octave": 0.006466538980289259,
+        "python": 0.006466538980289124,
+        "fortran": 0.006466538980289124
+      },
+      "passes": {
+        "octave": true,
+        "python": true,
+        "fortran": true
+      },
+      "reference": null,
+      "tol": null,
+      "spread": 2.079026660134488e-14,
+      "spread_abs": 1.3444106938820255e-16,
+      "metric": "rel",
+      "observed_only": true,
+      "all_pass": true
+    },
+    {
+      "quantity": "V_min",
+      "entry": "double_well",
+      "family": "potential",
+      "computed": {
+        "octave": -0.25,
+        "python": -0.24999999999999994,
+        "fortran": -0.25
+      },
+      "passes": {
+        "octave": true,
+        "python": true,
+        "fortran": true
+      },
+      "reference": -0.25,
+      "tol": 1e-06,
+      "spread": 2.220446049250313e-16,
+      "spread_abs": 5.551115123125783e-17,
+      "metric": "rel",
+      "observed_only": false,
+      "all_pass": true
+    },
+    {
+      "quantity": "r_min_abs",
+      "entry": "double_well",
+      "family": "potential",
+      "computed": {
+        "octave": 0.7071067811504755,
+        "python": 0.7071067819793245,
+        "fortran": 0.7071067849118262
+      },
+      "passes": {
+        "octave": true,
+        "python": true,
+        "fortran": true
+      },
+      "reference": 0.7071067811865476,
+      "tol": 1e-06,
+      "spread": 5.319353109923382e-09,
+      "spread_abs": 3.7613506753686465e-09,
+      "metric": "rel",
+      "observed_only": false,
+      "all_pass": true
+    },
+    {
+      "quantity": "E_0",
+      "entry": "harmonic",
+      "family": "potential",
+      "computed": {
+        "octave": 0.49999911051725315,
+        "python": 0.499999110516885,
+        "fortran": 0.49999911052494345
+      },
+      "passes": {
+        "octave": true,
+        "python": true,
+        "fortran": true
+      },
+      "reference": 0.5,
+      "tol": 0.0005,
+      "spread": 1.6116914275064945e-11,
+      "spread_abs": 8.058442801939236e-12,
+      "metric": "rel",
+      "observed_only": false,
+      "all_pass": true
+    },
+    {
+      "quantity": "E_1",
+      "entry": "harmonic",
+      "family": "potential",
+      "computed": {
+        "octave": 1.4999955525775657,
+        "python": 1.4999955525773392,
+        "fortran": 1.4999955525800166
+      },
+      "passes": {
+        "octave": true,
+        "python": true,
+        "fortran": true
+      },
+      "reference": 1.5,
+      "tol": 0.0015,
+      "spread": 1.7849478563991956e-12,
+      "spread_abs": 2.6774138461860275e-12,
+      "metric": "rel",
+      "observed_only": false,
+      "all_pass": true
+    },
+    {
+      "quantity": "E_2",
+      "entry": "harmonic",
+      "family": "potential",
+      "computed": {
+        "octave": 2.4999884366819813,
+        "python": 2.49998843668179,
+        "fortran": 2.4999884366800504
+      },
+      "passes": {
+        "octave": true,
+        "python": true,
+        "fortran": true
+      },
+      "reference": 2.5,
+      "tol": 0.0025,
+      "spread": 7.723635262052607e-13,
+      "spread_abs": 1.9308998844280723e-12,
+      "metric": "rel",
+      "observed_only": false,
+      "all_pass": true
+    },
+    {
+      "quantity": "omega",
+      "entry": "harmonic",
+      "family": "potential",
+      "computed": {
+        "octave": 1,
+        "python": 1.0,
+        "fortran": 1
+      },
+      "passes": {
+        "octave": true,
+        "python": true,
+        "fortran": true
+      },
+      "reference": 1,
+      "tol": 1e-08,
+      "spread": 0.0,
+      "spread_abs": 0,
+      "metric": "rel",
+      "observed_only": false,
+      "all_pass": true
+    },
+    {
+      "quantity": "E_1",
+      "entry": "hydrogen",
+      "family": "potential",
+      "computed": {
+        "octave": -0.4999968758199461,
+        "python": -0.4999968758201585,
+        "fortran": -0.4999968758241121
+      },
+      "passes": {
+        "octave": true,
+        "python": true,
+        "fortran": true
+      },
+      "reference": -0.5,
+      "tol": 0.001,
+      "spread": 8.332053816810137e-12,
+      "spread_abs": 4.166000877603437e-12,
+      "metric": "rel",
+      "observed_only": false,
+      "all_pass": true
+    },
+    {
+      "quantity": "E_2",
+      "entry": "hydrogen",
+      "family": "potential",
+      "computed": {
+        "octave": -0.12499980473638184,
+        "python": -0.12499980473634431,
+        "fortran": -0.12499980476251801
+      },
+      "passes": {
+        "octave": true,
+        "python": true,
+        "fortran": true
+      },
+      "reference": -0.125,
+      "tol": 0.00025,
+      "spread": 2.0938994380266206e-10,
+      "spread_abs": 2.6173702094567375e-11,
+      "metric": "rel",
+      "observed_only": false,
+      "all_pass": true
+    },
+    {
+      "quantity": "V_min",
+      "entry": "lennard_jones",
+      "family": "potential",
+      "computed": {
+        "octave": -1.0000000000000002,
+        "python": -1.0000000000000002,
+        "fortran": -1
+      },
+      "passes": {
+        "octave": true,
+        "python": true,
+        "fortran": true
+      },
+      "reference": -1,
+      "tol": 1e-06,
+      "spread": 2.2204460492503126e-16,
+      "spread_abs": 2.220446049250313e-16,
+      "metric": "rel",
+      "observed_only": false,
+      "all_pass": true
+    },
+    {
+      "quantity": "r_min",
+      "entry": "lennard_jones",
+      "family": "potential",
+      "computed": {
+        "octave": 1.1224620481065424,
+        "python": 1.1224620481065424,
+        "fortran": 1.1224620497031939
+      },
+      "passes": {
+        "octave": true,
+        "python": true,
+        "fortran": true
+      },
+      "reference": 1.122462048309373,
+      "tol": 1e-06,
+      "spread": 1.4224547530314387e-09,
+      "spread_abs": 1.5966514776977192e-09,
+      "metric": "rel",
+      "observed_only": false,
+      "all_pass": true
+    },
+    {
+      "quantity": "V_min",
+      "entry": "morse",
+      "family": "potential",
+      "computed": {
+        "octave": -1,
+        "python": -1.0,
+        "fortran": -1
+      },
+      "passes": {
+        "octave": true,
+        "python": true,
+        "fortran": true
+      },
+      "reference": -1,
+      "tol": 1e-06,
+      "spread": 0.0,
+      "spread_abs": 0,
+      "metric": "rel",
+      "observed_only": false,
+      "all_pass": true
+    },
+    {
+      "quantity": "r_min",
+      "entry": "morse",
+      "family": "potential",
+      "computed": {
+        "octave": 1.0000000000146878,
+        "python": 1.0000000070397705,
+        "fortran": 1.0000000074505788
+      },
+      "passes": {
+        "octave": true,
+        "python": true,
+        "fortran": true
+      },
+      "reference": 1,
+      "tol": 1e-06,
+      "spread": 7.435890958638716e-09,
+      "spread_abs": 7.435891014040408e-09,
+      "metric": "rel",
+      "observed_only": false,
+      "all_pass": true
+    },
+    {
+      "quantity": "E_0",
+      "entry": "poschl_teller",
+      "family": "potential",
+      "computed": {
+        "octave": -4.500023226580221,
+        "python": -4.5000232265800175,
+        "fortran": -4.500023226560616
+      },
+      "passes": {
+        "octave": true,
+        "python": true,
+        "fortran": true
+      },
+      "reference": -4.5,
+      "tol": 0.009000000000000001,
+      "spread": 4.356591348738314e-12,
+      "spread_abs": 1.9604762258040864e-11,
+      "metric": "rel",
+      "observed_only": false,
+      "all_pass": true
+    },
+    {
+      "quantity": "E_1",
+      "entry": "poschl_teller",
+      "family": "potential",
+      "computed": {
+        "octave": -2.0000667037681747,
+        "python": -2.000066703768182,
+        "fortran": -2.0000667037506785
+      },
+      "passes": {
+        "octave": true,
+        "python": true,
+        "fortran": true
+      },
+      "reference": -2,
+      "tol": 0.004,
+      "spread": 8.751374183697773e-12,
+      "spread_abs": 1.7503332117030368e-11,
+      "metric": "rel",
+      "observed_only": false,
+      "all_pass": true
+    },
+    {
+      "quantity": "E_2",
+      "entry": "poschl_teller",
+      "family": "potential",
+      "computed": {
+        "octave": -0.5000670644900778,
+        "python": -0.5000670644901195,
+        "fortran": -0.5000670644770273
+      },
+      "passes": {
+        "octave": true,
+        "python": true,
+        "fortran": true
+      },
+      "reference": -0.5,
+      "tol": 0.001,
+      "spread": 2.6180876376929192e-11,
+      "spread_abs": 1.3092193995589696e-11,
+      "metric": "rel",
+      "observed_only": false,
+      "all_pass": true
+    },
+    {
+      "quantity": "force_r_0.5",
+      "entry": "yukawa",
+      "family": "potential",
+      "computed": {
+        "octave": 3.6391839598581828,
+        "python": 3.6391839598581828,
+        "fortran": 3.6391839598581828
+      },
+      "passes": {
+        "octave": true,
+        "python": true,
+        "fortran": true
+      },
+      "reference": 3.6391839582758005,
+      "tol": 1e-06,
+      "spread": 0.0,
+      "spread_abs": 0.0,
+      "metric": "rel",
+      "observed_only": false,
+      "all_pass": true
+    },
+    {
+      "quantity": "force_r_1",
+      "entry": "yukawa",
+      "family": "potential",
+      "computed": {
+        "octave": 0.735758882441928,
+        "python": 0.735758882441928,
+        "fortran": 0.735758882441928
+      },
+      "passes": {
+        "octave": true,
+        "python": true,
+        "fortran": true
+      },
+      "reference": 0.7357588823428847,
+      "tol": 1e-06,
+      "spread": 0.0,
+      "spread_abs": 0.0,
+      "metric": "rel",
+      "observed_only": false,
+      "all_pass": true
+    },
+    {
+      "quantity": "force_r_1_ref",
+      "entry": "yukawa",
+      "family": "potential",
+      "computed": {
+        "octave": 0.735758882441928,
+        "python": 0.735758882441928,
+        "fortran": 0.735758882441928
+      },
+      "passes": {
+        "octave": true,
+        "python": true,
+        "fortran": true
+      },
+      "reference": 0.7357588823428847,
+      "tol": 1e-06,
+      "spread": 0.0,
+      "spread_abs": 0.0,
+      "metric": "rel",
+      "observed_only": false,
+      "all_pass": true
+    },
+    {
+      "quantity": "force_r_2",
+      "entry": "yukawa",
+      "family": "potential",
+      "computed": {
+        "octave": 0.10150146243295687,
+        "python": 0.10150146243295687,
+        "fortran": 0.10150146243295687
+      },
+      "passes": {
+        "octave": true,
+        "python": true,
+        "fortran": true
+      },
+      "reference": 0.10150146242745953,
+      "tol": 1e-06,
+      "spread": 0.0,
+      "spread_abs": 0.0,
+      "metric": "rel",
+      "observed_only": false,
+      "all_pass": true
+    }
+  ]
+}

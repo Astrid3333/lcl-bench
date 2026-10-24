@@ -8,7 +8,7 @@ references stored in the registry. A hub then diffs the three result sets.
 ## Quick start
 
 ```bash
-./run_all.sh              # full suite + hub (builds Fortran automatically)
+./run_all.sh              # full suite + hub + HDF5 (builds Fortran automatically)
 ./run_all.sh map          # one family
 ./run_all.sh henon        # one entry
 ```
@@ -21,12 +21,30 @@ python3 python/registry_run.py all
 make -s -C fortran f_runner
 ./fortran/f_runner all
 python3 python/hub_compare.py
+.venv/bin/python python/export_hdf5.py   # optional; needs h5py
 ```
 
 Results land in `results/registry_run_*.json` (Octave),
 `results/registry_run_py_*.json` (Python),
 `results/registry_run_f_*.json` (Fortran), and `results/hub_compare.json`.
 Orbit dumps: `results/orbits/<name>_orbit.txt`.
+HDF5 bundle of everything: `results/registry_all.h5`.
+
+## Discrepancy analysis
+
+Where and why the three languages diverge is quantified in
+`reports/informe-discrepancias.md` (with publication figures):
+
+```bash
+python3 python/discrepancy_report.py          # results/discrepancy/per_quantity.{json,csv}
+python3 python/sensitivity_aizawa.py          # results/discrepancy/sensitivity_aizawa.json
+.venv/bin/python python/figures_discrepancy.py
+```
+
+Headline: reference-backed checks agree to a median spread of 1.8e-12;
+the largest observed gap (aizawa λ1, 15%) is finite-time-estimator
+sensitivity to one-ulp x0 changes, demonstrated experimentally — not a bug.
+
 
 ## Layout
 
@@ -37,8 +55,13 @@ Orbit dumps: `results/orbits/<name>_orbit.txt`.
 | `octave/` | Octave runner + kernels |
 | `python/` | Python runner + kernels + hub |
 | `fortran/` | Fortran runner + kernels + fjson parser + Makefile |
-| `run_all.sh` | one-command suite (4 steps) |
-| `results/` | JSON results (timestamped) |
+| `python/discrepancy_report.py` | per-quantity cross-language spread table |
+| `python/sensitivity_aizawa.py` | aizawa λ1 sensitivity experiment |
+| `python/figures_discrepancy.py` | publication figures for the report |
+| `python/export_hdf5.py` | HDF5 bundle (needs h5py; `.venv` recommended) |
+| `reports/informe-discrepancias.md` | discrepancy report (Spanish) |
+| `run_all.sh` | one-command suite (5 steps, HDF5 optional) |
+| `results/` | JSON results (timestamped), `discrepancy/`, `registry_all.h5` |
 
 ## Invariants
 
@@ -81,7 +104,8 @@ Observed-only quantities (no citable reference yet) are reported with
 - Observed-only values of chaotic systems show cross-language spread up to
   ~15% (aizawa): a one-ulp change of `x0` alone moves the finite-time
   Lyapunov estimate by that much (see `results/hub_compare.json` field
-  `obs_rel_diff`); reference-backed checks agree much tighter (≤4e-5
-  rel). Pass flags are unaffected.
+  `obs_rel_diff` and the sensitivity study in
+  `reports/informe-discrepancias.md`); reference-backed checks agree much
+  tighter (median 1.8e-12 rel). Pass flags are unaffected.
 - Cosmetic: Python prints an absolute `Saved:` path, Octave/Fortran a
   relative one.

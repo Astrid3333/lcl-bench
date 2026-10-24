@@ -1,13 +1,12 @@
 # Current State
 
 - Goal: cross-language benchmark registry (chaotic attractors + physical potentials) with independent runners in **Octave, Python, and Fortran (gfortran)** that compute invariants and compare against cited references, plus a hub that diffs the three languages.
-- Stage: **18/18 entries green in all three languages**; hub 18/18 ALL_PASS `[PPP]`; `./run_all.sh` runs Octave → Python → build+Fortran → hub end-to-end (4 steps).
-- Current task: cycle close (commit of Fortran runner + 3-language harness).
-- Next action: discrepancy report + figures (task 4) — key evidence already gathered: observed-only spread (aizawa obs_rel_diff 0.145 traced to one-ulp x0 sensitivity of the finite-time Lyapunov estimator, d0-robust); optional HDF5 export (task 5); further entries (Duffing, FitzHugh-Nagumo, De Jong/Lozi/Standard), energy-drift integrator test.
+- Stage: **tasks 1–5 complete**. 18/18 entries green in all three languages, hub 18/18 ALL_PASS, discrepancy report + figures delivered (`reports/informe-discrepancias.md`), HDF5 export (`results/registry_all.h5`, schema registry_all/1), `./run_all.sh` = 5 steps (Octave → Python → Fortran → hub → HDF5, last one optional/skippable).
+- Current task: cycle close (commit of tasks 4+5); then optional extensions.
+- Next action: propose optional registry additions (Duffing, FitzHugh-Nagumo, De Jong/Lozi/Standard maps) + energy-drift integrator test (Verlet vs RK4) per design notes.
 - Registries: `registries/attractors.json` (11 entries: logistic, henon, clifford, tinkerbell, sierpinski, barnsley_fern, lorenz, rossler, thomas, aizawa, hopfield_4), `registries/potentials.json` (7 entries: lennard_jones, morse, double_well, harmonic, hydrogen, yukawa, poschl_teller).
 - Runners: `octave/registry_run.m`, `python/registry_run.py`, `fortran/frunner.f90` (program `f_runner`); selector semantics identical (all|attractors|potentials|family|entry-name). Hub: `python/hub_compare.py` (3-way: globs `_py_`, `_f_`, plain; writes `results/hub_compare.json`).
-- Fortran: `kinds/fjson/fhandles/fkernels/frunner.f90` + `Makefile` (f_runner / f_runner_dbg / f_runner_asan); jcopy-based JSON deep copy; ASAN-clean 18/18; console output structurally identical to Python (only `Saved:` path style differs).
-- Invariants per family: maps = bit-exact first-20 iterates (`ref.orbit_head`, tol 1e-12) + Benettin lyap1 (+ Hénon GP corr_dim under frozen protocol); IFS = box-counting; ODE = Benettin lyap1 (RK4); neural = pattern fixed points; potentials = analytic minima/forces + FD eigenvalues.
-- Observed-only values (no citable ref yet): clifford lyap1≈0.2904, tinkerbell lyap1≈0.1995, thomas lyap1≈0.00647, aizawa lyap1≈0.10733 (Octave; Fortran tinkerbell 0.1982, aizawa 0.0917 — finite-time estimator sensitivity, hub reports `obs_rel_diff`).
-- Cross-language agreement: reference-backed checks rel ≤4e-5 (mostly ≤1e-9); observed: clifford 1.9e-16, thomas 2.1e-14, tinkerbell 6.4e-3, aizawa 1.45e-1; orbit_head maxdiff ≤2.2e-16.
-- Tooling: gfortran 13.3.0; two gfortran bugs documented in `knowledge/fortran-gfortran-quirks.md`.
+- Discrepancy tooling: `python/discrepancy_report.py` (36 quantities → `results/discrepancy/per_quantity.{json,csv}`), `python/sensitivity_aizawa.py` (14 scenarios), `python/figures_discrepancy.py` (fig1_spread + fig2_aizawa_sensitivity, openscience.mplstyle, venv matplotlib), `python/export_hdf5.py` (`.venv` + h5py).
+- Key numbers: reference-backed spread median 1.78e-12, max 3.28e-3 (henon corr_dim); observed max 0.145 (aizawa lyap1, estimator-sensitive, ulp-proven); orbit-head residuals ≤2.22e-16 (bit-exact in 3 of 4 maps).
+- Fortran: `kinds/fjson/fhandles/fkernels/frunner.f90` + `Makefile` (f_runner / f_runner_dbg / f_runner_asan); jcopy-based JSON deep copy; ASAN-clean 18/18.
+- Tooling: gfortran 13.3.0; two gfortran bugs documented in `knowledge/fortran-gfortran-quirks.md`; `.venv/` (matplotlib 3.11.2, h5py 3.16.0) for figures/HDF5 — system python3 stays the canonical registry interpreter (numpy 1.26.4).
