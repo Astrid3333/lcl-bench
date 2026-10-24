@@ -1,11 +1,11 @@
 {
   "files": {
-    "octave": "registry_run_20261023T230731.json",
-    "python": "registry_run_py_20261023T230822.json",
-    "fortran": "registry_run_f_20261023T230828.json"
+    "octave": "registry_run_20261024T040741.json",
+    "python": "registry_run_py_20261024T041021.json",
+    "fortran": "registry_run_f_20261024T041028.json"
   },
-  "n_entries": 18,
-  "all_pass": 18,
+  "n_entries": 24,
+  "all_pass": 24,
   "rows": [
     {
       "name": "aizawa",
@@ -53,6 +53,21 @@
       }
     },
     {
+      "name": "de_jong",
+      "status": "ALL_PASS",
+      "passes": {
+        "octave": true,
+        "python": true,
+        "fortran": true
+      },
+      "obs_rel_diff": 0.0,
+      "obs": {
+        "octave": 0.36155256647279393,
+        "python": 0.36155256647279393,
+        "fortran": 0.36155256647279393
+      }
+    },
+    {
       "name": "double_well",
       "status": "ALL_PASS",
       "passes": {
@@ -65,6 +80,51 @@
         "octave": null,
         "python": null,
         "fortran": null
+      }
+    },
+    {
+      "name": "double_well_verlet_rk4",
+      "status": "ALL_PASS",
+      "passes": {
+        "octave": true,
+        "python": true,
+        "fortran": true
+      },
+      "obs_rel_diff": null,
+      "obs": {
+        "octave": null,
+        "python": null,
+        "fortran": null
+      }
+    },
+    {
+      "name": "duffing",
+      "status": "ALL_PASS",
+      "passes": {
+        "octave": true,
+        "python": true,
+        "fortran": true
+      },
+      "obs_rel_diff": 0.10553849727378305,
+      "obs": {
+        "octave": 0.09386273470262832,
+        "python": 0.09386273470262804,
+        "fortran": 0.1049377020884019
+      }
+    },
+    {
+      "name": "fhn",
+      "status": "ALL_PASS",
+      "passes": {
+        "octave": true,
+        "python": true,
+        "fortran": true
+      },
+      "obs_rel_diff": 4.8194155416168924e-15,
+      "obs": {
+        "octave": 0.2994740585345928,
+        "python": 0.29947405853459136,
+        "fortran": 0.29947405853459136
       }
     },
     {
@@ -173,6 +233,21 @@
       }
     },
     {
+      "name": "lozi",
+      "status": "ALL_PASS",
+      "passes": {
+        "octave": true,
+        "python": true,
+        "fortran": true
+      },
+      "obs_rel_diff": null,
+      "obs": {
+        "octave": null,
+        "python": null,
+        "fortran": null
+      }
+    },
+    {
       "name": "morse",
       "status": "ALL_PASS",
       "passes": {
@@ -219,6 +294,21 @@
     },
     {
       "name": "sierpinski",
+      "status": "ALL_PASS",
+      "passes": {
+        "octave": true,
+        "python": true,
+        "fortran": true
+      },
+      "obs_rel_diff": null,
+      "obs": {
+        "octave": null,
+        "python": null,
+        "fortran": null
+      }
+    },
+    {
+      "name": "standard",
       "status": "ALL_PASS",
       "passes": {
         "octave": true,

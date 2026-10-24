@@ -22,6 +22,7 @@ from kernels import (box_counting_dim, corr_dim_grassberger, fd_eigenvalues,
 ROOT = Path(__file__).resolve().parent.parent
 REG_ATTRA = ROOT / "registries" / "attractors.json"
 REG_POTE = ROOT / "registries" / "potentials.json"
+REG_ENERGY = ROOT / "registries" / "energy_drift.json"
 OUTDIR = ROOT / "results"
 
 
@@ -310,6 +311,78 @@ def eval_potential(e: dict) -> dict:
     }
 
 
+def eval_energy_drift(e: dict) -> dict:
+    """Double-well trajectory: velocity Verlet vs RK4, relative energy drift."""
+    a, b = e["params"]["a"], e["params"]["b"]
+    mass = float(e["mass"])
+    h = float(e["h"])
+    T = float(e["T"])
+    n = int(round(T / h))
+    x = float(e["x0"][0])
+    v = float(e["v0"][0])
+
+    def V(q):
+        return a * q ** 4 - b * q ** 2
+
+    def F(q):
+        return -4.0 * a * q ** 3 + 2.0 * b * q
+
+    E0 = 0.5 * mass * v * v + V(x)
+    # velocity Verlet
+    xv, vv = x, v
+    max_rel = 0.0
+    for _ in range(n):
+        acc = F(xv) / mass
+        xv = xv + vv * h + 0.5 * acc * h * h
+        acc_new = F(xv) / mass
+        vv = vv + 0.5 * (acc + acc_new) * h
+        E = 0.5 * mass * vv * vv + V(xv)
+        rel = abs(E - E0) / abs(E0)
+        if rel > max_rel:
+            max_rel = rel
+    verlet_final = rel
+    verlet_max = max_rel
+    # RK4 on (x, v)
+    def f_y(y):
+        return np.array([y[1], F(y[0]) / mass])
+    y = np.array([x, v])
+    max_rel = 0.0
+    for _ in range(n):
+        k1 = f_y(y)
+        k2 = f_y(y + h / 2.0 * k1)
+        k3 = f_y(y + h / 2.0 * k2)
+        k4 = f_y(y + h * k3)
+        y = y + h / 6.0 * (k1 + 2.0 * k2 + 2.0 * k3 + k4)
+        E = 0.5 * mass * y[1] ** 2 + V(y[0])
+        rel = abs(E - E0) / abs(E0)
+        if rel > max_rel:
+            max_rel = rel
+    rk4_final = rel
+    rk4_max = max_rel
+
+    ref = e.get("ref") or {}
+    checks = []
+    for key, computed in [("E0", E0),
+                          ("verlet_final_rel_drift", verlet_final),
+                          ("verlet_max_rel_drift", verlet_max),
+                          ("rk4_final_rel_drift", rk4_final),
+                          ("rk4_max_rel_drift", rk4_max)]:
+        r = ref.get(key)
+        if r is None:
+            checks.append(mkcheck(f"{key}_observed", computed, None, None,
+                                  None, True))
+            continue
+        val = r["value"]
+        tol = r.get("abs_tol", r.get("rel_tol", 0.0) * abs(val))
+        rel = abs(computed - val) / max(abs(val), np.finfo(float).eps)
+        checks.append(mkcheck(key, computed, val, tol, rel,
+                              abs(computed - val) <= tol))
+    return {
+        "name": e["name"], "family": e["family"],
+        "pass": all(c["pass"] for c in checks), "checks": checks,
+    }
+
+
 def selected(e: dict, sel: str) -> bool:
     if sel == "all":
         return True
@@ -326,6 +399,7 @@ EVALUATORS = {
     "ode": eval_ode,
     "neural": eval_neural,
     "potential": eval_potential,
+    "energy_drift": eval_energy_drift,
 }
 
 
@@ -370,6 +444,18 @@ def run(selector: str = "all") -> dict:
         print(f"[{e['family']}] {e['name']}")
         try:
             r = EVALUATORS["potential"](e)
+        except Exception as exc:  # noqa: BLE001
+            r = {"name": e["name"], "family": e["family"], "pass": False,
+                 "checks": [mkcheck("error", None, None, None, None, False)],
+                 "error": str(exc)}
+        printrun(r)
+        runs.append(r)
+    for e in load_registry(REG_ENERGY):
+        if not selected(e, selector):
+            continue
+        print(f"[{e['family']}] {e['name']}")
+        try:
+            r = EVALUATORS["energy_drift"](e)
         except Exception as exc:  # noqa: BLE001
             r = {"name": e["name"], "family": e["family"], "pass": False,
                  "checks": [mkcheck("error", None, None, None, None, False)],

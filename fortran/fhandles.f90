@@ -36,12 +36,33 @@ contains
       np = 2
       p(1) = jnum_req(pr, 'a')
       p(2) = jnum_req(pr, 'b')
-    case ('clifford', 'tinkerbell')
+    case ('clifford', 'tinkerbell', 'de_jong')
       np = 4
       p(1) = jnum_req(pr, 'a')
       p(2) = jnum_req(pr, 'b')
       p(3) = jnum_req(pr, 'c')
       p(4) = jnum_req(pr, 'd')
+    case ('lozi')
+      np = 2
+      p(1) = jnum_req(pr, 'a')
+      p(2) = jnum_req(pr, 'b')
+    case ('standard')
+      np = 1
+      p(1) = jnum_req(pr, 'K')
+    case ('duffing')
+      np = 5
+      p(1) = jnum_req(pr, 'delta')
+      p(2) = jnum_req(pr, 'alpha')
+      p(3) = jnum_req(pr, 'beta')
+      p(4) = jnum_req(pr, 'gamma')
+      p(5) = jnum_req(pr, 'omega')
+    case ('fhn')
+      np = 5
+      p(1) = jnum_req(pr, 'a')
+      p(2) = jnum_req(pr, 'b')
+      p(3) = jnum_req(pr, 'delta')
+      p(4) = jnum_req(pr, 'r')
+      p(5) = jnum_req(pr, 'omega0')
     case ('lorenz')
       np = 3
       p(1) = jnum_req(pr, 'sigma')
@@ -101,6 +122,17 @@ contains
     case ('tinkerbell')
       y(1) = ((x(1) * x(1) - x(2) * x(2)) + p(1) * x(1)) + p(2) * x(2)
       y(2) = ((2.0_dp * x(1)) * x(2) + p(3) * x(1)) + p(4) * x(2)
+    case ('de_jong')
+      y(1) = sin(p(1) * x(2)) - cos(p(2) * x(1))
+      y(2) = sin(p(3) * x(1)) - cos(p(4) * x(2))
+    case ('lozi')
+      y(1) = 1.0_dp - p(1) * abs(x(1)) + x(2)
+      y(2) = p(2) * x(1)
+    case ('standard')
+      ! state (q, p): x(1)=q, x(2)=p. Wrap q with floor-mod 2*pi (MODULO).
+      t = x(2) + p(1) * sin(x(1))
+      y(1) = modulo(x(1) + t, 2.0_dp * acos(-1.0_dp))
+      y(2) = t
     case default
       y(1) = 0.0_dp
     end select
@@ -131,6 +163,18 @@ contains
       y(3) = (((p(3) + p(1) * x(3)) - ((x(3) * x(3) * x(3)) / 3.0_dp)) &
              - ((x(1) * x(1) + x(2) * x(2)) * (1.0_dp + p(5) * x(3)))) &
              + ((p(6) * x(3)) * (x(1) * x(1) * x(1)))
+    case ('duffing')
+      ! x(1)=pos, x(2)=vel, x(3)=phi (forcing phase). p: delta, alpha,
+      ! beta, gamma, omega.
+      y(1) = x(2)
+      y(2) = -p(1) * x(2) - p(2) * x(1) - p(3) * x(1)**3 &
+             + p(4) * cos(x(3))
+      y(3) = p(5)
+    case ('fhn')
+      ! x(1)=V, x(2)=W, x(3)=phi (drive phase). p: a, b, delta, r, omega0.
+      y(1) = (x(1) * (x(1) - p(1)) * (1.0_dp - x(1)) - x(2)) / p(3)
+      y(2) = x(1) - x(2) - p(2) + p(4) * sin(x(3))
+      y(3) = p(5)
     case default
       y(1) = 0.0_dp
       y(2) = 0.0_dp

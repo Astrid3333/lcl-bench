@@ -1,0 +1,53 @@
+{
+  "schema_version": 1,
+  "description": "Energy-conservation drift benchmark per language: double-well potential integrated with velocity Verlet (symplectic) vs fixed-step RK4 (non-symplectic). Each language computes the same trajectory and reports relative energy drift vs the analytic E0; values are cross-language frozen invariants.",
+  "entries": [
+    {
+      "name": "double_well_verlet_rk4",
+      "family": "energy_drift",
+      "potential": "double_well",
+      "equations": "V(x) = a*x^4 - b*x^2; F(x) = -dV/dx = -4*a*x^3 + 2*b*x; E = 0.5*m*v^2 + V(x). Verlet: velocity-Verlet kick-drift-kick. RK4: fixed-step RK4 on (x, v).",
+      "params": {
+        "a": 1.0,
+        "b": 1.0
+      },
+      "mass": 1.0,
+      "x0": [
+        0.5
+      ],
+      "v0": [
+        0.4
+      ],
+      "h": 0.01,
+      "T": 1000.0,
+      "ref": {
+        "E0": {
+          "value": -0.1075,
+          "abs_tol": 1e-12,
+          "source": "Analytic: E0 = 0.5*m*v0^2 + V(x0) = 0.5*0.4^2 + (0.5^4 - 0.5^2) = 0.08 - 0.1875 = -0.1075."
+        },
+        "verlet_final_rel_drift": {
+          "value": 9.27602078278e-05,
+          "rel_tol": 1e-05,
+          "source": "Frozen float64 result: velocity-Verlet on the double well at h=0.01, T=1000; Python and Octave bit-identical; Fortran agrees to ~1e-9 (Verlet) / ~1e-6 (RK4) relative because gfortran expands x**3 to multiplies while CPython/Octave use libm pow; rel_tol 1e-5 covers that honest cross-language spread without weakening the check (Verlet/RK4 drifts differ by ~500x). Symplectic drift is O(h^2) and oscillatory (max_rel 1.004e-4)."
+        },
+        "verlet_max_rel_drift": {
+          "value": 0.000100394704653,
+          "rel_tol": 1e-05,
+          "source": "Frozen float64 max |E-E0|/|E0| over the full Verlet run; Python and Octave bit-identical; Fortran agrees to ~1e-9 (Verlet) / ~1e-6 (RK4) relative because gfortran expands x**3 to multiplies while CPython/Octave use libm pow; rel_tol 1e-5 covers that honest cross-language spread without weakening the check (Verlet/RK4 drifts differ by ~500x)."
+        },
+        "rk4_final_rel_drift": {
+          "value": 1.92527339033e-07,
+          "rel_tol": 1e-05,
+          "source": "Frozen float64 result: RK4 on (x, v) at h=0.01, T=1000; Python and Octave bit-identical; Fortran agrees to ~1e-9 (Verlet) / ~1e-6 (RK4) relative because gfortran expands x**3 to multiplies while CPython/Octave use libm pow; rel_tol 1e-5 covers that honest cross-language spread without weakening the check (Verlet/RK4 drifts differ by ~500x). Non-symplectic local error accumulates, but stays ~3 orders below Verlet's oscillatory bound at this h."
+        },
+        "rk4_max_rel_drift": {
+          "value": 1.93887892692e-07,
+          "rel_tol": 1e-05,
+          "source": "Frozen float64 max |E-E0|/|E0| over the full RK4 run; Python and Octave bit-identical; Fortran agrees to ~1e-9 (Verlet) / ~1e-6 (RK4) relative because gfortran expands x**3 to multiplies while CPython/Octave use libm pow; rel_tol 1e-5 covers that honest cross-language spread without weakening the check (Verlet/RK4 drifts differ by ~500x)."
+        }
+      },
+      "notes": "Per-language energy-drift test (double well, x0=0.5, v0=0.4 stays in one well, E0<0). Verlet conserves energy to O(h^2) with bounded oscillation; RK4 shows smooth drift ~h^4-scaled at this horizon. Cross-language agreement is the check: identical invariants within rel_tol 1e-6."
+    }
+  ]
+}

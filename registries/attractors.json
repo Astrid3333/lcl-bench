@@ -445,6 +445,339 @@
       "notes": "lambda1 pending a citable source for this parameter set; orbit reproducibility only."
     },
     {
+      "name": "de_jong",
+      "family": "map",
+      "dim": 2,
+      "equations": "x_{n+1} = sin(a*y_n) - cos(b*x_n); y_{n+1} = sin(c*x_n) - cos(d*y_n)",
+      "params": {
+        "a": -2.24,
+        "b": 0.43,
+        "c": -0.65,
+        "d": -2.43
+      },
+      "x0": [
+        0.1,
+        0.1
+      ],
+      "n_orbit": 20,
+      "n_lyap": 50000,
+      "transient": 2000,
+      "ref": {
+        "lyap1": null,
+        "orbit_head": {
+          "n": 20,
+          "values": [
+            [
+              -1.2212070990752326,
+              -1.0355747358595835
+            ],
+            [
+              -0.13281996412774633,
+              1.52388962193896
+            ],
+            [
+              -0.7297880396827577,
+              0.9327049120441142
+            ],
+            [
+              -1.8197467595830714,
+              1.0976761515622466
+            ],
+            [
+              -1.3401256557608971,
+              1.8153225883855173
+            ],
+            [
+              -0.040051451252979375,
+              1.0616494927814828
+            ],
+            [
+              -1.6913042524917552,
+              0.8723364241502127
+            ],
+            [
+              -1.6744572790795482,
+              1.4127297109445576
+            ],
+            [
+              -0.7288748717339892,
+              1.843744202006905
+            ],
+            [
+              -0.11614197280716032,
+              0.6862556260884014
+            ],
+            [
+              -1.9981893247467482,
+              0.17207431612740987
+            ],
+            [
+              -1.0290002045245221,
+              0.04939713234002052
+            ],
+            [
+              -1.0141207243533834,
+              -0.37272015554676663
+            ],
+            [
+              -0.16519301564486,
+              -0.004659436275894602
+            ],
+            [
+              -0.9870412695331626,
+              -0.8927666535974245
+            ],
+            [
+              -0.0018927766077226904,
+              1.1619679227483155
+            ],
+            [
+              -1.5130927416872273,
+              0.951089642060192
+            ],
+            [
+              -1.6431463558265484,
+              1.5069950002120192
+            ],
+            [
+              -0.5286598548222045,
+              1.743878023061225
+            ],
+            [
+              -0.28195672673581496,
+              0.7940358491138733
+            ]
+          ],
+          "abs_tol": 1e-12,
+          "source": "Frozen float64 iterate sequence of the registry equations from x0; cross-checked Octave vs Python to <=1e-16 before freezing (bit-exactness guard against formula drift)."
+        }
+      },
+      "notes": "Peter de Jong map at classic chaotic parameters a=-2.24 b=0.43 c=-0.65 d=-2.43; lambda1 observed-only (0.3616 with this protocol) pending a citable high-precision source for this exact set."
+    },
+    {
+      "name": "lozi",
+      "family": "map",
+      "dim": 2,
+      "equations": "x_{n+1} = 1 - a*|x_n| + y_n; y_{n+1} = b*x_n",
+      "params": {
+        "a": 1.7,
+        "b": 0.5
+      },
+      "x0": [
+        0.1,
+        0.1
+      ],
+      "n_orbit": 20,
+      "n_lyap": 50000,
+      "transient": 2000,
+      "ref": {
+        "lyap1": {
+          "value": 0.47023,
+          "abs_tol": 0.02,
+          "source": "Lozi attractor a=1.7 b=0.5: lambda1=0.47023, lambda2=-1.16338, KY dim=1.40419 (Sprott, Continuous Chaotic Systems, Oxford 2003, ch. 4; values widely reproduced)."
+        },
+        "orbit_head": {
+          "n": 20,
+          "values": [
+            [
+              0.9299999999999999,
+              0.05
+            ],
+            [
+              -0.5309999999999999,
+              0.46499999999999997
+            ],
+            [
+              0.5623000000000001,
+              -0.26549999999999996
+            ],
+            [
+              -0.2214100000000001,
+              0.28115000000000007
+            ],
+            [
+              0.9047529999999999,
+              -0.11070500000000005
+            ],
+            [
+              -0.6487850999999998,
+              0.45237649999999996
+            ],
+            [
+              0.3494418300000004,
+              -0.3243925499999999
+            ],
+            [
+              0.08155633899999948,
+              0.1747209150000002
+            ],
+            [
+              1.0360751387000011,
+              0.04077816949999974
+            ],
+            [
+              -0.7205495662900021,
+              0.5180375693500006
+            ],
+            [
+              0.293103306656997,
+              -0.36027478314500105
+            ],
+            [
+              0.1414495955381041,
+              0.1465516533284985
+            ],
+            [
+              0.9060873409137216,
+              0.07072479776905205
+            ],
+            [
+              -0.4696236817842746,
+              0.4530436704568608
+            ],
+            [
+              0.654683411423594,
+              -0.2348118408921373
+            ],
+            [
+              -0.34777364031224706,
+              0.327341705711797
+            ],
+            [
+              0.736126517180977,
+              -0.17388682015612353
+            ],
+            [
+              -0.4253018993637844,
+              0.3680632585904885
+            ],
+            [
+              0.645050029672055,
+              -0.2126509496818922
+            ],
+            [
+              -0.30923600012438585,
+              0.3225250148360275
+            ]
+          ],
+          "abs_tol": 1e-12,
+          "source": "Frozen float64 iterate sequence of the registry equations from x0; cross-checked Octave vs Python to <=1e-16 before freezing (bit-exactness guard against formula drift)."
+        }
+      },
+      "notes": "Piecewise-linear cousin of H\u00e9non; measured lambda1=0.47116 with n_lyap=50000 (matches literature to 1e-3)."
+    },
+    {
+      "name": "standard",
+      "family": "map",
+      "dim": 2,
+      "equations": "p_{n+1} = p_n + K*sin(q_n); q_{n+1} = mod(q_n + p_{n+1}, 2*pi)  [state (q, p)]",
+      "params": {
+        "K": 1.0
+      },
+      "x0": [
+        0.1,
+        0.0
+      ],
+      "n_orbit": 20,
+      "n_lyap": 200000,
+      "transient": 5000,
+      "ref": {
+        "lyap1": {
+          "value": 0.10497,
+          "abs_tol": 0.03,
+          "source": "Chirikov standard map at K=1: asymptotic lambda1 ~ 0.105 (Chirikov, Physics Reports 52, 263, 1979; Sprott catalogue lists 0.10497). Slow convergence due to KAM islands: measured values 0.10-0.12 depending on length/language; abs_tol 0.03 covers that honest spread."
+        },
+        "orbit_head": {
+          "n": 20,
+          "values": [
+            [
+              0.19983341664682816,
+              0.09983341664682815
+            ],
+            [
+              0.49817289855606584,
+              0.2983394819092377
+            ],
+            [
+              1.274333687362788,
+              0.7761607888067221
+            ],
+            [
+              3.0068703476228924,
+              1.7325366602601044
+            ],
+            [
+              4.873722146317419,
+              1.8668517986945268
+            ],
+            [
+              5.753559936493821,
+              0.8798377901764016
+            ],
+            [
+              6.128187653754034,
+              0.3746277172602124
+            ],
+            [
+              0.06525228298655339,
+              0.2202499364121056
+            ],
+            [
+              0.3507082063900694,
+              0.285455923403516
+            ],
+            [
+              0.9797271209600477,
+              0.6290189145699783
+            ],
+            [
+              2.439091375325439,
+              1.4593642543653913
+            ],
+            [
+              4.544584382833955,
+              2.105493007508516
+            ],
+            [
+              5.6641235755435515,
+              1.1195391927095963
+            ],
+            [
+              6.203391499768211,
+              0.5392679242246595
+            ],
+            [
+              0.3797649576656248,
+              0.45955876507699994
+            ],
+            [
+              1.2100259064080876,
+              0.8302609487424629
+            ],
+            [
+              2.9759120018546406,
+              1.765886095446553
+            ],
+            [
+              4.90672179755702,
+              1.9308097957023789
+            ],
+            [
+              5.856354864363009,
+              0.94963306680599
+            ],
+            [
+              0.10881492961735884,
+              0.5356453724339361
+            ]
+          ],
+          "abs_tol": 1e-12,
+          "source": "Frozen float64 iterate sequence of the registry equations from x0; cross-checked Octave vs Python to <=1e-16 before freezing (bit-exactness guard against formula drift)."
+        }
+      },
+      "notes": "Chirikov standard map; q wrapped with floor-mod 2*pi (Python %, Octave mod, Fortran MODULO). n_lyap=2e5 needed: shorter runs undershoot (0.085 at 5e4)."
+    },
+    {
       "name": "sierpinski",
       "family": "ifs",
       "dim": 2,
@@ -655,6 +988,56 @@
         "lyap1": null
       },
       "notes": "Aizawa attractor, standard parameters a=0.95 b=0.7 c=0.6 d=3.5 e=0.25 f=0.1 (widely reproduced); lambda1 observed-only pending a citable high-precision numerical source."
+    },
+    {
+      "name": "duffing",
+      "family": "ode",
+      "dim": 3,
+      "equations": "Driven Duffing oscillator, phase-augmented autonomous form: dx/dt = v; dv/dt = -delta*v - alpha*x - beta*x^3 + gamma*cos(phi); dphi/dt = omega. Physical oscillator is 2D non-autonomous; phi is the forcing phase (neutral direction, lambda=0).",
+      "params": {
+        "delta": 0.3,
+        "alpha": -1.0,
+        "beta": 1.0,
+        "gamma": 0.5,
+        "omega": 1.2
+      },
+      "x0": [
+        0.1,
+        0.0,
+        0.0
+      ],
+      "dt_lyap": 0.01,
+      "t_transient": 100.0,
+      "t_lyap": 2000.0,
+      "ref": {
+        "lyap1": null
+      },
+      "notes": "Double-well Duffing at robustly chaotic forcing (gamma=0.5 well above the periodic windows near gamma~0.37; classic set delta=0.3 alpha=-1 beta=1, Thompson & Robins / Zeni & Gallas parametrizations). lambda1 observed-only: measured 0.09386 with fixed-step RK4, dt=0.01, t_lyap=2000; no high-precision citable value verified for this exact set. Finite-time Benettin LLE is sensitive to roundoff on this chaotic attractor: perturbing x0 by 1e-16 changes lam1 in [0.083, 0.114] over t_lyap=2000. Cross-language spread (Py 0.0939 vs gfortran 0.1049) is within this band, not a bug; ref is null."
+    },
+    {
+      "name": "fhn",
+      "family": "ode",
+      "dim": 3,
+      "equations": "Sinusoidally driven FitzHugh-Nagumo neuron, phase-augmented autonomous form: dV/dt = (V*(V-a)*(1-V) - W)/delta; dW/dt = V - W - b + r*sin(phi); dphi/dt = omega0. Neuron is 2D non-autonomous; phi is the drive phase (neutral direction).",
+      "params": {
+        "a": 0.42,
+        "b": 0.15,
+        "delta": 0.005,
+        "r": 0.32,
+        "omega0": 15.0
+      },
+      "x0": [
+        0.1,
+        0.0,
+        0.0
+      ],
+      "dt_lyap": 0.0001,
+      "t_transient": 20.0,
+      "t_lyap": 100.0,
+      "ref": {
+        "lyap1": null
+      },
+      "notes": "Chaotic driven FHN from Su, Lai & Wang, Entropy 16(7):3889 (2014) 'Identifying Chaotic FitzHugh-Nagumo Neurons Using Compressive Sensing' (a=0.42 chaotic regime; the paper uses RK4 at h=1e-4). Stiff: 1/delta=200 requires dt_lyap=1e-4 (dt=0.01 unstable). lambda1 observed-only: measured 0.29947 (stable across Octave/Python to 1e-15); the paper does not quote lambda1. Costly: ~2.1e6 RK4 steps per run (~5 min Octave)."
     },
     {
       "name": "hopfield_4",

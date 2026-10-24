@@ -1,0 +1,591 @@
+{
+  "timestamp": "20261024T041028",
+  "selector": "all",
+  "language": "fortran",
+  "n_pass": 24,
+  "n_total": 24,
+  "runs": [
+    {
+      "name": "logistic",
+      "family": "map",
+      "pass": true,
+      "checks": [
+        {
+          "quantity": "orbit_head_maxabs",
+          "computed": 0,
+          "reference": 0,
+          "tol": 9.99999999999999980E-013,
+          "rel_err": 0,
+          "pass": true
+        },
+        {
+          "quantity": "lyap1",
+          "computed": 6.93129418221960392E-001,
+          "reference": 6.93147180559945286E-001,
+          "tol": 2.00000000000000004E-003,
+          "rel_err": 2.56256369254010616E-005,
+          "pass": true
+        }
+      ],
+      "orbit_path": "results/orbits/logistic_orbit.txt",
+      "lyap1_observed": 6.93129418221960392E-001
+    },
+    {
+      "name": "henon",
+      "family": "map",
+      "pass": true,
+      "checks": [
+        {
+          "quantity": "orbit_head_maxabs",
+          "computed": 0,
+          "reference": 0,
+          "tol": 9.99999999999999980E-013,
+          "rel_err": 0,
+          "pass": true
+        },
+        {
+          "quantity": "lyap1",
+          "computed": 4.19174003952423824E-001,
+          "reference": 4.19200000000000017E-001,
+          "tol": 2.00000000000000004E-002,
+          "rel_err": 6.20134722714535701E-005,
+          "pass": true
+        },
+        {
+          "quantity": "corr_dim",
+          "computed": 1.20384247906187336E+000,
+          "reference": 1.21999999999999997E+000,
+          "tol": 9.76000000000000062E-002,
+          "rel_err": 1.32438696214152562E-002,
+          "pass": true
+        }
+      ],
+      "orbit_path": "results/orbits/henon_orbit.txt",
+      "lyap1_observed": 4.19174003952423824E-001
+    },
+    {
+      "name": "clifford",
+      "family": "map",
+      "pass": true,
+      "checks": [
+        {
+          "quantity": "orbit_head_maxabs",
+          "computed": 0,
+          "reference": 0,
+          "tol": 9.99999999999999980E-013,
+          "rel_err": 0,
+          "pass": true
+        },
+        {
+          "quantity": "lyap1_observed",
+          "computed": 2.90419451027670084E-001,
+          "reference": null,
+          "tol": null,
+          "rel_err": null,
+          "pass": true
+        }
+      ],
+      "orbit_path": "results/orbits/clifford_orbit.txt",
+      "lyap1_observed": 2.90419451027670084E-001
+    },
+    {
+      "name": "tinkerbell",
+      "family": "map",
+      "pass": true,
+      "checks": [
+        {
+          "quantity": "orbit_head_maxabs",
+          "computed": 0,
+          "reference": 0,
+          "tol": 9.99999999999999980E-013,
+          "rel_err": 0,
+          "pass": true
+        },
+        {
+          "quantity": "lyap1_observed",
+          "computed": 1.98193397298125379E-001,
+          "reference": null,
+          "tol": null,
+          "rel_err": null,
+          "pass": true
+        }
+      ],
+      "orbit_path": "results/orbits/tinkerbell_orbit.txt",
+      "lyap1_observed": 1.98193397298125379E-001
+    },
+    {
+      "name": "de_jong",
+      "family": "map",
+      "pass": true,
+      "checks": [
+        {
+          "quantity": "orbit_head_maxabs",
+          "computed": 0,
+          "reference": 0,
+          "tol": 9.99999999999999980E-013,
+          "rel_err": 0,
+          "pass": true
+        },
+        {
+          "quantity": "lyap1_observed",
+          "computed": 3.61552566472793935E-001,
+          "reference": null,
+          "tol": null,
+          "rel_err": null,
+          "pass": true
+        }
+      ],
+      "orbit_path": "results/orbits/de_jong_orbit.txt",
+      "lyap1_observed": 3.61552566472793935E-001
+    },
+    {
+      "name": "lozi",
+      "family": "map",
+      "pass": true,
+      "checks": [
+        {
+          "quantity": "orbit_head_maxabs",
+          "computed": 0,
+          "reference": 0,
+          "tol": 9.99999999999999980E-013,
+          "rel_err": 0,
+          "pass": true
+        },
+        {
+          "quantity": "lyap1",
+          "computed": 4.71158412155898931E-001,
+          "reference": 4.70229999999999981E-001,
+          "tol": 2.00000000000000004E-002,
+          "rel_err": 1.97437882716745014E-003,
+          "pass": true
+        }
+      ],
+      "orbit_path": "results/orbits/lozi_orbit.txt",
+      "lyap1_observed": 4.71158412155898931E-001
+    },
+    {
+      "name": "standard",
+      "family": "map",
+      "pass": true,
+      "checks": [
+        {
+          "quantity": "orbit_head_maxabs",
+          "computed": 0,
+          "reference": 0,
+          "tol": 9.99999999999999980E-013,
+          "rel_err": 0,
+          "pass": true
+        },
+        {
+          "quantity": "lyap1",
+          "computed": 1.05086911564441610E-001,
+          "reference": 1.04969999999999994E-001,
+          "tol": 2.99999999999999989E-002,
+          "rel_err": 1.11376168849781627E-003,
+          "pass": true
+        }
+      ],
+      "orbit_path": "results/orbits/standard_orbit.txt",
+      "lyap1_observed": 1.05086911564441610E-001
+    },
+    {
+      "name": "sierpinski",
+      "family": "ifs",
+      "pass": true,
+      "checks": [
+        {
+          "quantity": "box_dim",
+          "computed": 1.57159212991715869E+000,
+          "reference": 1.58496250072115608E+000,
+          "tol": 1.58496250072115603E-002,
+          "rel_err": 8.43576475652508227E-003,
+          "pass": true
+        }
+      ],
+      "dim_observed": 1.57159212991715869E+000
+    },
+    {
+      "name": "barnsley_fern",
+      "family": "ifs",
+      "pass": true,
+      "checks": [
+        {
+          "quantity": "box_dim",
+          "computed": 1.82611226323817677E+000,
+          "reference": 1.85000000000000009E+000,
+          "tol": 9.25000000000000128E-002,
+          "rel_err": 1.29122901415261188E-002,
+          "pass": true
+        }
+      ],
+      "dim_observed": 1.82611226323817677E+000
+    },
+    {
+      "name": "lorenz",
+      "family": "ode",
+      "pass": true,
+      "checks": [
+        {
+          "quantity": "lyap1",
+          "computed": 9.03996167446005416E-001,
+          "reference": 9.05599999999999961E-001,
+          "tol": 4.52800000000000008E-002,
+          "rel_err": 1.77101651280316282E-003,
+          "pass": true
+        }
+      ],
+      "lyap1_observed": 9.03996167446005416E-001
+    },
+    {
+      "name": "rossler",
+      "family": "ode",
+      "pass": true,
+      "checks": [
+        {
+          "quantity": "lyap1",
+          "computed": 7.47039869762843728E-002,
+          "reference": 7.14000000000000051E-002,
+          "tol": 1.00000000000000002E-002,
+          "rel_err": 4.62743273989407178E-002,
+          "pass": true
+        }
+      ],
+      "lyap1_observed": 7.47039869762843728E-002
+    },
+    {
+      "name": "thomas",
+      "family": "ode",
+      "pass": true,
+      "checks": [
+        {
+          "quantity": "lyap1_observed",
+          "computed": 6.46653898028912415E-003,
+          "reference": null,
+          "tol": null,
+          "rel_err": null,
+          "pass": true
+        }
+      ],
+      "lyap1_observed": 6.46653898028912415E-003
+    },
+    {
+      "name": "aizawa",
+      "family": "ode",
+      "pass": true,
+      "checks": [
+        {
+          "quantity": "lyap1_observed",
+          "computed": 9.17161231238340369E-002,
+          "reference": null,
+          "tol": null,
+          "rel_err": null,
+          "pass": true
+        }
+      ],
+      "lyap1_observed": 9.17161231238340369E-002
+    },
+    {
+      "name": "duffing",
+      "family": "ode",
+      "pass": true,
+      "checks": [
+        {
+          "quantity": "lyap1_observed",
+          "computed": 1.04937702088401905E-001,
+          "reference": null,
+          "tol": null,
+          "rel_err": null,
+          "pass": true
+        }
+      ],
+      "lyap1_observed": 1.04937702088401905E-001
+    },
+    {
+      "name": "fhn",
+      "family": "ode",
+      "pass": true,
+      "checks": [
+        {
+          "quantity": "lyap1_observed",
+          "computed": 2.99474058534591359E-001,
+          "reference": null,
+          "tol": null,
+          "rel_err": null,
+          "pass": true
+        }
+      ],
+      "lyap1_observed": 2.99474058534591359E-001
+    },
+    {
+      "name": "hopfield_4",
+      "family": "neural",
+      "pass": true,
+      "checks": [
+        {
+          "quantity": "fixed_point_pattern_1",
+          "computed": 1,
+          "reference": 1,
+          "tol": 0,
+          "rel_err": 0,
+          "pass": true
+        },
+        {
+          "quantity": "fixed_point_pattern_2",
+          "computed": 1,
+          "reference": 1,
+          "tol": 0,
+          "rel_err": 0,
+          "pass": true
+        }
+      ]
+    },
+    {
+      "name": "lennard_jones",
+      "family": "potential",
+      "pass": true,
+      "checks": [
+        {
+          "quantity": "r_min",
+          "computed": 1.12246204970319385E+000,
+          "reference": 1.12246204830937302E+000,
+          "tol": 9.99999999999999955E-007,
+          "rel_err": 1.24175319657836281E-009,
+          "pass": true
+        },
+        {
+          "quantity": "V_min",
+          "computed": -1,
+          "reference": -1,
+          "tol": 9.99999999999999955E-007,
+          "rel_err": 0,
+          "pass": true
+        }
+      ]
+    },
+    {
+      "name": "morse",
+      "family": "potential",
+      "pass": true,
+      "checks": [
+        {
+          "quantity": "r_min",
+          "computed": 1.00000000745057882E+000,
+          "reference": 1,
+          "tol": 9.99999999999999955E-007,
+          "rel_err": 7.45057882056698872E-009,
+          "pass": true
+        },
+        {
+          "quantity": "V_min",
+          "computed": -1,
+          "reference": -1,
+          "tol": 9.99999999999999955E-007,
+          "rel_err": 0,
+          "pass": true
+        }
+      ]
+    },
+    {
+      "name": "double_well",
+      "family": "potential",
+      "pass": true,
+      "checks": [
+        {
+          "quantity": "r_min_abs",
+          "computed": 7.07106784911826214E-001,
+          "reference": 7.07106781186547573E-001,
+          "tol": 9.99999999999999955E-007,
+          "rel_err": 5.26833957789093740E-009,
+          "pass": true
+        },
+        {
+          "quantity": "V_min",
+          "computed": -2.50000000000000000E-001,
+          "reference": -2.50000000000000000E-001,
+          "tol": 9.99999999999999955E-007,
+          "rel_err": 0,
+          "pass": true
+        }
+      ]
+    },
+    {
+      "name": "harmonic",
+      "family": "potential",
+      "pass": true,
+      "checks": [
+        {
+          "quantity": "E_0",
+          "computed": 4.99999110524943446E-001,
+          "reference": 5.00000000000000000E-001,
+          "tol": 5.00000000000000010E-004,
+          "rel_err": 1.77895011310713613E-006,
+          "pass": true
+        },
+        {
+          "quantity": "E_1",
+          "computed": 1.49999555258001660E+000,
+          "reference": 1.50000000000000000E+000,
+          "tol": 1.50000000000000003E-003,
+          "rel_err": 2.96494665559995018E-006,
+          "pass": true
+        },
+        {
+          "quantity": "E_2",
+          "computed": 2.49998843668005044E+000,
+          "reference": 2.50000000000000000E+000,
+          "tol": 2.50000000000000005E-003,
+          "rel_err": 4.62532797982362388E-006,
+          "pass": true
+        },
+        {
+          "quantity": "omega",
+          "computed": 1,
+          "reference": 1,
+          "tol": 1.00000000000000002E-008,
+          "rel_err": 0,
+          "pass": true
+        }
+      ]
+    },
+    {
+      "name": "hydrogen",
+      "family": "potential",
+      "pass": true,
+      "checks": [
+        {
+          "quantity": "E_1",
+          "computed": -4.99996875824112119E-001,
+          "reference": -5.00000000000000000E-001,
+          "tol": 1.00000000000000002E-003,
+          "rel_err": 6.24835177576166245E-006,
+          "pass": true
+        },
+        {
+          "quantity": "E_2",
+          "computed": -1.24999804762518013E-001,
+          "reference": -1.25000000000000000E-001,
+          "tol": 2.50000000000000005E-004,
+          "rel_err": 1.56189985589527680E-006,
+          "pass": true
+        }
+      ]
+    },
+    {
+      "name": "yukawa",
+      "family": "potential",
+      "pass": true,
+      "checks": [
+        {
+          "quantity": "force_r_0.5",
+          "computed": 3.63918395985818277E+000,
+          "reference": 3.63918395827580055E+000,
+          "tol": 9.99999999999999955E-007,
+          "rel_err": 4.34817872191636775E-010,
+          "pass": true
+        },
+        {
+          "quantity": "force_r_1",
+          "computed": 7.35758882441927997E-001,
+          "reference": 7.35758882342884668E-001,
+          "tol": 9.99999999999999955E-007,
+          "rel_err": 1.34613840852770822E-010,
+          "pass": true
+        },
+        {
+          "quantity": "force_r_2",
+          "computed": 1.01501462432956865E-001,
+          "reference": 1.01501462427459527E-001,
+          "tol": 9.99999999999999955E-007,
+          "rel_err": 5.41601920198864862E-011,
+          "pass": true
+        },
+        {
+          "quantity": "force_r_1_ref",
+          "computed": 7.35758882441927997E-001,
+          "reference": 7.35758882342884668E-001,
+          "tol": 9.99999999999999955E-007,
+          "rel_err": 1.34613840852770822E-010,
+          "pass": true
+        }
+      ]
+    },
+    {
+      "name": "poschl_teller",
+      "family": "potential",
+      "pass": true,
+      "checks": [
+        {
+          "quantity": "E_0",
+          "computed": -4.50002322656061615E+000,
+          "reference": -4.50000000000000000E+000,
+          "tol": 9.00000000000000105E-003,
+          "rel_err": 5.16145791470042516E-006,
+          "pass": true
+        },
+        {
+          "quantity": "E_1",
+          "computed": -2.00006670375067852E+000,
+          "reference": -2,
+          "tol": 4.00000000000000008E-003,
+          "rel_err": 3.33518753392603173E-005,
+          "pass": true
+        },
+        {
+          "quantity": "E_2",
+          "computed": -5.00067064477027312E-001,
+          "reference": -5.00000000000000000E-001,
+          "tol": 1.00000000000000002E-003,
+          "rel_err": 1.34128954054624216E-004,
+          "pass": true
+        }
+      ]
+    },
+    {
+      "name": "double_well_verlet_rk4",
+      "family": "energy_drift",
+      "pass": true,
+      "checks": [
+        {
+          "quantity": "E0",
+          "computed": -1.07499999999999984E-001,
+          "reference": -1.07499999999999998E-001,
+          "tol": 9.99999999999999980E-013,
+          "rel_err": 1.29095700537808908E-016,
+          "pass": true
+        },
+        {
+          "quantity": "verlet_final_rel_drift",
+          "computed": 9.27602080880679758E-005,
+          "reference": 9.27602078277999995E-005,
+          "tol": 9.27602078278000054E-010,
+          "rel_err": 2.80581493323426016E-009,
+          "pass": true
+        },
+        {
+          "quantity": "verlet_max_rel_drift",
+          "computed": 1.00394704788010682E-004,
+          "reference": 1.00394704653000000E-004,
+          "tol": 1.00394704653000000E-009,
+          "rel_err": 1.34479883746077364E-009,
+          "pass": true
+        },
+        {
+          "quantity": "rk4_final_rel_drift",
+          "computed": 1.92527147454520677E-007,
+          "reference": 1.92527339033000006E-007,
+          "tol": 1.92527339033000002E-012,
+          "rel_err": 9.95071558625303614E-007,
+          "pass": true
+        },
+        {
+          "quantity": "rk4_max_rel_drift",
+          "computed": 1.93887698661101683E-007,
+          "reference": 1.93887892692000005E-007,
+          "tol": 1.93887892692000020E-012,
+          "rel_err": 1.00073756864140375E-006,
+          "pass": true
+        }
+      ]
+    }
+  ]
+}

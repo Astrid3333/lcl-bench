@@ -38,7 +38,7 @@ program f_runner
 
   character(len=64) :: sel
   character(len=512) :: outdir, emsg, jpath
-  type(jval) :: reg1, reg2, ents, ent, top, ra
+  type(jval) :: reg1, reg2, reg3, ents, ent, top, ra
   type(run_t) :: runs(MAXRUN)
   logical :: ok, ok2
   integer :: nrun, npass, ei, ri, nent, u, ios
@@ -63,6 +63,12 @@ program f_runner
     write(*, '(a)') 'ERROR: ' // trim(emsg)
     error stop 1
   end if
+  call jload('registries/energy_drift.json', reg3, ok2, emsg)
+  if (.not. ok2) call jload('../registries/energy_drift.json', reg3, ok2, emsg)
+  if (.not. ok2) then
+    write(*, '(a)') 'ERROR: ' // trim(emsg)
+    error stop 1
+  end if
 
   call execute_command_line('mkdir -p "' // trim(outdir) // '"', exitstat=ios)
 
@@ -74,6 +80,12 @@ program f_runner
     if (selected(ent, sel)) call run_one(ent, outdir, runs, nrun)
   end do
   call jcopy(ents, jget(reg2, 'entries'))
+  nent = jalen(ents)
+  do ei = 1, nent
+    call jcopy(ent, jat(ents, ei))
+    if (selected(ent, sel)) call run_one(ent, outdir, runs, nrun)
+  end do
+  call jcopy(ents, jget(reg3, 'entries'))
   nent = jalen(ents)
   do ei = 1, nent
     call jcopy(ent, jat(ents, ei))
@@ -469,6 +481,8 @@ contains
       call eval_neural(ent, r, ok, emsg)
     case ('potential')
       call eval_potential(ent, r, ok, emsg)
+    case ('energy_drift')
+      call eval_energy_drift(ent, r, ok, emsg)
     case default
       ok = .false.
       emsg = 'unknown family: ' // trim(fam)
@@ -1012,6 +1026,111 @@ contains
       emsg = 'No checks produced for ' // trim(nraw)
       return
     end if
+    ok = .true.
+    emsg = ''
+  end subroutine
+
+  subroutine eval_energy_drift(e, r, ok, emsg)
+    ! Double-well trajectory: velocity Verlet vs RK4, relative energy drift.
+    type(jval), intent(in) :: e
+    type(run_t), intent(inout) :: r
+    logical, intent(out) :: ok
+    character(len=*), intent(out) :: emsg
+    type(jval) :: pr, ref, ck
+    real(dp) :: a, b, mass, h, T, x, v, E0, acc, accn, en, rel, maxr
+    real(dp) :: xv, vv, val, tol, rlt
+    real(dp) :: y1, y2, k11, k12, k21, k22, k31, k32, k41, k42
+    integer :: n, k
+    character(len=64) :: keys(5)
+    real(dp) :: vals(5)
+    logical :: has_abs
+
+    call jcopy(pr, jget(e, 'params'))
+    a = jnum_req(pr, 'a')
+    b = jnum_req(pr, 'b')
+    mass = jnum_req(e, 'mass')
+    h = jnum_req(e, 'h')
+    T = jnum_req(e, 'T')
+    ! x0/v0 are arrays; extract element 1
+    block
+      type(jval) :: arr, cell0
+      call jcopy(arr, jget(e, 'x0'))
+      call jcopy(cell0, jat(arr, 1))
+      x = cell0%v
+      call jcopy(arr, jget(e, 'v0'))
+      call jcopy(cell0, jat(arr, 1))
+      v = cell0%v
+    end block
+    n = nint(T / h)
+
+    E0 = 0.5_dp * mass * v * v + (a * x**4 - b * x**2)
+
+    ! velocity Verlet kick-drift-kick
+    xv = x
+    vv = v
+    maxr = 0.0_dp
+    do k = 1, n
+      acc = (-4.0_dp * a * xv**3 + 2.0_dp * b * xv) / mass
+      xv = xv + vv * h + 0.5_dp * acc * h * h
+      accn = (-4.0_dp * a * xv**3 + 2.0_dp * b * xv) / mass
+      vv = vv + 0.5_dp * (acc + accn) * h
+      en = 0.5_dp * mass * vv * vv + (a * xv**4 - b * xv**2)
+      rel = abs(en - E0) / abs(E0)
+      if (rel > maxr) maxr = rel
+    end do
+    vals(2) = rel
+    vals(3) = maxr
+
+    ! RK4 on (x, v)
+    y1 = x
+    y2 = v
+    maxr = 0.0_dp
+    do k = 1, n
+      k11 = y2
+      k12 = (-4.0_dp * a * y1**3 + 2.0_dp * b * y1) / mass
+      k21 = y2 + 0.5_dp * h * k12
+      k22 = (-4.0_dp * a * (y1 + 0.5_dp * h * k11)**3 &
+             + 2.0_dp * b * (y1 + 0.5_dp * h * k11)) / mass
+      k31 = y2 + 0.5_dp * h * k22
+      k32 = (-4.0_dp * a * (y1 + 0.5_dp * h * k21)**3 &
+             + 2.0_dp * b * (y1 + 0.5_dp * h * k21)) / mass
+      k41 = y2 + h * k32
+      k42 = (-4.0_dp * a * (y1 + h * k31)**3 + 2.0_dp * b * (y1 + h * k31)) / mass
+      y1 = y1 + (h / 6.0_dp) * (k11 + 2.0_dp * k21 + 2.0_dp * k31 + k41)
+      y2 = y2 + (h / 6.0_dp) * (k12 + 2.0_dp * k22 + 2.0_dp * k32 + k42)
+      en = 0.5_dp * mass * y2 * y2 + (a * y1**4 - b * y1**2)
+      rel = abs(en - E0) / abs(E0)
+      if (rel > maxr) maxr = rel
+    end do
+    vals(4) = rel
+    vals(5) = maxr
+    vals(1) = E0
+
+    keys(1) = 'E0'
+    keys(2) = 'verlet_final_rel_drift'
+    keys(3) = 'verlet_max_rel_drift'
+    keys(4) = 'rk4_final_rel_drift'
+    keys(5) = 'rk4_max_rel_drift'
+
+    call jcopy(ref, jget(e, 'ref'))
+    do k = 1, 5
+      call jcopy(ck, jget(ref, trim(keys(k))))
+      if (ck%t /= JV_OBJ) then
+        call add_obs(r, trim(keys(k)) // '_observed', vals(k))
+        cycle
+      end if
+      val = jnum_req(ck, 'value')
+      has_abs = jhas(ck, 'abs_tol')
+      if (has_abs) then
+        tol = jnum_req(ck, 'abs_tol')
+      else
+        rlt = jnum_req(ck, 'rel_tol')
+        tol = rlt * abs(val)
+      end if
+      rel = abs(vals(k) - val) / max(abs(val), epsilon(1.0_dp))
+      call add_check(r, trim(keys(k)), vals(k), val, tol, rel, &
+                     abs(vals(k) - val) <= tol)
+    end do
     ok = .true.
     emsg = ''
   end subroutine

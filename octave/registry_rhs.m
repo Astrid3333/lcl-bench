@@ -25,6 +25,19 @@ function f = registry_rhs(name, params)
                 c + a * x(3) - x(3).^3 / 3 ...
                 - (x(1).^2 + x(2).^2) .* (1 + e * x(3)) ...
                 + fz * x(3) * x(1).^3];
+    case 'duffing'
+      delta = params.delta; alpha = params.alpha; beta = params.beta;
+      gamma = params.gamma; omega = params.omega;
+      f = @(x) [x(2);
+                -delta * x(2) - alpha * x(1) - beta * x(1)^3 ...
+                + gamma * cos(x(3));
+                omega];
+    case 'fhn'
+      a = params.a; b = params.b; delta = params.delta;
+      r = params.r; omega0 = params.omega0;
+      f = @(x) [(x(1) * (x(1) - a) * (1 - x(1)) - x(2)) / delta;
+                x(1) - x(2) - b + r * sin(x(3));
+                omega0];
     otherwise
       error('registry_rhs:unknown', 'Unknown ODE attractor: %s', name);
   end
