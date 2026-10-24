@@ -1,0 +1,105 @@
+{
+  "file": "fixtures/legacy/lorenz_rk4_double.f",
+  "language": "fortran",
+  "extracted": {
+    "system": {
+      "name": "lorenz",
+      "evidence": [
+        {
+          "line": 1,
+          "text": "c     Lorenz attractor, classic Runge-Kutta 4, double precision.",
+          "why": "keyword 'lorenz'"
+        }
+      ]
+    },
+    "precision": {
+      "value": "double",
+      "mixed": false,
+      "counts": {
+        "double": 5
+      },
+      "evidence": [
+        {
+          "line": 1,
+          "text": "c     Lorenz attractor, classic Runge-Kutta 4, double precision.",
+          "marks": "double"
+        },
+        {
+          "line": 2,
+          "text": "c     Correct reference-era code: REAL*8 + RK4 stages.",
+          "marks": "double"
+        },
+        {
+          "line": 7,
+          "text": "double precision x, y, z, t, dt, sigma, rho, beta",
+          "marks": "double"
+        },
+        {
+          "line": 8,
+          "text": "double precision k1x, k1y, k1z, k2x, k2y, k2z",
+          "marks": "double"
+        },
+        {
+          "line": 9,
+          "text": "double precision k3x, k3y, k3z, k4x, k4y, k4z",
+          "marks": "double"
+        }
+      ]
+    },
+    "integrator": {
+      "value": "rk4",
+      "evidence": [
+        {
+          "line": 8,
+          "text": "double precision k1x, k1y, k1z, k2x, k2y, k2z",
+          "why": "k1..k4 stage variables present"
+        }
+      ]
+    },
+    "dt": {
+      "value": 0.01,
+      "evidence": [
+        {
+          "line": 16,
+          "text": "dt = 0.01d0",
+          "name": "dt",
+          "value": 0.01
+        }
+      ],
+      "chosen_line": 16
+    }
+  },
+  "variant": "reference",
+  "candidate_source": "synthetic_equivalent",
+  "assumptions": [],
+  "diagnosis": {
+    "system": "lorenz",
+    "family": "ode",
+    "variant": "reference",
+    "series": null,
+    "fingerprint": {
+      "lambda1": 0.9039961674460054,
+      "corr_dim": 1.8274008263185544,
+      "unique_frac": 1.0,
+      "finite": true
+    },
+    "oracle": {
+      "lambda1": 0.9039961674460054,
+      "corr_dim": 1.8274008263185544,
+      "unique_frac": 1.0,
+      "finite": true
+    },
+    "thresholds": {
+      "lam_noise": 0.02,
+      "lam_rel": 0.05,
+      "d2_rel": 0.08,
+      "cycle_frac": 0.1
+    },
+    "diagnostico": "equivalente",
+    "potencial": null,
+    "confianza": 0.95,
+    "evidence": [
+      "dlambda1=0 <= 0.0452"
+    ]
+  }
+}

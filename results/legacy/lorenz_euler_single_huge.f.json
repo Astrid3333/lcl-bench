@@ -1,0 +1,104 @@
+{
+  "file": "fixtures/legacy/lorenz_euler_single_huge.f",
+  "language": "fortran",
+  "extracted": {
+    "system": {
+      "name": "lorenz",
+      "evidence": [
+        {
+          "line": 1,
+          "text": "c     Lorenz attractor, forward Euler, single precision, dt far too large.",
+          "why": "keyword 'lorenz'"
+        }
+      ]
+    },
+    "precision": {
+      "value": "single",
+      "mixed": false,
+      "counts": {
+        "single": 2
+      },
+      "evidence": [
+        {
+          "line": 6,
+          "text": "real x, y, z, dt, sigma, rho, beta",
+          "marks": "single"
+        },
+        {
+          "line": 7,
+          "text": "real dx, dy, dz",
+          "marks": "single"
+        }
+      ]
+    },
+    "integrator": {
+      "value": "euler",
+      "evidence": [
+        {
+          "line": 19,
+          "text": "x = x + dt * dx",
+          "why": "self-assignment with product step (x = x + dt*dx)"
+        },
+        {
+          "line": 20,
+          "text": "y = y + dt * dy",
+          "why": "self-assignment with product step (x = x + dt*dx)"
+        },
+        {
+          "line": 21,
+          "text": "z = z + dt * dz",
+          "why": "self-assignment with product step (x = x + dt*dx)"
+        }
+      ]
+    },
+    "dt": {
+      "value": 0.1,
+      "evidence": [
+        {
+          "line": 14,
+          "text": "dt = 0.1",
+          "name": "dt",
+          "value": 0.1
+        }
+      ],
+      "chosen_line": 14
+    }
+  },
+  "variant": "euler_large",
+  "candidate_source": "synthetic_equivalent",
+  "assumptions": [
+    "source dt=0.1 >= 5x registry dt_lyap=0.01 -> euler_large variant",
+    "single precision not composed into euler_large (variant runs float64)",
+    "source dt=0.1 differs from registry dt_lyap=0.01; diagnosis uses the registry dt for comparability"
+  ],
+  "diagnosis": {
+    "system": "lorenz",
+    "family": "ode",
+    "variant": "euler_large",
+    "series": null,
+    "fingerprint": {
+      "lambda1": null,
+      "corr_dim": null,
+      "unique_frac": 0.0,
+      "finite": false
+    },
+    "oracle": {
+      "lambda1": 0.9039961674460054,
+      "corr_dim": 1.8274008263185544,
+      "unique_frac": 1.0,
+      "finite": true
+    },
+    "thresholds": {
+      "lam_noise": 0.02,
+      "lam_rel": 0.05,
+      "d2_rel": 0.08,
+      "cycle_frac": 0.1
+    },
+    "diagnostico": "inestabilidad_numerica",
+    "potencial": "reducir_dt_o_integrador_estable",
+    "confianza": 0.95,
+    "evidence": [
+      "orbit left the finite box (non-finite values)"
+    ]
+  }
+}

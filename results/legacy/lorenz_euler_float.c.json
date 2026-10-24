@@ -1,0 +1,111 @@
+{
+  "file": "fixtures/legacy/lorenz_euler_float.c",
+  "language": "c",
+  "extracted": {
+    "system": {
+      "name": "lorenz",
+      "evidence": [
+        {
+          "line": 1,
+          "text": "/* Lorenz attractor -- forward Euler, single precision (legacy C). */",
+          "why": "keyword 'lorenz'"
+        }
+      ]
+    },
+    "precision": {
+      "value": "single",
+      "mixed": false,
+      "counts": {
+        "single": 4
+      },
+      "evidence": [
+        {
+          "line": 4,
+          "text": "float x, y, z;",
+          "marks": "single"
+        },
+        {
+          "line": 5,
+          "text": "float h = 0.01f;",
+          "marks": "single"
+        },
+        {
+          "line": 9,
+          "text": "float sigma = 10.0f, rho = 28.0f, beta = 8.0f / 3.0f;",
+          "marks": "single"
+        },
+        {
+          "line": 10,
+          "text": "float dx, dy, dz;",
+          "marks": "single"
+        }
+      ]
+    },
+    "integrator": {
+      "value": "euler",
+      "evidence": [
+        {
+          "line": 18,
+          "text": "x = x + h * dx;",
+          "why": "self-assignment with product step (x = x + dt*dx)"
+        },
+        {
+          "line": 19,
+          "text": "y = y + h * dy;",
+          "why": "self-assignment with product step (x = x + dt*dx)"
+        },
+        {
+          "line": 20,
+          "text": "z = z + h * dz;",
+          "why": "self-assignment with product step (x = x + dt*dx)"
+        }
+      ]
+    },
+    "dt": {
+      "value": 0.01,
+      "evidence": [
+        {
+          "line": 5,
+          "text": "float h = 0.01f;",
+          "name": "h",
+          "value": 0.01
+        }
+      ],
+      "chosen_line": 5
+    }
+  },
+  "variant": "euler_single",
+  "candidate_source": "synthetic_equivalent",
+  "assumptions": [],
+  "diagnosis": {
+    "system": "lorenz",
+    "family": "ode",
+    "variant": "euler_single",
+    "series": null,
+    "fingerprint": {
+      "lambda1": null,
+      "corr_dim": 1.173569734735356,
+      "unique_frac": 1.0,
+      "finite": true
+    },
+    "oracle": {
+      "lambda1": 0.9039961674460054,
+      "corr_dim": 1.8274008263185544,
+      "unique_frac": 1.0,
+      "finite": true
+    },
+    "thresholds": {
+      "lam_noise": 0.02,
+      "lam_rel": 0.05,
+      "d2_rel": 0.08,
+      "cycle_frac": 0.1
+    },
+    "diagnostico": "precision_insuficiente",
+    "potencial": "migrar_a_double",
+    "confianza": 0.9,
+    "evidence": [
+      "orbit healthy (unique_frac=1.000 ~ oracle 1.000) but lambda1=nan: the 1e-8 Lyapunov perturbation is annihilated by single-precision casting; the exponent is not measurable at this precision",
+      "variant also uses first-order integration (euler); its order shift is masked while lambda1 is unmeasurable"
+    ]
+  }
+}

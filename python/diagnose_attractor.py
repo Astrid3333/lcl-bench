@@ -11,8 +11,12 @@ and returns a structured verdict:
 Taxonomy (from the MCP design notes + cross-language measurements in this
 repo, notes/2026-10-24.md):
   equivalente                within oracle tolerance (no bug)
-  colapso_por_redondeo       bounded orbit collapsed onto a short cycle;
-                             potential: migrar_a_double_o_aumentar_precision
+  colapso_por_redondeo       bounded orbit collapsed onto a short cycle
+                             (tail unique_frac < 0.5x oracle); potential:
+                             migrar_a_double_o_aumentar_precision
+  precision_insuficiente      orbit healthy but lambda1=nan: the 1e-8
+                             perturbation is annihilated by single-precision
+                             casting; potential: migrar_a_double
   artefacto_tipo_sna         fractal-looking (D2 ok) but lambda1 <= 0 while
                              the oracle is chaotic; potential: revisar_integrador
   degradacion_de_orden       systematic lambda1/D2 shift beyond tolerance from
@@ -58,7 +62,7 @@ N_POINTS_D2 = 4000
 N_RADII = 30
 C_LO, C_HI = 0.01, 0.5
 
-VARIANTS = ("reference", "float32", "euler", "euler_large")
+VARIANTS = ("reference", "float32", "euler", "euler_large", "euler_single")
 
 
 def load_entry(name):
@@ -211,18 +215,24 @@ def candidate_fingerprint(entry, variant):
             lam = lyap_ode(f32, entry["x0"], h,
                            entry["t_transient"], entry["t_lyap"])
         pts, finite, frac = run_orbit(step32, x0, N_POINTS_D2, cast64=False)
-    elif variant in ("euler", "euler_large"):
+    elif variant in ("euler", "euler_large", "euler_single"):
         if entry["family"] != "ode":
             raise ValueError(f"variant {variant!r} requires an ODE system")
         h = entry["dt_lyap"] * (5.0 if variant == "euler_large" else 1.0)
-        step = _euler_stepper(f, h)
+        if variant == "euler_single":
+            f_use = _wrap_float32(f)
+            raw_step = _euler_stepper(f_use, h)
+            step = lambda z: np.asarray(raw_step(z), dtype=np.float32)
+        else:
+            step = _euler_stepper(f, h)
         n_tr = int(round(entry["t_transient"] / h))
         n_ly = int(round(entry["t_lyap"] / h))
         lam = lyap_with_stepper(step, entry["x0"], h, n_tr, n_ly)
         x = np.asarray(entry["x0"], dtype=float).copy()
         for _ in range(n_tr):
             x = step(x)
-        pts, finite, frac = run_orbit(step, x, N_POINTS_D2)
+        pts, finite, frac = run_orbit(step, x, N_POINTS_D2,
+                                      cast64=(variant != "euler_single"))
     else:
         raise ValueError(f"unknown variant {variant!r}; choose from {VARIANTS}")
     return {"lambda1": float(lam), "corr_dim": fingerprint_d2(pts, finite),
@@ -252,19 +262,38 @@ def classify(entry, oracle, cand, variant):
     tol_lam = max(LAM_NOISE, LAM_REL * abs(lam_o))
     tol_d2 = D2_REL * abs(d2_o) if d2_o is not None else None
 
-    cycle = cand["unique_frac"] is not None and cand["unique_frac"] < CYCLE_FRAC
-    lam_zero = lam_c is None or not np.isfinite(lam_c) or abs(lam_c) <= LAM_NOISE
+    # Orbit degradation: tail unique-count far below the oracle's
+    # (measured: logistic float32 uf=0.2155 vs oracle 1.0 = genuine
+    # roundoff collapse; lorenz euler_single uf=1.0 = healthy orbit).
+    uf_o, uf_c = oracle["unique_frac"], cand["unique_frac"]
+    cycle = uf_c is not None and (uf_c < CYCLE_FRAC or uf_c < 0.5 * uf_o)
+    lam_nan = lam_c is not None and not np.isfinite(lam_c)
 
-    if cycle or (lam_c is not None and not np.isfinite(lam_c)) or \
-            (lam_c is not None and np.isfinite(lam_c) and
-             oracle["lambda1"] > tol_lam and lam_zero and d2_c is None):
-        ev = []
-        if cycle:
-            ev.append(f"tail unique_frac={cand['unique_frac']:.3f} < {CYCLE_FRAC} (short cycle)")
-        if lam_c is not None and not np.isfinite(lam_c):
+    if cycle:
+        ev = [f"tail unique_frac={uf_c:.3f} vs oracle {uf_o:.3f} "
+              "(orbit collapsed onto too few distinct values)"]
+        if lam_nan:
             ev.append("lambda1=nan (perturbation direction annihilated)")
         return ("colapso_por_redondeo", "migrar_a_double_o_aumentar_precision",
                 0.95, ev)
+
+    if variant is not None and d2_c is None:
+        return ("colapso_por_redondeo", "migrar_a_double_o_aumentar_precision",
+                0.90, ["corr_dim failed: too few nonzero pairs "
+                       "(states collapsed onto a short cycle)"])
+
+    if lam_nan:
+        # Orbit is fine; the 1e-8 Benettin perturbation is below the
+        # single-precision eps at this state magnitude -> exponent
+        # unmeasurable. Verified: float32(10.0)+float32(1e-8)==float32(10.0).
+        ev = [f"orbit healthy (unique_frac={uf_c:.3f} ~ oracle {uf_o:.3f}) "
+              "but lambda1=nan: the 1e-8 Lyapunov perturbation is annihilated "
+              "by single-precision casting; the exponent is not measurable at "
+              "this precision"]
+        if variant and variant.startswith("euler"):
+            ev.append("variant also uses first-order integration (euler); "
+                      "its order shift is masked while lambda1 is unmeasurable")
+        return ("precision_insuficiente", "migrar_a_double", 0.90, ev)
 
     if lam_c is None:  # series mode: lambda1 unavailable
         if tol_d2 is not None and d2_c is not None and \
@@ -298,7 +327,7 @@ def classify(entry, oracle, cand, variant):
     if tol_d2 is not None and d2_c is not None:
         ev.append(f"dD2={abs(d2_c - d2_o):.4g} vs tol {tol_d2:.4g}")
     ratio = dlam / tol_lam
-    if variant == "euler" or variant == "euler_large":
+    if variant and variant.startswith("euler"):
         if dlam <= 2.0 * tol_lam:
             return ("diferencia_por_integrador", None, 0.75,
                     ev + ["bounded method difference within 2x tolerance; "

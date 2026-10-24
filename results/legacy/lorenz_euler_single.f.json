@@ -1,0 +1,112 @@
+{
+  "file": "fixtures/legacy/lorenz_euler_single.f",
+  "language": "fortran",
+  "extracted": {
+    "system": {
+      "name": "lorenz",
+      "evidence": [
+        {
+          "line": 1,
+          "text": "c     Lorenz attractor, forward Euler, bare REAL = single precision.",
+          "why": "keyword 'lorenz'"
+        }
+      ]
+    },
+    "precision": {
+      "value": "single",
+      "mixed": true,
+      "counts": {
+        "single": 3,
+        "double": 1
+      },
+      "evidence": [
+        {
+          "line": 1,
+          "text": "c     Lorenz attractor, forward Euler, bare REAL = single precision.",
+          "marks": "single"
+        },
+        {
+          "line": 2,
+          "text": "c     Classic legacy defects: no REAL*8, first-order step.",
+          "marks": "double"
+        },
+        {
+          "line": 7,
+          "text": "real x, y, z, t, dt, sigma, rho, beta",
+          "marks": "single"
+        },
+        {
+          "line": 8,
+          "text": "real dx, dy, dz",
+          "marks": "single"
+        }
+      ]
+    },
+    "integrator": {
+      "value": "euler",
+      "evidence": [
+        {
+          "line": 21,
+          "text": "x = x + dt * dx",
+          "why": "self-assignment with product step (x = x + dt*dx)"
+        },
+        {
+          "line": 22,
+          "text": "y = y + dt * dy",
+          "why": "self-assignment with product step (x = x + dt*dx)"
+        },
+        {
+          "line": 23,
+          "text": "z = z + dt * dz",
+          "why": "self-assignment with product step (x = x + dt*dx)"
+        }
+      ]
+    },
+    "dt": {
+      "value": 0.01,
+      "evidence": [
+        {
+          "line": 15,
+          "text": "dt = 0.01",
+          "name": "dt",
+          "value": 0.01
+        }
+      ],
+      "chosen_line": 15
+    }
+  },
+  "variant": "euler_single",
+  "candidate_source": "synthetic_equivalent",
+  "assumptions": [],
+  "diagnosis": {
+    "system": "lorenz",
+    "family": "ode",
+    "variant": "euler_single",
+    "series": null,
+    "fingerprint": {
+      "lambda1": null,
+      "corr_dim": 1.173569734735356,
+      "unique_frac": 1.0,
+      "finite": true
+    },
+    "oracle": {
+      "lambda1": 0.9039961674460054,
+      "corr_dim": 1.8274008263185544,
+      "unique_frac": 1.0,
+      "finite": true
+    },
+    "thresholds": {
+      "lam_noise": 0.02,
+      "lam_rel": 0.05,
+      "d2_rel": 0.08,
+      "cycle_frac": 0.1
+    },
+    "diagnostico": "precision_insuficiente",
+    "potencial": "migrar_a_double",
+    "confianza": 0.9,
+    "evidence": [
+      "orbit healthy (unique_frac=1.000 ~ oracle 1.000) but lambda1=nan: the 1e-8 Lyapunov perturbation is annihilated by single-precision casting; the exponent is not measurable at this precision",
+      "variant also uses first-order integration (euler); its order shift is masked while lambda1 is unmeasurable"
+    ]
+  }
+}

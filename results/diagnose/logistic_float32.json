@@ -25,6 +25,7 @@
   "potencial": "migrar_a_double_o_aumentar_precision",
   "confianza": 0.95,
   "evidence": [
+    "tail unique_frac=0.215 vs oracle 1.000 (orbit collapsed onto too few distinct values)",
     "lambda1=nan (perturbation direction annihilated)"
   ]
 }

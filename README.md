@@ -46,6 +46,38 @@ the largest observed gap (aizawa λ1, 15%) is finite-time-estimator
 sensitivity to one-ulp x0 changes, demonstrated experimentally — not a bug.
 
 
+## Attractor diagnosis
+
+`python/diagnose_attractor.py` compares a candidate implementation (a
+degraded variant or an external trajectory) against the registry oracle
+using the geometric fingerprint (λ1 + correlation dimension D2) and returns
+`{diagnostico, potencial, confianza, evidence}`. Taxonomy: `equivalente`,
+`colapso_por_redondeo`, `precision_insuficiente`, `artefacto_tipo_sna`,
+`degradacion_de_orden`, `diferencia_por_integrador`,
+`degradacion_de_precision`, `inestabilidad_numerica`,
+`diferencia_no_explicada`. Thresholds are calibrated on measurements in
+this repo (λ1 ulp band ±0.015 → LAM_NOISE 0.02; registry rel_tol 0.05/0.08).
+
+```bash
+python3 python/diagnose_attractor.py --system lorenz --variant euler
+python3 python/diagnose_attractor.py --system henon --series some_orbit.txt
+```
+
+`python/parse_legacy_source.py` reads a legacy Fortran 77 / C source,
+extracts language/precision/integrator/dt/system **with line evidence**,
+maps that metadata onto the equivalent variant, and returns the verdict
+(`candidate_source: synthetic_equivalent` — the legacy file is not executed):
+
+```bash
+python3 python/parse_legacy_source.py fixtures/legacy/lorenz_euler_single.f
+# single + euler + dt=0.01 -> euler_single -> precision_insuficiente (conf 0.90)
+```
+
+Fixture verdicts: rk4/double → `equivalente`; euler/single (F77 and C) →
+`precision_insuficiente`; euler dt=0.1 → `inestabilidad_numerica`.
+Reports: `results/diagnose/*.json`, `results/legacy/*.json`.
+
+
 ## Layout
 
 | Path | Role |
@@ -60,9 +92,12 @@ sensitivity to one-ulp x0 changes, demonstrated experimentally — not a bug.
 | `python/sensitivity_aizawa.py` | aizawa λ1 sensitivity experiment |
 | `python/figures_discrepancy.py` | publication figures for the report |
 | `python/export_hdf5.py` | HDF5 bundle (needs h5py; `.venv` recommended) |
+| `python/diagnose_attractor.py` | fingerprint diagnosis (λ1+D2 vs oracle) |
+| `python/parse_legacy_source.py` | legacy F77/C reader → metadata → verdict |
+| `fixtures/legacy/` | 4 legacy-source fixtures (F77/C) |
 | `reports/informe-discrepancias.md` | discrepancy report (Spanish) |
 | `run_all.sh` | one-command suite (5 steps, HDF5 optional) |
-| `results/` | JSON results (timestamped), `discrepancy/`, `registry_all.h5` |
+| `results/` | JSON results (timestamped), `discrepancy/`, `diagnose/`, `legacy/`, `registry_all.h5` |
 
 ## Invariants
 
