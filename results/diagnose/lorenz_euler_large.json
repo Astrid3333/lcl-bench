@@ -1,0 +1,30 @@
+{
+  "system": "lorenz",
+  "family": "ode",
+  "variant": "euler_large",
+  "series": null,
+  "fingerprint": {
+    "lambda1": null,
+    "corr_dim": null,
+    "unique_frac": 0.0,
+    "finite": false
+  },
+  "oracle": {
+    "lambda1": 0.9039961674460054,
+    "corr_dim": 1.8274008263185544,
+    "unique_frac": 1.0,
+    "finite": true
+  },
+  "thresholds": {
+    "lam_noise": 0.02,
+    "lam_rel": 0.05,
+    "d2_rel": 0.08,
+    "cycle_frac": 0.1
+  },
+  "diagnostico": "inestabilidad_numerica",
+  "potencial": "reducir_dt_o_integrador_estable",
+  "confianza": 0.95,
+  "evidence": [
+    "orbit left the finite box (non-finite values)"
+  ]
+}

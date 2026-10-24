@@ -1,0 +1,30 @@
+{
+  "system": "henon",
+  "family": "map",
+  "variant": null,
+  "series": "/tmp/opencode/henon_series.txt",
+  "fingerprint": {
+    "lambda1": null,
+    "corr_dim": 1.2052870076080127,
+    "unique_frac": 1.0,
+    "finite": true
+  },
+  "oracle": {
+    "lambda1": 0.419190459718058,
+    "corr_dim": 1.2050403571022035,
+    "unique_frac": 1.0,
+    "finite": true
+  },
+  "thresholds": {
+    "lam_noise": 0.02,
+    "lam_rel": 0.05,
+    "d2_rel": 0.08,
+    "cycle_frac": 0.1
+  },
+  "diagnostico": "equivalente",
+  "potencial": null,
+  "confianza": 0.75,
+  "evidence": [
+    "D2 1.205 within 8% of oracle 1.205; lambda1 not available from a series alone"
+  ]
+}

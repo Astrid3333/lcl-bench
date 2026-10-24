@@ -1,0 +1,32 @@
+{
+  "system": "lorenz",
+  "family": "ode",
+  "variant": "euler",
+  "series": null,
+  "fingerprint": {
+    "lambda1": 1.040030166573521,
+    "corr_dim": 1.8933195873714135,
+    "unique_frac": 1.0,
+    "finite": true
+  },
+  "oracle": {
+    "lambda1": 0.9039961674460054,
+    "corr_dim": 1.8274008263185544,
+    "unique_frac": 1.0,
+    "finite": true
+  },
+  "thresholds": {
+    "lam_noise": 0.02,
+    "lam_rel": 0.05,
+    "d2_rel": 0.08,
+    "cycle_frac": 0.1
+  },
+  "diagnostico": "degradacion_de_orden",
+  "potencial": "integrador_de_mayor_orden",
+  "confianza": 0.95,
+  "evidence": [
+    "dlambda1=0.136 > tol 0.0452",
+    "dD2=0.06592 vs tol 0.1462",
+    "lower-order integrator shift beyond tolerance"
+  ]
+}

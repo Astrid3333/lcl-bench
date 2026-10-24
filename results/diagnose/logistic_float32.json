@@ -1,0 +1,30 @@
+{
+  "system": "logistic",
+  "family": "map",
+  "variant": "float32",
+  "series": null,
+  "fingerprint": {
+    "lambda1": null,
+    "corr_dim": 0.8219904005591224,
+    "unique_frac": 0.2155,
+    "finite": true
+  },
+  "oracle": {
+    "lambda1": 0.6931294182219604,
+    "corr_dim": 0.814482121694498,
+    "unique_frac": 1.0,
+    "finite": true
+  },
+  "thresholds": {
+    "lam_noise": 0.02,
+    "lam_rel": 0.05,
+    "d2_rel": 0.08,
+    "cycle_frac": 0.1
+  },
+  "diagnostico": "colapso_por_redondeo",
+  "potencial": "migrar_a_double_o_aumentar_precision",
+  "confianza": 0.95,
+  "evidence": [
+    "lambda1=nan (perturbation direction annihilated)"
+  ]
+}
