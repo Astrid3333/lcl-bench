@@ -1,134 +1,281 @@
 {
-  "octave_file": "registry_run_20261023T203616.json",
-  "python_file": "registry_run_py_20261023T203704.json",
+  "files": {
+    "octave": "registry_run_20261023T230731.json",
+    "python": "registry_run_py_20261023T230822.json",
+    "fortran": "registry_run_f_20261023T230828.json"
+  },
   "n_entries": 18,
-  "both_pass": 18,
+  "all_pass": 18,
   "rows": [
     {
       "name": "aizawa",
-      "status": "BOTH_PASS",
-      "octave_pass": true,
-      "python_pass": true,
-      "obs_rel_diff": 4.396134136781698e-15
+      "status": "ALL_PASS",
+      "passes": {
+        "octave": true,
+        "python": true,
+        "fortran": true
+      },
+      "obs_rel_diff": 0.14548938087760846,
+      "obs": {
+        "octave": 0.10733175348719398,
+        "python": 0.10733175348719351,
+        "fortran": 0.09171612312383404
+      }
     },
     {
       "name": "barnsley_fern",
-      "status": "BOTH_PASS",
-      "octave_pass": true,
-      "python_pass": true,
-      "obs_rel_diff": null
+      "status": "ALL_PASS",
+      "passes": {
+        "octave": true,
+        "python": true,
+        "fortran": true
+      },
+      "obs_rel_diff": null,
+      "obs": {
+        "octave": null,
+        "python": null,
+        "fortran": null
+      }
     },
     {
       "name": "clifford",
-      "status": "BOTH_PASS",
-      "octave_pass": true,
-      "python_pass": true,
-      "obs_rel_diff": 1.9114129936830205e-16
+      "status": "ALL_PASS",
+      "passes": {
+        "octave": true,
+        "python": true,
+        "fortran": true
+      },
+      "obs_rel_diff": 1.9114129936830205e-16,
+      "obs": {
+        "octave": 0.29041945102767003,
+        "python": 0.2904194510276701,
+        "fortran": 0.2904194510276701
+      }
     },
     {
       "name": "double_well",
-      "status": "BOTH_PASS",
-      "octave_pass": true,
-      "python_pass": true,
-      "obs_rel_diff": null
+      "status": "ALL_PASS",
+      "passes": {
+        "octave": true,
+        "python": true,
+        "fortran": true
+      },
+      "obs_rel_diff": null,
+      "obs": {
+        "octave": null,
+        "python": null,
+        "fortran": null
+      }
     },
     {
       "name": "harmonic",
-      "status": "BOTH_PASS",
-      "octave_pass": true,
-      "python_pass": true,
-      "obs_rel_diff": null
+      "status": "ALL_PASS",
+      "passes": {
+        "octave": true,
+        "python": true,
+        "fortran": true
+      },
+      "obs_rel_diff": null,
+      "obs": {
+        "octave": null,
+        "python": null,
+        "fortran": null
+      }
     },
     {
       "name": "henon",
-      "status": "BOTH_PASS",
-      "octave_pass": true,
-      "python_pass": true,
-      "obs_rel_diff": null
+      "status": "ALL_PASS",
+      "passes": {
+        "octave": true,
+        "python": true,
+        "fortran": true
+      },
+      "obs_rel_diff": null,
+      "obs": {
+        "octave": null,
+        "python": null,
+        "fortran": null
+      }
     },
     {
       "name": "hopfield_4",
-      "status": "BOTH_PASS",
-      "octave_pass": true,
-      "python_pass": true,
-      "obs_rel_diff": null
+      "status": "ALL_PASS",
+      "passes": {
+        "octave": true,
+        "python": true,
+        "fortran": true
+      },
+      "obs_rel_diff": null,
+      "obs": {
+        "octave": null,
+        "python": null,
+        "fortran": null
+      }
     },
     {
       "name": "hydrogen",
-      "status": "BOTH_PASS",
-      "octave_pass": true,
-      "python_pass": true,
-      "obs_rel_diff": null
+      "status": "ALL_PASS",
+      "passes": {
+        "octave": true,
+        "python": true,
+        "fortran": true
+      },
+      "obs_rel_diff": null,
+      "obs": {
+        "octave": null,
+        "python": null,
+        "fortran": null
+      }
     },
     {
       "name": "lennard_jones",
-      "status": "BOTH_PASS",
-      "octave_pass": true,
-      "python_pass": true,
-      "obs_rel_diff": null
+      "status": "ALL_PASS",
+      "passes": {
+        "octave": true,
+        "python": true,
+        "fortran": true
+      },
+      "obs_rel_diff": null,
+      "obs": {
+        "octave": null,
+        "python": null,
+        "fortran": null
+      }
     },
     {
       "name": "logistic",
-      "status": "BOTH_PASS",
-      "octave_pass": true,
-      "python_pass": true,
-      "obs_rel_diff": null
+      "status": "ALL_PASS",
+      "passes": {
+        "octave": true,
+        "python": true,
+        "fortran": true
+      },
+      "obs_rel_diff": null,
+      "obs": {
+        "octave": null,
+        "python": null,
+        "fortran": null
+      }
     },
     {
       "name": "lorenz",
-      "status": "BOTH_PASS",
-      "octave_pass": true,
-      "python_pass": true,
-      "obs_rel_diff": null
+      "status": "ALL_PASS",
+      "passes": {
+        "octave": true,
+        "python": true,
+        "fortran": true
+      },
+      "obs_rel_diff": null,
+      "obs": {
+        "octave": null,
+        "python": null,
+        "fortran": null
+      }
     },
     {
       "name": "morse",
-      "status": "BOTH_PASS",
-      "octave_pass": true,
-      "python_pass": true,
-      "obs_rel_diff": null
+      "status": "ALL_PASS",
+      "passes": {
+        "octave": true,
+        "python": true,
+        "fortran": true
+      },
+      "obs_rel_diff": null,
+      "obs": {
+        "octave": null,
+        "python": null,
+        "fortran": null
+      }
     },
     {
       "name": "poschl_teller",
-      "status": "BOTH_PASS",
-      "octave_pass": true,
-      "python_pass": true,
-      "obs_rel_diff": null
+      "status": "ALL_PASS",
+      "passes": {
+        "octave": true,
+        "python": true,
+        "fortran": true
+      },
+      "obs_rel_diff": null,
+      "obs": {
+        "octave": null,
+        "python": null,
+        "fortran": null
+      }
     },
     {
       "name": "rossler",
-      "status": "BOTH_PASS",
-      "octave_pass": true,
-      "python_pass": true,
-      "obs_rel_diff": null
+      "status": "ALL_PASS",
+      "passes": {
+        "octave": true,
+        "python": true,
+        "fortran": true
+      },
+      "obs_rel_diff": null,
+      "obs": {
+        "octave": null,
+        "python": null,
+        "fortran": null
+      }
     },
     {
       "name": "sierpinski",
-      "status": "BOTH_PASS",
-      "octave_pass": true,
-      "python_pass": true,
-      "obs_rel_diff": null
+      "status": "ALL_PASS",
+      "passes": {
+        "octave": true,
+        "python": true,
+        "fortran": true
+      },
+      "obs_rel_diff": null,
+      "obs": {
+        "octave": null,
+        "python": null,
+        "fortran": null
+      }
     },
     {
       "name": "thomas",
-      "status": "BOTH_PASS",
-      "octave_pass": true,
-      "python_pass": true,
-      "obs_rel_diff": 2.079026660134488e-14
+      "status": "ALL_PASS",
+      "passes": {
+        "octave": true,
+        "python": true,
+        "fortran": true
+      },
+      "obs_rel_diff": 2.079026660134488e-14,
+      "obs": {
+        "octave": 0.006466538980289259,
+        "python": 0.006466538980289124,
+        "fortran": 0.006466538980289124
+      }
     },
     {
       "name": "tinkerbell",
-      "status": "BOTH_PASS",
-      "octave_pass": true,
-      "python_pass": true,
-      "obs_rel_diff": 0.0
+      "status": "ALL_PASS",
+      "passes": {
+        "octave": true,
+        "python": true,
+        "fortran": true
+      },
+      "obs_rel_diff": 0.00643644124787795,
+      "obs": {
+        "octave": 0.19947732135732588,
+        "python": 0.19947732135732588,
+        "fortran": 0.19819339729812538
+      }
     },
     {
       "name": "yukawa",
-      "status": "BOTH_PASS",
-      "octave_pass": true,
-      "python_pass": true,
-      "obs_rel_diff": null
+      "status": "ALL_PASS",
+      "passes": {
+        "octave": true,
+        "python": true,
+        "fortran": true
+      },
+      "obs_rel_diff": null,
+      "obs": {
+        "octave": null,
+        "python": null,
+        "fortran": null
+      }
     }
   ]
 }

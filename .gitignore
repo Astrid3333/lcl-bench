@@ -8,3 +8,8 @@ octave-workspace
 *.oct
 __pycache__/
 *.pyc
+fortran/*.mod
+fortran/f_runner
+fortran/f_runner_dbg
+fortran/f_runner_asan
+fortran/results/

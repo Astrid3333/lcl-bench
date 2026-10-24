@@ -1,8 +1,8 @@
-"""Cross-language hub: compare Octave and Python runs over the same registry.
+"""Cross-language hub: compare Octave, Python and Fortran runs over one registry.
 
-Both languages independently evaluate the same registry JSON and compare
+All three languages independently evaluate the same registry JSON and compare
 computed invariants against the same analytic/literature references (not
-against each other). This hub then diffs the two result sets entry by entry
+against each other). This hub then diffs the three result sets entry by entry
 to report agreement between languages.
 """
 from __future__ import annotations
@@ -13,15 +13,17 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 RESULTS = ROOT / "results"
+LANGS = ("octave", "python", "fortran")
 
 
 def latest_run(lang: str) -> Path | None:
     if lang == "python":
         cands = sorted(RESULTS.glob("registry_run_py_*.json"))
+    elif lang == "fortran":
+        cands = sorted(RESULTS.glob("registry_run_f_*.json"))
     else:
-        # exclude Python results (they contain "_py_")
         cands = sorted(p for p in RESULTS.glob("registry_run_*.json")
-                       if "_py_" not in p.name)
+                       if "_py_" not in p.name and "_f_" not in p.name)
     return cands[-1] if cands else None
 
 
@@ -43,46 +45,42 @@ def _observed(checks) -> float | None:
     return None
 
 
-def compare(oct_path: Path, py_path: Path) -> dict:
-    with open(oct_path) as f:
-        oct_run = json.load(f)
-    with open(py_path) as f:
-        py_run = json.load(f)
-    oct_idx = index_runs(oct_run)
-    py_idx = index_runs(py_run)
+def compare(paths: dict[str, Path]) -> dict:
+    idx = {}
+    for lang in LANGS:
+        with open(paths[lang]) as f:
+            idx[lang] = index_runs(json.load(f))
 
-    names = sorted(set(oct_idx) | set(py_idx))
+    names = sorted(set().union(*(set(i) for i in idx.values())))
     rows = []
-    both_pass = 0
+    all_pass = 0
     for name in names:
-        o = oct_idx.get(name)
-        p = py_idx.get(name)
-        if o is None or p is None:
-            rows.append({"name": name, "status": "MISSING",
-                         "octave": o is not None, "python": p is not None})
+        present = {lang: name in idx[lang] for lang in LANGS}
+        if not all(present.values()):
+            rows.append({"name": name, "status": "MISSING", "present": present})
             continue
-        o_pass = o["pass"]
-        p_pass = p["pass"]
-        obs_o = _observed(o["checks"])
-        obs_p = _observed(p["checks"])
+        passes = {lang: idx[lang][name]["pass"] for lang in LANGS}
+        obs = {lang: _observed(idx[lang][name]["checks"]) for lang in LANGS}
+        obs_vals = [v for v in obs.values() if v is not None]
         agree = None
-        if obs_o is not None and obs_p is not None:
-            denom = max(abs(obs_o), abs(obs_p), 1e-15)
-            agree = abs(obs_o - obs_p) / denom
-        status = "BOTH_PASS" if (o_pass and p_pass) else (
-            "OCTAVE_ONLY" if o_pass else (
-                "PYTHON_ONLY" if p_pass else "BOTH_FAIL"))
-        if status == "BOTH_PASS":
-            both_pass += 1
+        if len(obs_vals) >= 2:
+            den = max(max(abs(v) for v in obs_vals), 1e-15)
+            agree = (max(obs_vals) - min(obs_vals)) / den
+        if all(passes.values()):
+            status = "ALL_PASS"
+            all_pass += 1
+        elif any(passes.values()):
+            status = "PARTIAL"
+        else:
+            status = "ALL_FAIL"
         rows.append({
-            "name": name, "status": status,
-            "octave_pass": o_pass, "python_pass": p_pass,
-            "obs_rel_diff": agree,
+            "name": name, "status": status, "passes": passes,
+            "obs_rel_diff": agree, "obs": obs,
         })
 
     summary = {
-        "octave_file": oct_path.name, "python_file": py_path.name,
-        "n_entries": len(names), "both_pass": both_pass,
+        "files": {lang: paths[lang].name for lang in LANGS},
+        "n_entries": len(names), "all_pass": all_pass,
         "rows": rows,
     }
     out_path = RESULTS / "hub_compare.json"
@@ -92,21 +90,26 @@ def compare(oct_path: Path, py_path: Path) -> dict:
 
 
 def main():
-    oct_path = latest_run("octave")
-    py_path = latest_run("python")
-    if not oct_path or not py_path:
-        print("Need both an Octave and a Python registry_run result in results/",
-              file=sys.stderr)
+    paths = {lang: latest_run(lang) for lang in LANGS}
+    missing = [lang for lang in LANGS if paths[lang] is None]
+    if missing:
+        print("Missing registry_run result in results/ for: "
+              + ", ".join(missing), file=sys.stderr)
         sys.exit(1)
-    print(f"Octave: {oct_path.name}")
-    print(f"Python: {py_path.name}")
-    s = compare(oct_path, py_path)
-    print(f"\nEntries: {s['n_entries']}  Both PASS: {s['both_pass']}")
+    for lang in LANGS:
+        print(f"{lang.capitalize()}: {paths[lang].name}")
+    s = compare(paths)
+    print(f"\nEntries: {s['n_entries']}  All-pass entries: {s['all_pass']}")
     for r in s["rows"]:
+        if r["status"] == "MISSING":
+            gone = ", ".join(l for l in LANGS if not r["present"][l])
+            print(f"  {r['name']:16s} MISSING in {gone}")
+            continue
         extra = ""
         if r.get("obs_rel_diff") is not None:
             extra = f"  obs_rel_diff={r['obs_rel_diff']:.3g}"
-        print(f"  {r['name']:16s} {r['status']}{extra}")
+        bits = "".join("P" if r["passes"][l] else "F" for l in LANGS)
+        print(f"  {r['name']:16s} {r['status']} [{bits}]{extra}")
     print(f"\nSaved: {RESULTS / 'hub_compare.json'}")
 
 
