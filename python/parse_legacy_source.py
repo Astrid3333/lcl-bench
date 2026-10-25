@@ -10,7 +10,8 @@ HONESTY: an F77 file inside the supported subset is EXECUTED (translated to
 Python by translate_f77.py, then run under the precision declared in the
 source), so lambda1/D2 come from the legacy recurrence itself and the report
 says `candidate_source: executed_source`. Anything the translator refuses
-(arrays, GOTO, multiple loops, ...) and every C file falls back to the
+(several loops, non-literal array extents, labelled DO, ...) and every C
+file falls back to the
 synthetic equivalent variant (registry system run under the integrator /
 precision / dt read from the source) and is labelled
 `candidate_source: synthetic_equivalent` plus an `execution.status` block

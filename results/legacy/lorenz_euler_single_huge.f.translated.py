@@ -3,6 +3,7 @@ import numpy as np
 FLOAT_VARS = ['x', 'y', 'z']
 STATE_NAMES = ['n', 'sigma', 'rho', 'beta', 'x', 'y', 'z', 'dt']
 LOOP_VAR = 'i'
+MODE = 'structured'
 
 def legacy_init():
     v = {}

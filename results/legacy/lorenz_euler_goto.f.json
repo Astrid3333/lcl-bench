@@ -1,0 +1,124 @@
+{
+  "file": "fixtures/legacy/lorenz_euler_goto.f",
+  "language": "fortran",
+  "extracted": {
+    "system": {
+      "name": "lorenz",
+      "evidence": [
+        {
+          "line": 1,
+          "text": "c     Lorenz attractor, forward Euler, double precision, with a classic",
+          "why": "keyword 'lorenz'"
+        }
+      ]
+    },
+    "precision": {
+      "value": "double",
+      "mixed": false,
+      "counts": {
+        "double": 3
+      },
+      "evidence": [
+        {
+          "line": 1,
+          "text": "c     Lorenz attractor, forward Euler, double precision, with a classic",
+          "marks": "double"
+        },
+        {
+          "line": 8,
+          "text": "double precision x, y, z, t, dt, sigma, rho, beta",
+          "marks": "double"
+        },
+        {
+          "line": 9,
+          "text": "double precision dx, dy, dz",
+          "marks": "double"
+        }
+      ]
+    },
+    "integrator": {
+      "value": "euler",
+      "evidence": [
+        {
+          "line": 22,
+          "text": "x = x + dt * dx",
+          "why": "self-assignment with product step (x = x + dt*dx)"
+        },
+        {
+          "line": 23,
+          "text": "y = y + dt * dy",
+          "why": "self-assignment with product step (x = x + dt*dx)"
+        },
+        {
+          "line": 24,
+          "text": "z = z + dt * dz",
+          "why": "self-assignment with product step (x = x + dt*dx)"
+        }
+      ]
+    },
+    "dt": {
+      "value": 0.01,
+      "evidence": [
+        {
+          "line": 16,
+          "text": "dt = 0.01d0",
+          "name": "dt",
+          "value": 0.01
+        }
+      ],
+      "chosen_line": 16
+    }
+  },
+  "variant": "euler",
+  "candidate_source": "executed_source",
+  "assumptions": [],
+  "execution": {
+    "status": "executed_source",
+    "translator": "strict_f77_subset",
+    "mode": "goto_dispatch",
+    "steps_run": 100000,
+    "recorded_vars": [
+      "x",
+      "y",
+      "z"
+    ],
+    "lambda1_transient": 100000,
+    "lambda1_window": 100000,
+    "h": 0.01,
+    "translated_lines": 93,
+    "translated_source": "import numpy as np\n\nFLOAT_VARS = ['x', 'y', 'z']\nSTATE_NAMES = ['n', 'sigma', 'rho', 'beta', 'x', 'y', 'z', 'dt', 't']\nLOOP_VAR = 'i'\nMODE = 'goto_dispatch'\n\ndef legacy_init():\n    v = {}\n    n = int(100000)\n    sigma = np.float64(np.float64(10.0))\n    rho = np.float64(np.float64(28.0))\n    beta = np.float64(np.float64(2.666666666666667))\n    x = np.float64(np.float64(1.0))\n    y = np.float64(np.float64(1.0))\n    z = np.float64(np.float64(1.0))\n    dt = np.float64(np.float64(0.01))\n    t = np.float64(np.float64(0.0))\n    v['n'] = n\n    v['sigma'] = sigma\n    v['rho'] = rho\n    v['beta'] = beta\n    v['x'] = x\n    v['y'] = y\n    v['z'] = z\n    v['dt'] = dt\n    v['t'] = t\n    return v\n\ndef legacy_step(v, i=0):\n    n = v['n']\n    sigma = v['sigma']\n    rho = v['rho']\n    beta = v['beta']\n    x = v['x']\n    y = v['y']\n    z = v['z']\n    dt = v['dt']\n    t = v['t']\n    _nb = 0\n    _pc = 0\n    while True:\n        _nb += 1\n        if _nb > 100000:\n            raise RuntimeError(\"legacy step: goto budget exceeded (cyclic control flow)\")\n        if _pc == 0:\n            dx = np.float64((sigma * (y - x)))\n            dy = np.float64(((x * (rho - z)) - y))\n            dz = np.float64(((x * y) - (beta * z)))\n            x = np.float64((x + (dt * dx)))\n            y = np.float64((y + (dt * dy)))\n            z = np.float64((z + (dt * dz)))\n            t = np.float64((t + dt))\n            if ((abs(x) > np.float64(1e+30)) or (abs(y) > np.float64(1e+30))):\n                _pc = 1\n            else:\n                _pc = 2\n        elif _pc == 1:\n            break\n        elif _pc == 2:\n            break\n        else:\n            break\n    v['n'] = n\n    v['sigma'] = sigma\n    v['rho'] = rho\n    v['beta'] = beta\n    v['x'] = x\n    v['y'] = y\n    v['z'] = z\n    v['dt'] = dt\n    v['t'] = t\n    return v\n\ndef legacy_steps(v=None):\n    n = v['n']\n    sigma = v['sigma']\n    rho = v['rho']\n    beta = v['beta']\n    x = v['x']\n    y = v['y']\n    z = v['z']\n    dt = v['dt']\n    t = v['t']\n    _s = 1\n    _e = n\n    return max(0, int(_e) - int(_s) + 1)\n\ndef legacy_final(v):\n    x = v['x']\n    y = v['y']\n    z = v['z']\n    return [x, y, z]\n"
+  },
+  "diagnosis": {
+    "system": "lorenz",
+    "family": "ode",
+    "variant": "euler",
+    "series": null,
+    "candidate_source": "executed_source",
+    "fingerprint": {
+      "lambda1": 1.0470854525682567,
+      "corr_dim": 1.6539062075088715,
+      "unique_frac": 1.0,
+      "finite": true
+    },
+    "oracle": {
+      "lambda1": 0.9039961674460054,
+      "corr_dim": 1.8274008263185544,
+      "unique_frac": 1.0,
+      "finite": true
+    },
+    "thresholds": {
+      "lam_noise": 0.02,
+      "lam_rel": 0.05,
+      "d2_rel": 0.15,
+      "cycle_frac": 0.1
+    },
+    "diagnostico": "degradacion_de_orden",
+    "potencial": "integrador_de_mayor_orden",
+    "confianza": 0.95,
+    "evidence": [
+      "dlambda1=0.1431 > tol 0.0452",
+      "dD2=0.1735 vs tol 0.2741",
+      "lower-order integrator shift beyond tolerance"
+    ]
+  }
+}
