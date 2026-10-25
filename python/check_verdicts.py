@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Assert the preregistered verdict table for every diagnosis artefact.
 
-24 assertions over 13 artefacts: 7 stored diagnoses (results/diagnose) +
+25 assertions over 13 artefacts: 7 stored diagnoses (results/diagnose) +
 6 legacy-source reports (results/legacy). Exit 0 only if every verdict AND
 every execution status matches the preregistration; any mismatch is printed
 and fails the run.
@@ -33,9 +33,9 @@ LEGACY = {
     # tiny single-precision dt -> orbit collapses (run goes non-finite)
     "lorenz_euler_single_huge.f.json": ("inestabilidad_numerica",
                                         "executed_source", False),
-    # C driver is metadata-only (no translator for C)
+    # C driver runs the legacy source via the strict C subset front-end
     "lorenz_euler_float.c.json": ("precision_insuficiente",
-                                  "unsupported_language", None),
+                                  "executed_source", True),
     # layer 10: array-valued RK4 (structured path) is still reference-grade
     "lorenz_rk4_array.f.json": ("equivalente", "executed_source", True),
     # layer 10: block IF + GOTO euler runs the legacy source and degrades
@@ -64,8 +64,14 @@ def main():
     for fn, (want_diag, want_status, want_finite) in LEGACY.items():
         p = ROOT / "results" / "legacy" / fn
         d = json.loads(p.read_text())
+        # status + translator folded into one assertion (C uses the
+        # strict_c_subset front-end, the .f sources strict_f77_subset)
+        want_tr = ("strict_c_subset" if fn.endswith(".c.json")
+                   else "strict_f77_subset")
         check(f"{fn} diagnostico", d["diagnosis"]["diagnostico"], want_diag)
-        check(f"{fn} status", d["execution"]["status"], want_status)
+        check(f"{fn} status", (d["execution"]["status"],
+                               d["execution"].get("translator")),
+              (want_status, want_tr))
         if want_finite is not None:
             check(f"{fn} finite", d["diagnosis"]["fingerprint"]["finite"],
                   want_finite)

@@ -68,18 +68,23 @@ python3 python/diagnose_attractor.py --system henon --series some_orbit.txt
 
 `python/parse_legacy_source.py` reads a legacy Fortran 77 / C source,
 extracts language/precision/integrator/dt/system **with line evidence**, and
-then **executes** the F77 file: `python/translate_f77.py` translates the
-strict subset (fixed-form with labels/continuations, scalar and 1-D array
+then **executes** it: `python/translate_f77.py` translates the strict F77
+subset (fixed-form with labels/continuations, scalar and 1-D array
 declarations with literal extents, arithmetic and intrinsics, block and
 single-line `IF`, one `do` loop, `GOTO`/`GO TO` via a program-counter
-dispatch, `write` after `end do`) to Python and runs it under the precision
-declared in the source
-(`REAL` → float32, `REAL*8`/`DOUBLE PRECISION` → float64), so λ1 and D2 come
+dispatch, `write` after `end do`) and `python/translate_c.py` translates the
+strict C subset into fixed-form F77, then reuses the same back-end (one
+`for` loop with `<`/`<=` bounds, if/else-if/else chains, single-line `IF`,
+`+=`/`++` increments, `!=`/`&&`/`||`/`!` operators, `f`-suffix literals;
+refused constructs remap every error back to the original C line). Both run
+under the precision declared in the source
+(`REAL`/`float` → float32, `REAL*8`/`DOUBLE PRECISION`/`double` → float64),
+so λ1 and D2 come
 from the legacy recurrence itself (`candidate_source: executed_source`). The
 translated program is stored in the report as `execution.translated_source`
 and written next to `--out` as `*.translated.py`. Anything outside the
-subset — several loops, non-literal array extents, labelled `DO`, every C
-file — falls back to the
+subset — several loops, non-literal array extents, labelled `DO`, other C
+constructs — falls back to the
 synthetic equivalent variant (`candidate_source: synthetic_equivalent`) with
 an `execution.status` block (`executed_source` | `translation_failed` |
 `unsupported_language`):
@@ -87,11 +92,12 @@ an `execution.status` block (`executed_source` | `translation_failed` |
 ```bash
 python3 python/parse_legacy_source.py fixtures/legacy/lorenz_euler_single.f
 # single + euler + dt=0.01 -> executed_source -> precision_insuficiente (0.90)
+python3 python/test_translate_c.py   # 127 branch checks for the C front-end
 ```
 
-Fixture verdicts (all executed except the C file): rk4/double →
+Fixture verdicts (all 6 executed, F77 and C): rk4/double →
 `equivalente` (λ1 0.895 vs 0.904, D2 1.679 vs 1.827, both inside tolerance);
-euler/single (F77 executed, C synthetic) → `precision_insuficiente`; euler
+euler/single (F77 and C drivers, both λ1=nan) → `precision_insuficiente`; euler
 dt=0.1 → `inestabilidad_numerica`; array-valued RK4 (`lorenz_rk4_array.f`,
 structured path) → `equivalente`; block `IF` + `GOTO` euler
 (`lorenz_euler_goto.f`, pc-dispatch path) → `degradacion_de_orden`
@@ -100,7 +106,7 @@ program's own loop count as transient and the source's own `dt` for
 normalisation.
 Reports: `results/diagnose/*.json`, `results/legacy/*.json`
 (+`*.translated.py`); `python3 python/check_verdicts.py` re-asserts the
-preregistered verdict table (24 assertions / 13 artefacts).
+preregistered verdict table (25 assertions / 13 artefacts).
 
 
 ## Layout
@@ -119,8 +125,10 @@ preregistered verdict table (24 assertions / 13 artefacts).
 | `python/export_hdf5.py` | HDF5 bundle (needs h5py; `.venv` recommended) |
 | `python/diagnose_attractor.py` | fingerprint diagnosis (λ1+D2 vs oracle) |
 | `python/parse_legacy_source.py` | legacy F77/C reader → evidence → verdict |
-| `python/check_verdicts.py` | re-asserts the preregistered verdict table (24/24) |
+| `python/check_verdicts.py` | re-asserts the preregistered verdict table (25/25) |
 | `python/translate_f77.py` | strict F77 subset → Python (executes legacy code) |
+| `python/translate_c.py` | strict C subset → F77 → Python (executes legacy C) |
+| `python/test_translate_c.py` | branch tests for the C front-end (127 checks) |
 | `fixtures/legacy/` | 6 legacy-source fixtures (F77/C), incl. arrays + GOTO |
 | `reports/informe-discrepancias.md` | discrepancy report (Spanish) |
 | `run_all.sh` | one-command suite (5 steps, HDF5 optional) |

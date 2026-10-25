@@ -992,9 +992,12 @@ def lyap_legacy(step, v0, float_vars, n_tr, n_steps, h, d0=1e-8):
     return acc / (n_steps * h)
 
 
-def fingerprint_source(text, entry, h=None):
-    """Run the legacy source and return (candidate_fingerprint, exec_info)."""
-    ns = load_legacy(text, entry["dim"])
+def fingerprint_ns(ns, entry, h=None, translator="strict_f77_subset"):
+    """Run an already-loaded legacy module -> (candidate_fingerprint, info).
+
+    Shared execution driver: any front-end that produces the legacy_* module
+    shape (legacy_init/steps/step + FLOAT_VARS) can be fingerprinted here.
+    """
     v0 = ns["legacy_init"]()
     n_steps = ns["legacy_steps"](v0)
     float_vars = ns["FLOAT_VARS"]
@@ -1045,7 +1048,7 @@ def fingerprint_source(text, entry, h=None):
             "finite": bool(finite)}
     info = {
         "status": "executed_source",
-        "translator": "strict_f77_subset",
+        "translator": translator,
         "mode": ns.get("MODE", "structured"),
         "steps_run": n_steps,
         "recorded_vars": float_vars,
@@ -1056,3 +1059,8 @@ def fingerprint_source(text, entry, h=None):
         "translated_source": ns["__source"],
     }
     return cand, info
+
+
+def fingerprint_source(text, entry, h=None):
+    """Run the legacy F77 source and return (candidate_fingerprint, info)."""
+    return fingerprint_ns(load_legacy(text, entry["dim"]), entry, h)

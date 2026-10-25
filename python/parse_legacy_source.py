@@ -6,17 +6,18 @@ Reads an old .f/.f77/.c file and extracts, WITH line evidence:
   equivalent synthetic variant of diagnose_attractor.py and returns the
   calibrated fingerprint verdict alongside the extracted facts.
 
-HONESTY: an F77 file inside the supported subset is EXECUTED (translated to
-Python by translate_f77.py, then run under the precision declared in the
-source), so lambda1/D2 come from the legacy recurrence itself and the report
-says `candidate_source: executed_source`. Anything the translator refuses
-(several loops, non-literal array extents, labelled DO, ...) and every C
-file falls back to the
+HONESTY: an F77 or C file inside the supported subsets is EXECUTED
+(translated to Python by translate_f77.py / translate_c.py, then run under
+the precision declared in the source), so lambda1/D2 come from the LEGACY
+recurrence itself and the report says `candidate_source: executed_source`.
+Anything the translator refuses (several loops, non-literal array extents,
+labelled DO, while-loops, arrays in C, ...) falls back to the
 synthetic equivalent variant (registry system run under the integrator /
 precision / dt read from the source) and is labelled
 `candidate_source: synthetic_equivalent` plus an `execution.status` block
-(`executed_source` | `translation_failed` | `unsupported_language`) listing
-every assumption made to bridge source metadata to a runnable variant.
+(`executed_source` | `translation_failed` | `unsupported_language`)
+listing every assumption made to bridge source metadata to a runnable
+variant; `unsupported_language` is reserved for languages other than F77/C.
 
 Usage:
   python3 parse_legacy_source.py fixtures/legacy/lorenz_euler_single.f
@@ -32,6 +33,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from diagnose_attractor import (diagnose, load_entry, oracle_fingerprint,
                                 report_for)
+from translate_c import fingerprint_c_source
 from translate_f77 import TranslationError, fingerprint_source
 
 DT_NAMES = ("dt", "delt", "delta", "timestep", "dtime", "tau", "step", "h")
@@ -40,7 +42,7 @@ SYSTEM_KEYWORDS = (
     "clifford", "tinkerbell", "barnsley", "sierpinski", "duffing",
     "fitzhugh", "lozi", "chirikov",
 )
-CONST_SETS = ((("sigma", "rho", "beta"), "lorenz"))
+CONST_SETS = ((("sigma", "rho", "beta"), "lorenz"),)
 
 
 def _lines(text):
@@ -204,15 +206,19 @@ def analyze(path):
         "diagnosis": None,
     }
 
-    # ---- 1st choice: EXECUTE the legacy source itself (strict F77 subset) ----
-    if lang == "fortran" and entry is not None:
+    # ---- 1st choice: EXECUTE the legacy source (strict F77 / C subsets) ----
+    if lang in ("fortran", "c") and entry is not None:
         try:
-            cand, info = fingerprint_source(text, entry, h=dt["value"])
+            if lang == "fortran":
+                cand, info = fingerprint_source(text, entry, h=dt["value"])
+            else:
+                cand, info = fingerprint_c_source(text, entry, h=dt["value"])
         except TranslationError as e:
             rep["execution"] = {"status": "translation_failed",
                                 "error": str(e), "line": e.line,
-                                "note": "outside the supported F77 subset; "
-                                        "diagnosis falls back to the "
+                                "note": "outside the supported "
+                                        f"{'F77' if lang == 'fortran' else 'C'} "
+                                        "subset; diagnosis falls back to the "
                                         "synthetic equivalent variant"}
             notes.append(f"translation refused at line {e.line}: {e}")
         else:
@@ -228,11 +234,11 @@ def analyze(path):
             rep["diagnosis"] = report_for(entry, oracle, cand, variant,
                                           "executed_source")
             return rep
-    elif lang == "c":
+    elif lang not in ("fortran", "c"):
         rep["execution"] = {"status": "unsupported_language",
-                            "note": "C driver not translated: only the "
-                                    "synthetic equivalent variant can be "
-                                    "diagnosed from its metadata"}
+                            "note": f"language {lang!r} has no translator: "
+                                    "only the synthetic equivalent variant "
+                                    "can be diagnosed from its metadata"}
 
     # ---- fallback: synthetic equivalent variant ----
     if dt["value"] is not None and entry is not None and \

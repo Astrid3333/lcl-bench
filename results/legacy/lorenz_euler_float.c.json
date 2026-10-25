@@ -75,21 +75,33 @@
     }
   },
   "variant": "euler_single",
-  "candidate_source": "synthetic_equivalent",
+  "candidate_source": "executed_source",
   "assumptions": [],
   "execution": {
-    "status": "unsupported_language",
-    "note": "C driver not translated: only the synthetic equivalent variant can be diagnosed from its metadata"
+    "status": "executed_source",
+    "translator": "strict_c_subset",
+    "mode": "structured",
+    "steps_run": 50000,
+    "recorded_vars": [
+      "x",
+      "y",
+      "z"
+    ],
+    "lambda1_transient": 50000,
+    "lambda1_window": 100000,
+    "h": 0.01,
+    "translated_lines": 59,
+    "translated_source": "import numpy as np\n\nFLOAT_VARS = ['x', 'y', 'z']\nSTATE_NAMES = ['h', 'sigma', 'rho', 'beta', 'x', 'y', 'z']\nLOOP_VAR = 'i'\nMODE = 'structured'\n\ndef legacy_init():\n    v = {}\n    h = np.float32(np.float32(0.01))\n    sigma = np.float32(np.float32(10.0))\n    rho = np.float32(np.float32(28.0))\n    beta = np.float32((np.float32(8.0) / np.float32(3.0)))\n    x = np.float32(np.float32(1.0))\n    y = np.float32(np.float32(1.0))\n    z = np.float32(np.float32(1.0))\n    v['h'] = h\n    v['sigma'] = sigma\n    v['rho'] = rho\n    v['beta'] = beta\n    v['x'] = x\n    v['y'] = y\n    v['z'] = z\n    return v\n\ndef legacy_step(v, i=0):\n    h = v['h']\n    sigma = v['sigma']\n    rho = v['rho']\n    beta = v['beta']\n    x = v['x']\n    y = v['y']\n    z = v['z']\n    dx = np.float32((sigma * (y - x)))\n    dy = np.float32(((x * (rho - z)) - y))\n    dz = np.float32(((x * y) - (beta * z)))\n    x = np.float32((x + (h * dx)))\n    y = np.float32((y + (h * dy)))\n    z = np.float32((z + (h * dz)))\n    v['h'] = h\n    v['sigma'] = sigma\n    v['rho'] = rho\n    v['beta'] = beta\n    v['x'] = x\n    v['y'] = y\n    v['z'] = z\n    return v\n\ndef legacy_steps(v=None):\n    h = v['h']\n    sigma = v['sigma']\n    rho = v['rho']\n    beta = v['beta']\n    x = v['x']\n    y = v['y']\n    z = v['z']\n    _s = (0 + 1)\n    _e = 50000\n    return max(0, int(_e) - int(_s) + 1)\n"
   },
   "diagnosis": {
     "system": "lorenz",
     "family": "ode",
     "variant": "euler_single",
     "series": null,
-    "candidate_source": "synthetic_variant",
+    "candidate_source": "executed_source",
     "fingerprint": {
       "lambda1": null,
-      "corr_dim": 1.173569734735356,
+      "corr_dim": 1.3437669536670236,
       "unique_frac": 1.0,
       "finite": true
     },
