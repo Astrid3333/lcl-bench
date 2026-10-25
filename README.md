@@ -56,7 +56,10 @@ using the geometric fingerprint (λ1 + correlation dimension D2) and returns
 `degradacion_de_orden`, `diferencia_por_integrador`,
 `degradacion_de_precision`, `inestabilidad_numerica`,
 `diferencia_no_explicada`. Thresholds are calibrated on measurements in
-this repo (λ1 ulp band ±0.015 → LAM_NOISE 0.02; registry rel_tol 0.05/0.08).
+this repo (λ1 ulp band ±0.015 → LAM_NOISE 0.02; registry rel_tol 0.05 for
+λ1; D2_REL 0.15 from the estimator's own noise: 12 consecutive oracle
+windows give D2 1.663–1.828, std 3.3 %, max pairwise 9.4 % — a tight 8 %
+false-mismatched 9 % of *same*-trajectory window pairs).
 
 ```bash
 python3 python/diagnose_attractor.py --system lorenz --variant euler
@@ -64,18 +67,30 @@ python3 python/diagnose_attractor.py --system henon --series some_orbit.txt
 ```
 
 `python/parse_legacy_source.py` reads a legacy Fortran 77 / C source,
-extracts language/precision/integrator/dt/system **with line evidence**,
-maps that metadata onto the equivalent variant, and returns the verdict
-(`candidate_source: synthetic_equivalent` — the legacy file is not executed):
+extracts language/precision/integrator/dt/system **with line evidence**, and
+then **executes** the F77 file: `python/translate_f77.py` translates the
+strict subset (fixed-form, scalar declarations, one `do` loop, `write` after
+`end do`) to Python and runs it under the precision declared in the source
+(`REAL` → float32, `REAL*8`/`DOUBLE PRECISION` → float64), so λ1 and D2 come
+from the legacy recurrence itself (`candidate_source: executed_source`). The
+translated program is stored in the report as `execution.translated_source`
+and written next to `--out` as `*.translated.py`. Anything outside the
+subset — arrays, `GOTO`, several loops, every C file — falls back to the
+synthetic equivalent variant (`candidate_source: synthetic_equivalent`) with
+an `execution.status` block (`executed_source` | `translation_failed` |
+`unsupported_language`):
 
 ```bash
 python3 python/parse_legacy_source.py fixtures/legacy/lorenz_euler_single.f
-# single + euler + dt=0.01 -> euler_single -> precision_insuficiente (conf 0.90)
+# single + euler + dt=0.01 -> executed_source -> precision_insuficiente (0.90)
 ```
 
-Fixture verdicts: rk4/double → `equivalente`; euler/single (F77 and C) →
-`precision_insuficiente`; euler dt=0.1 → `inestabilidad_numerica`.
-Reports: `results/diagnose/*.json`, `results/legacy/*.json`.
+Fixture verdicts (all executed except the C file): rk4/double →
+`equivalente` (λ1 0.895 vs 0.904, D2 1.679 vs 1.827, both inside tolerance);
+euler/single (F77 executed, C synthetic) → `precision_insuficiente`; euler
+dt=0.1 → `inestabilidad_numerica`. λ1 uses the legacy program's own loop
+count as transient and the source's own `dt` for normalisation.
+Reports: `results/diagnose/*.json`, `results/legacy/*.json` (+`*.translated.py`).
 
 
 ## Layout
@@ -93,7 +108,8 @@ Reports: `results/diagnose/*.json`, `results/legacy/*.json`.
 | `python/figures_discrepancy.py` | publication figures for the report |
 | `python/export_hdf5.py` | HDF5 bundle (needs h5py; `.venv` recommended) |
 | `python/diagnose_attractor.py` | fingerprint diagnosis (λ1+D2 vs oracle) |
-| `python/parse_legacy_source.py` | legacy F77/C reader → metadata → verdict |
+| `python/parse_legacy_source.py` | legacy F77/C reader → evidence → verdict |
+| `python/translate_f77.py` | strict F77 subset → Python (executes legacy code) |
 | `fixtures/legacy/` | 4 legacy-source fixtures (F77/C) |
 | `reports/informe-discrepancias.md` | discrepancy report (Spanish) |
 | `run_all.sh` | one-command suite (5 steps, HDF5 optional) |

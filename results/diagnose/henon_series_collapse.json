@@ -3,6 +3,7 @@
   "family": "map",
   "variant": null,
   "series": "/tmp/opencode/const_series.txt",
+  "candidate_source": "series",
   "fingerprint": {
     "lambda1": null,
     "corr_dim": null,
@@ -18,7 +19,7 @@
   "thresholds": {
     "lam_noise": 0.02,
     "lam_rel": 0.05,
-    "d2_rel": 0.08,
+    "d2_rel": 0.15,
     "cycle_frac": 0.1
   },
   "diagnostico": "colapso_por_redondeo",

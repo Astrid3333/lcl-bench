@@ -43,6 +43,7 @@
 10. Capture one reusable lesson in each review.
 11. Numerical benchmarks need the scaling range calibrated to the data size: too-fine box sizes or grids saturate and silently corrupt slopes/eigenvalues. Size the range from n_points and budget an honest error tolerance.
 12. Verify published equations/parameters against a canonical source before debugging the numerics; a wrong equation masquerades as an integrator bug and wastes the cycle.
+13. Calibrate a pass/fail tolerance from the estimator's own repeat-measurement spread (same input, several windows). Below ~2σ of that noise the tolerance manufactures false mismatches; measure it before blaming the code under test.
 
 ## Self-Evolution Loop
 - At the end of each cycle, ask: what could be better?

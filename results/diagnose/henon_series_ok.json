@@ -3,6 +3,7 @@
   "family": "map",
   "variant": null,
   "series": "/tmp/opencode/henon_series.txt",
+  "candidate_source": "series",
   "fingerprint": {
     "lambda1": null,
     "corr_dim": 1.2052870076080127,
@@ -18,13 +19,13 @@
   "thresholds": {
     "lam_noise": 0.02,
     "lam_rel": 0.05,
-    "d2_rel": 0.08,
+    "d2_rel": 0.15,
     "cycle_frac": 0.1
   },
   "diagnostico": "equivalente",
   "potencial": null,
   "confianza": 0.75,
   "evidence": [
-    "D2 1.205 within 8% of oracle 1.205; lambda1 not available from a series alone"
+    "D2 1.205 within 15% of oracle 1.205; lambda1 not available from a series alone"
   ]
 }

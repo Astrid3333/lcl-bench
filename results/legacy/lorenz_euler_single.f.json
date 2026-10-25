@@ -76,16 +76,32 @@
     }
   },
   "variant": "euler_single",
-  "candidate_source": "synthetic_equivalent",
+  "candidate_source": "executed_source",
   "assumptions": [],
+  "execution": {
+    "status": "executed_source",
+    "translator": "strict_f77_subset",
+    "steps_run": 50000,
+    "recorded_vars": [
+      "x",
+      "y",
+      "z"
+    ],
+    "lambda1_transient": 50000,
+    "lambda1_window": 100000,
+    "h": 0.01,
+    "translated_lines": 75,
+    "translated_source": "import numpy as np\n\nFLOAT_VARS = ['x', 'y', 'z']\nSTATE_NAMES = ['n', 'sigma', 'rho', 'beta', 'x', 'y', 'z', 'dt', 't']\nLOOP_VAR = 'i'\n\ndef legacy_init():\n    v = {}\n    n = int(50000)\n    sigma = np.float32(np.float32(10.0))\n    rho = np.float32(np.float32(28.0))\n    beta = np.float32(np.float32(2.6666667))\n    x = np.float32(np.float32(1.0))\n    y = np.float32(np.float32(1.0))\n    z = np.float32(np.float32(1.0))\n    dt = np.float32(np.float32(0.01))\n    t = np.float32(np.float32(0.0))\n    v['n'] = n\n    v['sigma'] = sigma\n    v['rho'] = rho\n    v['beta'] = beta\n    v['x'] = x\n    v['y'] = y\n    v['z'] = z\n    v['dt'] = dt\n    v['t'] = t\n    return v\n\ndef legacy_step(v, i=0):\n    n = v['n']\n    sigma = v['sigma']\n    rho = v['rho']\n    beta = v['beta']\n    x = v['x']\n    y = v['y']\n    z = v['z']\n    dt = v['dt']\n    t = v['t']\n    dx = np.float32((sigma * (y - x)))\n    dy = np.float32(((x * (rho - z)) - y))\n    dz = np.float32(((x * y) - (beta * z)))\n    x = np.float32((x + (dt * dx)))\n    y = np.float32((y + (dt * dy)))\n    z = np.float32((z + (dt * dz)))\n    t = np.float32((t + dt))\n    v['n'] = n\n    v['sigma'] = sigma\n    v['rho'] = rho\n    v['beta'] = beta\n    v['x'] = x\n    v['y'] = y\n    v['z'] = z\n    v['dt'] = dt\n    v['t'] = t\n    return v\n\ndef legacy_steps(v=None):\n    n = v['n']\n    sigma = v['sigma']\n    rho = v['rho']\n    beta = v['beta']\n    x = v['x']\n    y = v['y']\n    z = v['z']\n    dt = v['dt']\n    t = v['t']\n    _s = 1\n    _e = n\n    return max(0, int(_e) - int(_s) + 1)\n\ndef legacy_final(v):\n    x = v['x']\n    y = v['y']\n    z = v['z']\n    return [x, y, z]\n"
+  },
   "diagnosis": {
     "system": "lorenz",
     "family": "ode",
     "variant": "euler_single",
     "series": null,
+    "candidate_source": "executed_source",
     "fingerprint": {
       "lambda1": null,
-      "corr_dim": 1.173569734735356,
+      "corr_dim": 1.3437669536670236,
       "unique_frac": 1.0,
       "finite": true
     },
@@ -98,7 +114,7 @@
     "thresholds": {
       "lam_noise": 0.02,
       "lam_rel": 0.05,
-      "d2_rel": 0.08,
+      "d2_rel": 0.15,
       "cycle_frac": 0.1
     },
     "diagnostico": "precision_insuficiente",

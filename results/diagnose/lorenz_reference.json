@@ -3,6 +3,7 @@
   "family": "ode",
   "variant": "reference",
   "series": null,
+  "candidate_source": "synthetic_variant",
   "fingerprint": {
     "lambda1": 0.9039961674460054,
     "corr_dim": 1.8274008263185544,
@@ -18,13 +19,14 @@
   "thresholds": {
     "lam_noise": 0.02,
     "lam_rel": 0.05,
-    "d2_rel": 0.08,
+    "d2_rel": 0.15,
     "cycle_frac": 0.1
   },
   "diagnostico": "equivalente",
   "potencial": null,
   "confianza": 0.95,
   "evidence": [
-    "dlambda1=0 <= 0.0452"
+    "dlambda1=0 <= 0.0452",
+    "dD2=0 <= 0.2741 (D2_REL=15% calibrated on estimator noise)"
   ]
 }

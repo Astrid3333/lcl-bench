@@ -3,6 +3,7 @@
   "family": "ode",
   "variant": "euler",
   "series": null,
+  "candidate_source": "synthetic_variant",
   "fingerprint": {
     "lambda1": 1.040030166573521,
     "corr_dim": 1.8933195873714135,
@@ -18,7 +19,7 @@
   "thresholds": {
     "lam_noise": 0.02,
     "lam_rel": 0.05,
-    "d2_rel": 0.08,
+    "d2_rel": 0.15,
     "cycle_frac": 0.1
   },
   "diagnostico": "degradacion_de_orden",
@@ -26,7 +27,7 @@
   "confianza": 0.95,
   "evidence": [
     "dlambda1=0.136 > tol 0.0452",
-    "dD2=0.06592 vs tol 0.1462",
+    "dD2=0.06592 vs tol 0.2741",
     "lower-order integrator shift beyond tolerance"
   ]
 }

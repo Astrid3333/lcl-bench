@@ -32,7 +32,13 @@ Thresholds calibrated on this repo's measurements (NOT guessed):
   LAM_NOISE   0.02   abs floor; measured ulp band on lambda1 was ~+-0.015
                      (aizawa 1e-16 sweep, duffing 1-ulp sweep)
   LAM_REL     0.05   registry ODE lyap1 rel_tol
-  D2_REL      0.08   registry corr_dim rel_tol (henon reference)
+  D2_REL      0.15   estimator noise, measured: 12 consecutive oracle
+                     windows (4000 pts, tail 2000) give D2 = 1.663..1.828,
+                     std 0.058 = 3.3% rel; pairwise |dD2|/mean: median 3.7%,
+                     max 9.4%, so 8% (registry henon rel_tol) false-mismatched
+                     9% of SAME-trajectory window pairs. 15% ~= 4.6 sigma of
+                     that noise, still far below genuine degradations
+                     (euler_single measured 36% off).
   CYCLE_FRAC  0.10   unique-point fraction of the tail below this = cycle
 
 Usage:
@@ -56,7 +62,7 @@ REGISTRY = ROOT / "registries" / "attractors.json"
 
 LAM_NOISE = 0.02
 LAM_REL = 0.05
-D2_REL = 0.08
+D2_REL = 0.15
 CYCLE_FRAC = 0.10
 N_POINTS_D2 = 4000
 N_RADII = 30
@@ -311,8 +317,11 @@ def classify(entry, oracle, cand, variant):
         m_d2 = 1.0 if tol_d2 is None or d2_c is None else \
             1.0 - abs(d2_c - d2_o) / tol_d2
         conf = 0.85 + 0.10 * max(0.0, min(m_lam, m_d2))
-        return ("equivalente", None, round(conf, 2),
-                [f"dlambda1={dlam:.4g} <= {tol_lam:.4g}"])
+        ev = [f"dlambda1={dlam:.4g} <= {tol_lam:.4g}"]
+        if tol_d2 is not None and d2_c is not None:
+            ev.append(f"dD2={abs(d2_c - d2_o):.4g} <= {tol_d2:.4g} "
+                      f"(D2_REL={D2_REL:.0%} calibrated on estimator noise)")
+        return ("equivalente", None, round(conf, 2), ev)
 
     if lam_o > tol_lam and lam_c <= LAM_NOISE:
         if tol_d2 is None or d2_c is None or abs(d2_c - d2_o) <= 1.5 * tol_d2:
@@ -344,21 +353,17 @@ def classify(entry, oracle, cand, variant):
             0.70, ev + notes)
 
 
-def diagnose(system, variant="reference", series=None):
-    entry = load_entry(system)
-    oracle = oracle_fingerprint(entry)
-    if series is not None:
-        cand = series_fingerprint(series, entry)
-        variant = None
-    else:
-        cand = candidate_fingerprint(entry, variant)
+def report_for(entry, oracle, cand, variant, candidate_source, series=None):
+    """Build the verdict report for any candidate fingerprint (synthetic
+    variant, executed legacy source, or time series)."""
     diagnostico, potencial, confianza, evidence = classify(
         entry, oracle, cand, variant)
     return {
-        "system": system,
+        "system": entry["name"],
         "family": entry["family"],
         "variant": variant,
         "series": str(series) if series else None,
+        "candidate_source": candidate_source,
         "fingerprint": {k: (None if isinstance(v, float) and not np.isfinite(v)
                             else v) for k, v in cand.items()},
         "oracle": {k: (None if isinstance(v, float) and not np.isfinite(v)
@@ -370,6 +375,16 @@ def diagnose(system, variant="reference", series=None):
         "confianza": confianza,
         "evidence": evidence,
     }
+
+
+def diagnose(system, variant="reference", series=None):
+    entry = load_entry(system)
+    oracle = oracle_fingerprint(entry)
+    if series is not None:
+        cand = series_fingerprint(series, entry)
+        return report_for(entry, oracle, cand, None, "series", series=series)
+    cand = candidate_fingerprint(entry, variant)
+    return report_for(entry, oracle, cand, variant, "synthetic_variant")
 
 
 def main(argv=None):

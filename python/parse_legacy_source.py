@@ -6,11 +6,16 @@ Reads an old .f/.f77/.c file and extracts, WITH line evidence:
   equivalent synthetic variant of diagnose_attractor.py and returns the
   calibrated fingerprint verdict alongside the extracted facts.
 
-HONESTY: the legacy file itself is NOT executed (an unmodified F77/C main is
-not runnable here). The diagnosis runs the registry system under the
-integrator / precision / dt read from the source; the report says
-`candidate_source: synthetic_equivalent` and lists every assumption made to
-bridge source metadata to a runnable variant.
+HONESTY: an F77 file inside the supported subset is EXECUTED (translated to
+Python by translate_f77.py, then run under the precision declared in the
+source), so lambda1/D2 come from the legacy recurrence itself and the report
+says `candidate_source: executed_source`. Anything the translator refuses
+(arrays, GOTO, multiple loops, ...) and every C file falls back to the
+synthetic equivalent variant (registry system run under the integrator /
+precision / dt read from the source) and is labelled
+`candidate_source: synthetic_equivalent` plus an `execution.status` block
+(`executed_source` | `translation_failed` | `unsupported_language`) listing
+every assumption made to bridge source metadata to a runnable variant.
 
 Usage:
   python3 parse_legacy_source.py fixtures/legacy/lorenz_euler_single.f
@@ -24,7 +29,9 @@ from collections import Counter
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from diagnose_attractor import diagnose, load_entry
+from diagnose_attractor import (diagnose, load_entry, oracle_fingerprint,
+                                report_for)
+from translate_f77 import TranslationError, fingerprint_source
 
 DT_NAMES = ("dt", "delt", "delta", "timestep", "dtime", "tau", "step", "h")
 SYSTEM_KEYWORDS = (
@@ -184,12 +191,6 @@ def analyze(path):
     entry = load_entry(sysm["name"]) if sysm["name"] else None
     variant, notes = map_variant(entry, prec["value"], integ["value"],
                                  dt["value"])
-    if dt["value"] is not None and entry is not None and \
-            entry["family"] == "ode" and \
-            abs(dt["value"] - entry.get("dt_lyap", dt["value"])) > 1e-15:
-        notes.append(f"source dt={dt['value']:g} differs from registry "
-                     f"dt_lyap={entry.get('dt_lyap'):g}; diagnosis uses the "
-                     "registry dt for comparability")
     rep = {
         "file": str(path),
         "language": lang,
@@ -198,8 +199,47 @@ def analyze(path):
         "variant": variant,
         "candidate_source": "synthetic_equivalent",
         "assumptions": notes,
+        "execution": None,
         "diagnosis": None,
     }
+
+    # ---- 1st choice: EXECUTE the legacy source itself (strict F77 subset) ----
+    if lang == "fortran" and entry is not None:
+        try:
+            cand, info = fingerprint_source(text, entry, h=dt["value"])
+        except TranslationError as e:
+            rep["execution"] = {"status": "translation_failed",
+                                "error": str(e), "line": e.line,
+                                "note": "outside the supported F77 subset; "
+                                        "diagnosis falls back to the "
+                                        "synthetic equivalent variant"}
+            notes.append(f"translation refused at line {e.line}: {e}")
+        else:
+            if dt["value"] is not None and entry["family"] == "ode" and \
+                    abs(dt["value"] - entry.get("dt_lyap", dt["value"])) > 1e-15:
+                notes.append(f"lambda1 normalised with the SOURCE dt="
+                             f"{dt['value']:g} (registry dt_lyap="
+                             f"{entry.get('dt_lyap'):g}): the legacy program "
+                             "was run with its own timestep")
+            oracle = oracle_fingerprint(entry)
+            rep["execution"] = info
+            rep["candidate_source"] = "executed_source"
+            rep["diagnosis"] = report_for(entry, oracle, cand, variant,
+                                          "executed_source")
+            return rep
+    elif lang == "c":
+        rep["execution"] = {"status": "unsupported_language",
+                            "note": "C driver not translated: only the "
+                                    "synthetic equivalent variant can be "
+                                    "diagnosed from its metadata"}
+
+    # ---- fallback: synthetic equivalent variant ----
+    if dt["value"] is not None and entry is not None and \
+            entry["family"] == "ode" and \
+            abs(dt["value"] - entry.get("dt_lyap", dt["value"])) > 1e-15:
+        notes.append(f"source dt={dt['value']:g} differs from registry "
+                     f"dt_lyap={entry.get('dt_lyap'):g}; diagnosis uses the "
+                     "registry dt for comparability")
     if variant:
         rep["diagnosis"] = diagnose(sysm["name"], variant)
     else:
@@ -216,7 +256,11 @@ def main(argv=None):
     rep = analyze(args.file)
     text = json.dumps(rep, indent=2)
     if args.out:
-        Path(args.out).write_text(text + "\n")
+        out = Path(args.out)
+        out.write_text(text + "\n")
+        src = (rep.get("execution") or {}).get("translated_source")
+        if src:
+            out.with_suffix(".translated.py").write_text(src)
     print(text)
     return 0
 
