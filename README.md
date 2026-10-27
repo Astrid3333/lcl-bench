@@ -61,6 +61,18 @@ this repo (λ1 ulp band ±0.015 → LAM_NOISE 0.02; registry rel_tol 0.05 for
 windows give D2 1.663–1.828, std 3.3 %, max pairwise 9.4 % — a tight 8 %
 false-mismatched 9 % of *same*-trajectory window pairs).
 
+`--series` also measures λ1 from the trajectory alone
+(`rosenstein_series`: z-scored metric so neutral ramp coordinates such as an
+appended phase cannot dominate, Theiler window, median of per-pair
+divergence slopes). Series λ1 is validated against the oracle only when the
+neighbor distance is dense enough (`nn_med/D ≤ 5e-3`, the density gate) and
+is compared under `LAM_REL_SERIES 0.10` (measured worst-case error 3.3 % on
+realistic-size references); otherwise λ1 stays `None` with the reason in the
+report and the verdict falls back to D2. Scalar (1-column) series are
+delay-embedded (m=3, τ=first ACF lag < 1/e) for λ1 only — D2 and
+unique_frac stay on the raw rows. Use `--series-dt` to override the sample
+spacing (default: 1.0 for maps, `dt_lyap` for ODEs).
+
 ```bash
 python3 python/diagnose_attractor.py --system lorenz --variant euler
 python3 python/diagnose_attractor.py --system henon --series some_orbit.txt

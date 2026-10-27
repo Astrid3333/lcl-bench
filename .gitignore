@@ -15,3 +15,4 @@ fortran/f_runner_asan
 fortran/results/
 .venv/
 pasted-*.txt
+tmp_*

@@ -2,11 +2,15 @@
   "system": "henon",
   "family": "map",
   "variant": null,
-  "series": "/tmp/opencode/henon_series.txt",
+  "series": "fixtures/series/henon_reference.txt",
   "candidate_source": "series",
   "fingerprint": {
-    "lambda1": null,
-    "corr_dim": 1.2052870076080127,
+    "lambda1": 0.42044081367649566,
+    "lambda1_method": "rosenstein_series",
+    "lambda1_reason": null,
+    "series_dt": 1.0,
+    "series_mode": true,
+    "corr_dim": 1.2050403535310181,
     "unique_frac": 1.0,
     "finite": true
   },
@@ -19,13 +23,16 @@
   "thresholds": {
     "lam_noise": 0.02,
     "lam_rel": 0.05,
+    "lam_rel_series": 0.1,
     "d2_rel": 0.15,
     "cycle_frac": 0.1
   },
   "diagnostico": "equivalente",
   "potencial": null,
-  "confianza": 0.75,
+  "confianza": 0.85,
   "evidence": [
-    "D2 1.205 within 15% of oracle 1.205; lambda1 not available from a series alone"
+    "lambda1 via single-series estimator (rosenstein_series, dt=1.0, rel_tol=10%)",
+    "dlambda1=0.00125 <= 0.04192",
+    "dD2=3.571e-09 <= 0.1808 (D2_REL=15% calibrated on estimator noise)"
   ]
 }

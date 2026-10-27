@@ -32,6 +32,13 @@ Thresholds calibrated on this repo's measurements (NOT guessed):
   LAM_NOISE   0.02   abs floor; measured ulp band on lambda1 was ~+-0.015
                      (aizawa 1e-16 sweep, duffing 1-ulp sweep)
   LAM_REL     0.05   registry ODE lyap1 rel_tol
+  LAM_REL_SERIES 0.10 series-mode lambda1 rel_tol: median-of-pairs
+                     Rosenstein on realistic-size references errs <= 3.3%
+                     (henon 0.3%, logistic 1.6%, lorenz 3.3%, lorenz scalar
+                     embedding 3.0%); 10% = 3x margin. Paired with the
+                     density gate SERIES_DENSITY_GATE (nn_med/D <= 5e-3,
+                     separates accepted lorenz 0.0036 from rejected
+                     rossler 0.0169 / aizawa 0.0135).
   D2_REL      0.15   estimator noise, measured: 12 consecutive oracle
                      windows (4000 pts, tail 2000) give D2 = 1.663..1.828,
                      std 0.058 = 3.3% rel; pairwise |dD2|/mean: median 3.7%,
@@ -55,18 +62,31 @@ import numpy as np
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from handles import map_step, rhs
-from kernels import lyap_map, lyap_ode, corr_dim_grassberger
+from kernels import lyap_map, lyap_ode, corr_dim_grassberger, delay_embed, lyap1_series
 
 ROOT = Path(__file__).resolve().parent.parent
 REGISTRY = ROOT / "registries" / "attractors.json"
 
 LAM_NOISE = 0.02
 LAM_REL = 0.05
+LAM_REL_SERIES = 0.10
 D2_REL = 0.15
 CYCLE_FRAC = 0.10
 N_POINTS_D2 = 4000
 N_RADII = 30
 C_LO, C_HI = 0.01, 0.5
+
+SERIES_WINDOW = 20
+SERIES_SAT = 0.2
+SERIES_T_MIN = 0
+SERIES_MIN_POINTS = 6
+SERIES_MIN_SPAN = 8
+SERIES_MIN_PAIRS = 100
+SERIES_MAX_ANCHORS = 2000
+SERIES_T_MAX = 5000
+SERIES_DENSITY_GATE = 5e-3
+SERIES_EMBED_M = 3
+SERIES_METHOD = "rosenstein_series"
 
 VARIANTS = ("reference", "float32", "euler", "euler_large", "euler_single")
 
@@ -245,11 +265,33 @@ def candidate_fingerprint(entry, variant):
             "unique_frac": float(frac), "finite": bool(finite)}
 
 
-def series_fingerprint(path, entry):
-    pts = np.loadtxt(path)
-    pts = np.atleast_2d(pts)
+def series_fingerprint(path, entry, dt=None):
+    pts = np.loadtxt(path, ndmin=2)
     finite = bool(np.all(np.isfinite(pts)))
-    return {"lambda1": None, "corr_dim": fingerprint_d2(pts, finite),
+    h = float(dt) if dt is not None else (
+        1.0 if entry["family"] == "map" else float(entry["dt_lyap"]))
+    lam, info = None, {"reason": "orbit left the finite box (non-finite values)"}
+    if finite:
+        lam_pts = pts
+        if pts.shape[1] == 1:
+            emb, _ = delay_embed(pts[:, 0], SERIES_EMBED_M)
+            if emb.shape[0] >= 10:
+                lam_pts = emb
+        if lam_pts.shape[0] >= 10:
+            lam, info = lyap1_series(
+                lam_pts[lam_pts.shape[0] // 2:], h, window=SERIES_WINDOW,
+                sat_frac=SERIES_SAT, t_min=SERIES_T_MIN,
+                min_points=SERIES_MIN_POINTS, min_span=SERIES_MIN_SPAN,
+                min_pairs=SERIES_MIN_PAIRS, max_anchors=SERIES_MAX_ANCHORS,
+                t_max=SERIES_T_MAX, density_gate=SERIES_DENSITY_GATE)
+        else:
+            info = {"reason": f"series too short ({pts.shape[0]} rows < 10)"}
+    return {"lambda1": lam,
+            "lambda1_method": SERIES_METHOD if lam is not None else None,
+            "lambda1_reason": None if lam is not None else info.get("reason"),
+            "series_dt": h,
+            "series_mode": True,
+            "corr_dim": fingerprint_d2(pts, finite),
             "unique_frac": None if not finite else
             float(np.unique(np.round(pts[pts.shape[0] // 2:], 12),
                             axis=0).shape[0] / (pts.shape[0] - pts.shape[0] // 2)),
@@ -260,12 +302,14 @@ def classify(entry, oracle, cand, variant):
     notes = []
     lam_o, d2_o = oracle["lambda1"], oracle["corr_dim"]
     lam_c, d2_c = cand["lambda1"], cand["corr_dim"]
+    series_mode = bool(cand.get("series_mode"))
 
     if not cand["finite"]:
         return ("inestabilidad_numerica", "reducir_dt_o_integrador_estable",
                 0.95, ["orbit left the finite box (non-finite values)"])
 
-    tol_lam = max(LAM_NOISE, LAM_REL * abs(lam_o))
+    rel_lam = LAM_REL_SERIES if series_mode else LAM_REL
+    tol_lam = max(LAM_NOISE, rel_lam * abs(lam_o))
     tol_d2 = D2_REL * abs(d2_o) if d2_o is not None else None
 
     # Orbit degradation: tail unique-count far below the oracle's
@@ -301,14 +345,16 @@ def classify(entry, oracle, cand, variant):
                       "its order shift is masked while lambda1 is unmeasurable")
         return ("precision_insuficiente", "migrar_a_double", 0.90, ev)
 
-    if lam_c is None:  # series mode: lambda1 unavailable
+    if lam_c is None:  # series mode: lambda1 not measurable from this series
+        why = cand.get("lambda1_reason") or "not available from a series alone"
         if tol_d2 is not None and d2_c is not None and \
                 abs(d2_c - d2_o) <= tol_d2:
             return ("equivalente", None, 0.75,
                     [f"D2 {d2_c:.3f} within {D2_REL:.0%} of oracle {d2_o:.3f}; "
-                     "lambda1 not available from a series alone"])
+                     f"lambda1 {why}"])
         return ("diferencia_no_explicada", "verificar_parametros_o_ecuaciones",
-                0.70, [f"corr_dim {d2_c} vs oracle {d2_o} beyond tolerance"])
+                0.70, [f"corr_dim {d2_c} vs oracle {d2_o} beyond tolerance; "
+                       f"lambda1 {why}"])
 
     dlam = abs(lam_c - lam_o)
     if dlam <= tol_lam and (tol_d2 is None or d2_c is None or
@@ -316,12 +362,18 @@ def classify(entry, oracle, cand, variant):
         m_lam = 1.0 - dlam / tol_lam
         m_d2 = 1.0 if tol_d2 is None or d2_c is None else \
             1.0 - abs(d2_c - d2_o) / tol_d2
-        conf = 0.85 + 0.10 * max(0.0, min(m_lam, m_d2))
+        m = max(0.0, min(m_lam, m_d2))
+        conf = round((0.75 + 0.10 * m) if series_mode else (0.85 + 0.10 * m), 2)
         ev = [f"dlambda1={dlam:.4g} <= {tol_lam:.4g}"]
+        if series_mode:
+            ev.insert(0, f"lambda1 via single-series estimator "
+                         f"({cand.get('lambda1_method')}, "
+                         f"dt={cand.get('series_dt')}, "
+                         f"rel_tol={LAM_REL_SERIES:.0%})")
         if tol_d2 is not None and d2_c is not None:
             ev.append(f"dD2={abs(d2_c - d2_o):.4g} <= {tol_d2:.4g} "
                       f"(D2_REL={D2_REL:.0%} calibrated on estimator noise)")
-        return ("equivalente", None, round(conf, 2), ev)
+        return ("equivalente", None, conf, ev)
 
     if lam_o > tol_lam and lam_c <= LAM_NOISE:
         if tol_d2 is None or d2_c is None or abs(d2_c - d2_o) <= 1.5 * tol_d2:
@@ -369,6 +421,7 @@ def report_for(entry, oracle, cand, variant, candidate_source, series=None):
         "oracle": {k: (None if isinstance(v, float) and not np.isfinite(v)
                        else v) for k, v in oracle.items()},
         "thresholds": {"lam_noise": LAM_NOISE, "lam_rel": LAM_REL,
+                       "lam_rel_series": LAM_REL_SERIES,
                        "d2_rel": D2_REL, "cycle_frac": CYCLE_FRAC},
         "diagnostico": diagnostico,
         "potencial": potencial,
@@ -377,11 +430,11 @@ def report_for(entry, oracle, cand, variant, candidate_source, series=None):
     }
 
 
-def diagnose(system, variant="reference", series=None):
+def diagnose(system, variant="reference", series=None, series_dt=None):
     entry = load_entry(system)
     oracle = oracle_fingerprint(entry)
     if series is not None:
-        cand = series_fingerprint(series, entry)
+        cand = series_fingerprint(series, entry, dt=series_dt)
         return report_for(entry, oracle, cand, None, "series", series=series)
     cand = candidate_fingerprint(entry, variant)
     return report_for(entry, oracle, cand, variant, "synthetic_variant")
@@ -394,10 +447,13 @@ def main(argv=None):
                     help="synthetic candidate degradation (omit when --series)")
     ap.add_argument("--series", default=None,
                     help="external trajectory file (npy/txt, rows=states)")
+    ap.add_argument("--series-dt", type=float, default=None,
+                    help="sample spacing of --series (default: 1.0 for maps, "
+                         "dt_lyap for ODEs)")
     ap.add_argument("--out", default=None, help="write report JSON here")
     args = ap.parse_args(argv)
     rep = diagnose(args.system, None if args.series else args.variant,
-                   series=args.series)
+                   series=args.series, series_dt=args.series_dt)
     text = json.dumps(rep, indent=2)
     if args.out:
         Path(args.out).write_text(text + "\n")

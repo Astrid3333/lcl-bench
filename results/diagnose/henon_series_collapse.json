@@ -2,10 +2,14 @@
   "system": "henon",
   "family": "map",
   "variant": null,
-  "series": "/tmp/opencode/const_series.txt",
+  "series": "fixtures/series/const_series.txt",
   "candidate_source": "series",
   "fingerprint": {
     "lambda1": null,
+    "lambda1_method": null,
+    "lambda1_reason": "constant series (zero extent)",
+    "series_dt": 1.0,
+    "series_mode": true,
     "corr_dim": null,
     "unique_frac": 0.0005,
     "finite": true
@@ -19,6 +23,7 @@
   "thresholds": {
     "lam_noise": 0.02,
     "lam_rel": 0.05,
+    "lam_rel_series": 0.1,
     "d2_rel": 0.15,
     "cycle_frac": 0.1
   },
