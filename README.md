@@ -68,7 +68,9 @@ divergence slopes). Series λ1 is validated against the oracle only when the
 neighbor distance is dense enough (`nn_med/D ≤ 5e-3`, the density gate) and
 is compared under `LAM_REL_SERIES 0.10` (measured worst-case error 3.3 % on
 realistic-size references); otherwise λ1 stays `None` with the reason in the
-report and the verdict falls back to D2. Scalar (1-column) series are
+report and the verdict falls back to D2 under `D2_REL_SERIES 0.35`
+(measured window max err 32.7 % on rossler at N=1000; ≤23.6 % at N=2000).
+Scalar (1-column) series are
 delay-embedded (m=3, τ=first ACF lag < 1/e) for λ1 only — D2 and
 unique_frac stay on the raw rows. Use `--series-dt` to override the sample
 spacing (default: 1.0 for maps, `dt_lyap` for ODEs).

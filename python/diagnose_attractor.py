@@ -39,14 +39,25 @@ Thresholds calibrated on this repo's measurements (NOT guessed):
                      density gate SERIES_DENSITY_GATE (nn_med/D <= 5e-3,
                      separates accepted lorenz 0.0036 from rejected
                      rossler 0.0169 / aizawa 0.0135).
-  D2_REL      0.15   estimator noise, measured: 12 consecutive oracle
-                     windows (4000 pts, tail 2000) give D2 = 1.663..1.828,
-                     std 0.058 = 3.3% rel; pairwise |dD2|/mean: median 3.7%,
-                     max 9.4%, so 8% (registry henon rel_tol) false-mismatched
-                     9% of SAME-trajectory window pairs. 15% ~= 4.6 sigma of
-                     that noise, still far below genuine degradations
-                     (euler_single measured 36% off).
-  CYCLE_FRAC  0.10   unique-point fraction of the tail below this = cycle
+   D2_REL      0.15   estimator noise on the 4000-pt oracle tail: 12
+                      consecutive oracle windows (tail 2000) give
+                      D2 = 1.663..1.828, std 0.058 = 3.3% rel; pairwise
+                      |dD2|/mean: median 3.7%, max 9.4%, so 8% (registry
+                      henon rel_tol) false-mismatched 9% of SAME-trajectory
+                      window pairs. 15% ~= 4.6 sigma of that noise, still
+                      far below genuine degradations (euler_single measured
+                      36% off).
+   D2_REL_SERIES 0.35 series-mode D2 rel_tol (calibrated on window
+                      dispersion at N=1000 after the 4000-pt oracle, the
+                      regime the D2 fallback actually sees when lambda1 is
+                      unmeasurable): henon max 5.5%, logistic 8.2%,
+                      lorenz 21.4%, rossler 32.7%, thomas 4.8%. 35% =
+                      ~1.07x the worst measured (rossler), covering the
+                      ODE attractors whose shorter effective correlation
+                      length makes D2 noisier at fixed N. N=4000 segments
+                      trivially match the oracle (same tail), N=2000 errs
+                      <= 23.6%, so the binding case is N<=2000.
+   CYCLE_FRAC  0.10   unique-point fraction of the tail below this = cycle
 
 Usage:
   python3 diagnose_attractor.py --system lorenz --variant euler
@@ -71,6 +82,7 @@ LAM_NOISE = 0.02
 LAM_REL = 0.05
 LAM_REL_SERIES = 0.10
 D2_REL = 0.15
+D2_REL_SERIES = 0.35
 CYCLE_FRAC = 0.10
 N_POINTS_D2 = 4000
 N_RADII = 30
@@ -310,7 +322,8 @@ def classify(entry, oracle, cand, variant):
 
     rel_lam = LAM_REL_SERIES if series_mode else LAM_REL
     tol_lam = max(LAM_NOISE, rel_lam * abs(lam_o))
-    tol_d2 = D2_REL * abs(d2_o) if d2_o is not None else None
+    rel_d2 = D2_REL_SERIES if series_mode else D2_REL
+    tol_d2 = rel_d2 * abs(d2_o) if d2_o is not None else None
 
     # Orbit degradation: tail unique-count far below the oracle's
     # (measured: logistic float32 uf=0.2155 vs oracle 1.0 = genuine
@@ -350,7 +363,7 @@ def classify(entry, oracle, cand, variant):
         if tol_d2 is not None and d2_c is not None and \
                 abs(d2_c - d2_o) <= tol_d2:
             return ("equivalente", None, 0.75,
-                    [f"D2 {d2_c:.3f} within {D2_REL:.0%} of oracle {d2_o:.3f}; "
+                    [f"D2 {d2_c:.3f} within {rel_d2:.0%} of oracle {d2_o:.3f}; "
                      f"lambda1 {why}"])
         return ("diferencia_no_explicada", "verificar_parametros_o_ecuaciones",
                 0.70, [f"corr_dim {d2_c} vs oracle {d2_o} beyond tolerance; "
@@ -372,7 +385,8 @@ def classify(entry, oracle, cand, variant):
                          f"rel_tol={LAM_REL_SERIES:.0%})")
         if tol_d2 is not None and d2_c is not None:
             ev.append(f"dD2={abs(d2_c - d2_o):.4g} <= {tol_d2:.4g} "
-                      f"(D2_REL={D2_REL:.0%} calibrated on estimator noise)")
+                      f"({('D2_REL_SERIES' if series_mode else 'D2_REL')}="
+                      f"{rel_d2:.0%} calibrated on estimator noise)")
         return ("equivalente", None, conf, ev)
 
     if lam_o > tol_lam and lam_c <= LAM_NOISE:
@@ -422,7 +436,8 @@ def report_for(entry, oracle, cand, variant, candidate_source, series=None):
                        else v) for k, v in oracle.items()},
         "thresholds": {"lam_noise": LAM_NOISE, "lam_rel": LAM_REL,
                        "lam_rel_series": LAM_REL_SERIES,
-                       "d2_rel": D2_REL, "cycle_frac": CYCLE_FRAC},
+                       "d2_rel": D2_REL, "d2_rel_series": D2_REL_SERIES,
+                       "cycle_frac": CYCLE_FRAC},
         "diagnostico": diagnostico,
         "potencial": potencial,
         "confianza": confianza,

@@ -13,8 +13,9 @@ diferencia_no_explicada, colapso, inestabilidad), plus the CLI.
 
 Calibration this pins (see diagnose_attractor module docstring):
 realistic-size references err <= 3.3% (henon 0.3%, logistic 1.8%,
-lorenz 3.3%); LAM_REL_SERIES=0.10; density gate nn_med/D <= 5e-3
-(lorenz_sparse tail d0D=0.0100 must decline).
+lorenz 3.3%); LAM_REL_SERIES=0.10; D2_REL_SERIES=0.35 (series-D2
+window max err 32.7% rossler; N=2000 <=23.6%); density gate
+nn_med/D <= 5e-3 (lorenz_sparse tail d0D=0.0100 must decline).
 
 Usage: python3 python/test_series_lambda.py   # exit 0 only if all pass
 """
@@ -228,6 +229,24 @@ def test_classify_series() -> None:
     check("classify: sparse evidence carries the gate reason",
           any("density gate" in e for e in d[3]), str(d[3]))
 
+    d2ok = dict(good)
+    d2ok["lambda1"] = None
+    d2ok["lambda1_reason"] = "density gate"
+    d2ok["corr_dim"] = o["corr_dim"] * 1.20
+    d = da.classify(entry, o, d2ok, None)
+    check("classify: D2-only 20% within D2_REL_SERIES -> equivalente",
+          d[0] == "equivalente" and d[2] == 0.75, str(d))
+    check("classify: D2-only evidence names the 35% tolerance",
+          any("35%" in e for e in d[3]), str(d[3]))
+
+    d2far = dict(good)
+    d2far["lambda1"] = None
+    d2far["lambda1_reason"] = "density gate"
+    d2far["corr_dim"] = o["corr_dim"] * 1.40
+    d = da.classify(entry, o, d2far, None)
+    check("classify: D2-only 40% beyond D2_REL_SERIES -> diferencia_no_explicada",
+          d[0] == "diferencia_no_explicada", str(d))
+
     d = da.classify(entry, o, fp("henon", "const_series.txt"), None)
     check("classify: const -> colapso_por_redondeo",
           d[0] == "colapso_por_redondeo" and
@@ -263,6 +282,8 @@ def test_classify_series() -> None:
     rep = da.report_for(entry, o, good, None, "series", series="x.txt")
     check("report: thresholds expose lam_rel_series",
           rep["thresholds"].get("lam_rel_series") == 0.10)
+    check("report: thresholds expose d2_rel_series",
+          rep["thresholds"].get("d2_rel_series") == 0.35)
     check("report: JSON round-trip keeps verdict",
           json.loads(json.dumps(rep))["diagnostico"] == "equivalente")
 
