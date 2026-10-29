@@ -62,8 +62,8 @@ def main():
         r = c.request("tools/list")
         names = sorted(t["name"] for t in r["result"]["tools"])
         check("tools/list", names, [
-            "check_verdicts", "diagnose", "hub", "registry_get",
-            "registry_list", "run_entry"])
+            "check_verdicts", "diagnose", "hub", "legacy_analyze",
+            "registry_get", "registry_list", "run_entry"])
         check("tool schema shape",
               all("inputSchema" in t for t in r["result"]["tools"]), True)
 
@@ -98,6 +98,28 @@ def main():
             "name": "diagnose",
             "arguments": {"system": "lorenz", "variant": "not_a_variant"}})
         check("diagnose bad variant isError", r["result"]["isError"], True)
+
+        r = c.request("tools/call", {
+            "name": "legacy_analyze",
+            "arguments": {"file": "fixtures/legacy/lorenz_euler_single.f"}})
+        check("legacy_analyze isError", r["result"]["isError"], False)
+        payload = json.loads(r["result"]["content"][0]["text"])
+        check("legacy_analyze language", payload["language"], "fortran")
+        check("legacy_analyze candidate_source",
+              payload["candidate_source"] in
+              {"executed_source", "synthetic_equivalent"}, True)
+        check("legacy_analyze diagnosis dict",
+              isinstance(payload["diagnosis"], dict), True)
+        check("legacy_analyze wall_s present", "wall_s" in payload, True)
+
+        r = c.request("tools/call", {
+            "name": "legacy_analyze",
+            "arguments": {"file": "fixtures/legacy/no_such_file.f"}})
+        check("legacy_analyze missing isError", r["result"]["isError"], True)
+
+        r = c.request("tools/call", {
+            "name": "legacy_analyze", "arguments": {}})
+        check("legacy_analyze no file isError", r["result"]["isError"], True)
 
         r = c.request("tools/call", {"name": "unknown", "arguments": {}})
         check("unknown tool error code", r["error"]["code"], -32602)

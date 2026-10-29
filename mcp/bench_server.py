@@ -183,6 +183,25 @@ def tool_check_verdicts(args: dict) -> dict:
     }
 
 
+def tool_legacy_analyze(args: dict) -> dict:
+    file = args.get("file")
+    if not file:
+        raise ValueError("file is required")
+    path = Path(file)
+    if not path.is_absolute():
+        path = ROOT / path
+    if not path.is_file():
+        raise ValueError(f"file not found: {path}")
+    py_dir = str(ROOT / "python")
+    if py_dir not in sys.path:
+        sys.path.insert(0, py_dir)
+    import parse_legacy_source
+    t0 = time.time()
+    rep = parse_legacy_source.analyze(path)
+    rep["wall_s"] = round(time.time() - t0, 2)
+    return rep
+
+
 TOOLS = [
     {
         "name": "registry_list",
@@ -266,6 +285,28 @@ TOOLS = [
             "artefacts; returns pass summary and any FAIL lines."),
         "inputSchema": {"type": "object", "properties": {}, "required": []},
         "func": tool_check_verdicts,
+    },
+    {
+        "name": "legacy_analyze",
+        "description": (
+            "Analyze a legacy Fortran or C source file through the "
+            "cross-language diagnosis chain (parse_legacy_source). Executes "
+            "the source (via fingerprint_source/fingerprint_c_source) to "
+            "obtain candidate_source=executed_source, or falls back to a "
+            "synthetic equivalent on TranslationError. Returns a pure-dict "
+            "report with file, language, extracted{system,precision,"
+            "integrator,dt}, variant, candidate_source, assumptions, "
+            "execution, and diagnosis."),
+        "inputSchema": {
+            "type": "object",
+            "properties": {
+                "file": {
+                    "type": "string",
+                    "description": "path to the legacy .f or .c source file"},
+            },
+            "required": ["file"],
+        },
+        "func": tool_legacy_analyze,
     },
 ]
 
