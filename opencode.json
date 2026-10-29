@@ -1,0 +1,17 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "mcp": {
+    "bench": {
+      "type": "local",
+      "command": [
+        "/bin/bash",
+        "-lc",
+        "cd /home/astrid/Documents/OpenScience/sessions/2026-10-23-0117 && exec python3 mcp/bench_server.py"
+      ],
+      "enabled": true
+    }
+  },
+  "experimental": {
+    "mcp_timeout": 240000
+  }
+}
