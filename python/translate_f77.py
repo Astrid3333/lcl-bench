@@ -29,8 +29,10 @@ back to the synthetic-equivalent diagnosis):
     `end do` (continue/write/end); semantics = stop updating this step.
     The real program would halt there; with a state-only guard both record
     the same trajectory (guard re-evaluated on the unchanged state).
-  - ONE do var = a, b ... end do (loop counter must NOT appear in the body);
-    classic labelled `do L var = a, b` is NOT supported
+  - do var = a, b ... end do, nested to any depth; loop counters MAY be
+    read in the body (e.g. as array indices) but must NOT be assigned to;
+    classic labelled `do L var = a, b` is NOT supported, and a GOTO anywhere
+    in the source together with a nested do-loop is unsupported
   - write(*,*) name|name(i)|name, ...  (evaluated at the end, informational)
 The translated source is exposed as ns["__source"]; ns["MODE"] is
 "structured" or "goto_dispatch".
@@ -391,6 +393,11 @@ def _emit(stmts, indent):
             continue
         elif kind == "goto":
             raise TranslationError(0, "internal: goto in structured mode")
+        elif kind == "do":
+            out.append(f"{pad}for {node[2]} in range({node[3]}, "
+                       f"({node[4]}) + 1):")
+            body = _emit(node[5], indent + 4)
+            out += body if body else [pad + "    pass"]
         elif kind == "if":
             cond, then, els = node[2], node[3], node[4]
             out.append(f"{pad}if {cond}:")
@@ -447,6 +454,9 @@ def _flatten(body, post_labels):
                 blocks[cur]["term"] = ("goto", node[2])
                 blocks[cur]["goto_ln"] = node[3] if len(node) > 3 else 0
                 cur = None
+            elif kind == "do":
+                raise TranslationError(node[6] if len(node) > 6 else 0,
+                                       "nested do-loop with goto unsupported")
             elif kind == "if":
                 cond, then, els = node[2], node[3], node[4]
                 then_b = new_block()
@@ -523,7 +533,8 @@ def translate(text, dim=None):
     init_codes, init_names = [], []     # init_codes kept for order reference
     init_tree, body_tree = [], []
     avail, body_avail = set(), set()
-    loop = None          # (var, start_py, stop_py)
+    loop = None          # outermost (var, start_py, stop_py): the step loop
+    loop_stack = []      # open do frames: {"var": name, "open": [nodes]}
     write_vars = None
     phase = "pre"
     ended = False
@@ -544,6 +555,8 @@ def translate(text, dim=None):
     def top_list():
         if stack:
             return stack[-1]["open"]
+        if loop_stack:
+            return loop_stack[-1]["open"]
         return init_tree if phase == "pre" else body_tree
 
     def cur_avail():
@@ -668,7 +681,11 @@ def translate(text, dim=None):
                 raise TranslationError(ln, "if not closed before end do")
             if label is not None:
                 raise TranslationError(ln, "label on end do unsupported")
-            phase = "post"
+            if not loop_stack:
+                raise TranslationError(ln, "end do without do")
+            loop_stack.pop()
+            if not loop_stack:
+                phase = "post"
             continue
         if re.match(r"^end\s*if\s*$", low) or low == "endif":
             if not stack:
@@ -748,6 +765,10 @@ def translate(text, dim=None):
                     if not am2 or rest.lstrip().startswith("="):
                         raise TranslationError(ln, "unsupported single-line "
                                                f"if body: {rest!r}")
+                    if am2.group(1).lower() in {f["var"] for f in loop_stack}:
+                        raise TranslationError(ln, "assignment to do-loop "
+                                               "variable unsupported "
+                                               "(counter excluded)")
                     lhs_raw = am2.group(1) + \
                         (f"({am2.group(2)})" if am2.group(2) else "")
                     code, used2, key = _assign_code(lhs_raw, am2.group(3),
@@ -805,22 +826,31 @@ def translate(text, dim=None):
         dm = re.match(r"^do\s+([A-Za-z][A-Za-z0-9_]*)\s*=\s*(.+?),\s*(.+)$",
                       st, re.I)
         if dm:
-            if phase != "pre":
-                raise TranslationError(ln, "multiple/nested do-loops "
-                                       "unsupported (single do-loop subset)")
+            if phase == "post":
+                raise TranslationError(ln, "do after end do unsupported")
             if stack:
                 raise TranslationError(ln, "if not closed before do-loop")
+            if label is not None:
+                raise TranslationError(ln, "label on do-loop header "
+                                       "unsupported")
             var = dm.group(1).lower()
             if types.get(var) != "i":
                 raise TranslationError(ln, f"do variable {var!r} must be "
-                                       "declared integer")
+                                        "declared integer")
             sp = _parse_expr(dm.group(2).strip(), types, ln, arrays)
             stop = _parse_expr(dm.group(3).strip(), types, ln, arrays)
             check_used(ln, sp[2] | stop[2])
             if sp[1] != "i" or stop[1] != "i":
                 raise TranslationError(ln, "do bounds must be integer")
-            loop = (var, sp[0], stop[0])
-            phase = "body"
+            if loop is None:
+                loop = (var, sp[0], stop[0])
+                phase = "body"
+                loop_stack.append({"var": var, "open": body_tree})
+            else:
+                node = ["do", None, var, sp[0], stop[0], [], ln]
+                top_list().append(node)
+                loop_stack.append({"var": var, "open": node[5]})
+            add_avail(var)
             continue
         wm = re.match(r"^write\s*\(\s*\*\s*,\s*\*\s*\)\s*(.*)$", st, re.I)
         if wm:
@@ -847,13 +877,20 @@ def translate(text, dim=None):
             if phase == "post":
                 raise TranslationError(ln, "assignment after end do "
                                        "(only write/end allowed)")
-            if phase == "body" and am.group(1).lower() == loop[0]:
+            if am.group(1).lower() in {f["var"] for f in loop_stack}:
                 raise TranslationError(ln, "assignment to do-loop variable "
                                        "unsupported (counter excluded)")
             lhs_raw = am.group(1) + (f"({am.group(2)})" if am.group(2) else "")
             code, used, key = _assign_code(lhs_raw, rhs, types, ln, arrays)
             check_used(ln, used)
             add_avail(key)
+            # a write with a computed index (e.g. `y(j) = ...` inside a do)
+            # targets a dynamic key like `y[(j) - 1]`; register every literal
+            # element so state arrays stay visible to the recorded-var filter
+            km = re.fullmatch(r"([a-z][a-z0-9_]*)\[([^\]]*)\]", key)
+            if km and km.group(1) in arrays and not km.group(2).isdigit():
+                for _j in range(arrays[km.group(1)]):
+                    add_avail(f"{km.group(1)}[{_j}]")
             if phase == "pre" and "[" not in key and key not in init_names:
                 init_names.append(key)
             if phase != "pre":
@@ -928,20 +965,26 @@ def translate(text, dim=None):
             "    return max(0, int(_e) - int(_s) + 1)"]
     if write_vars:
         src += ["", "def legacy_final(v):"]
-        fin_loads, fin_vals = [], []
+        fin_loads, fin_vals, loaded = [], [], set()
         for v in write_vars:
             if v in arrays:
-                keys = ", ".join(f"v['{v}[{j}]']" for j in range(arrays[v]))
-                fin_loads.append(f"    {v} = [{keys}]")
+                if v not in loaded:
+                    keys = ", ".join(f"v['{v}[{j}]']" for j in range(arrays[v]))
+                    fin_loads.append(f"    {v} = [{keys}]")
+                    loaded.add(v)
                 fin_vals.append(v)
             elif "[" in v or "(" in v:
                 mw = re.fullmatch(r"([a-z][a-z0-9_]*)\s*\(\s*([0-9]+)\s*\)", v)
                 a, j = mw.group(1), int(mw.group(2)) - 1
-                keys = ", ".join(f"v['{a}[{k}]']" for k in range(arrays[a]))
-                fin_loads.append(f"    {a} = [{keys}]")
+                if a not in loaded:
+                    keys = ", ".join(f"v['{a}[{k}]']" for k in range(arrays[a]))
+                    fin_loads.append(f"    {a} = [{keys}]")
+                    loaded.add(a)
                 fin_vals.append(f"{a}[{j}]")
             else:
-                fin_loads.append(f"    {v} = v[{v!r}]")
+                if v not in loaded:
+                    fin_loads.append(f"    {v} = v[{v!r}]")
+                    loaded.add(v)
                 fin_vals.append(v)
         src += fin_loads + [f"    return [{', '.join(fin_vals)}]"]
     src += [""]
