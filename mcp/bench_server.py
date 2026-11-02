@@ -129,6 +129,12 @@ def tool_run_entry(args: dict) -> dict:
             r0 = rows[0]
             out["pass"] = r0.get("pass")
             out["checks"] = _checks_as_list(r0.get("checks"))
+            # Campos adicionales no estandar (ej. middle_square_cycles, weyl_period, etc.)
+            std = {"name", "family", "pass", "checks", "error", "orbit_path",
+                   "lyap1_observed", "dim_observed", "pi_stable", "pi_naive"}
+            for k, v in r0.items():
+                if k not in std and v is not None:
+                    out[k] = v
     return out
 
 
