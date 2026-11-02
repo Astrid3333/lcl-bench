@@ -2,12 +2,12 @@ function res = registry_eval_middle_square_weyl(e)
   % Middle-square de von Neumann (4 digitos) vs Weyl vs TCR.
   % Compara periodo de ciclo y fraccion de semillas que colapsan a 0.
   params = e.params;
-  digits = str2double(params.digits);
-  modulus = str2double(params.modulus);
-  weyl_s = str2double(params.weyl_s);
-  p1 = str2double(params.tcr_p1);
-  p2 = str2double(params.tcr_p2);
-  max_iter = str2double(params.max_iter);
+  digits = double(params.digits);
+  modulus = double(params.modulus);
+  weyl_s = double(params.weyl_s);
+  p1 = double(params.tcr_p1);
+  p2 = double(params.tcr_p2);
+  max_iter = double(params.max_iter);
 
   ref = e.ref;
   checks = emptychecks();
@@ -48,14 +48,14 @@ function res = registry_eval_middle_square_weyl(e)
   end
   zs_rel = zero_sink / modulus;
 
-  n_cycles_ref = str2double(ref.middle_square_cycles.value);
-  tol_cycles = str2double(ref.middle_square_cycles.abs_tol);
+  n_cycles_ref = double(ref.middle_square_cycles.value);
+  tol_cycles = double(ref.middle_square_cycles.abs_tol);
   checks(end+1) = mkcheck('middle_square_cycles', n_cycles, n_cycles_ref, ...
                           tol_cycles, abs(n_cycles - n_cycles_ref)/max(abs(n_cycles_ref),1), ...
                           abs(n_cycles - n_cycles_ref) <= tol_cycles);
 
-  zs_ref = str2double(ref.middle_square_zero_sink.value);
-  zs_tol = str2double(ref.middle_square_zero_sink.abs_tol);
+  zs_ref = double(ref.middle_square_zero_sink.value);
+  zs_tol = double(ref.middle_square_zero_sink.abs_tol);
   checks(end+1) = mkcheck('middle_square_zero_sink', zs_rel, zs_ref, ...
                           zs_tol, abs(zs_rel - zs_ref), ...
                           abs(zs_rel - zs_ref) <= zs_tol);
@@ -82,8 +82,8 @@ function res = registry_eval_middle_square_weyl(e)
 
   wp_val = ref.weyl_period.value;
   if ~isempty(wp_val) && ~isnan(wp_val)
-    wp_ref = str2double(wp_val);
-    wp_tol = str2double(ref.weyl_period.abs_tol);
+    wp_ref = double(wp_val);
+    wp_tol = double(ref.weyl_period.abs_tol);
     checks(end+1) = mkcheck('weyl_period', weyl_period, wp_ref, ...
                             wp_tol, abs(weyl_period - wp_ref)/max(abs(wp_ref),1), ...
                             abs(weyl_period - wp_ref) <= wp_tol);
@@ -114,8 +114,8 @@ function res = registry_eval_middle_square_weyl(e)
 
   tp_val = ref.tcr_period.value;
   if ~isempty(tp_val) && ~isnan(tp_val)
-    tp_ref = str2double(tp_val);
-    tp_tol = str2double(ref.tcr_period.abs_tol);
+    tp_ref = double(tp_val);
+    tp_tol = double(ref.tcr_period.abs_tol);
     checks(end+1) = mkcheck('tcr_period', tcr_period, tp_ref, ...
                             tp_tol, abs(tcr_period - tp_ref)/max(abs(tp_ref),1), ...
                             abs(tcr_period - tp_ref) <= tp_tol);
@@ -124,11 +124,11 @@ function res = registry_eval_middle_square_weyl(e)
   end
 
   %% ---------- Variant spread ----------
-  st = str2double(ref.variant_spread.abs_tol);
+  st = double(ref.variant_spread.abs_tol);
   vs_val = ref.variant_spread.value;
   spread = abs(weyl_period - tcr_period) / max(abs(tcr_period), 1);
   if ~isempty(vs_val) && ~isnan(vs_val)
-    vs_ref = str2double(vs_val);
+    vs_ref = double(vs_val);
     checks(end+1) = mkcheck('variant_spread', spread, vs_ref, st, spread, spread <= st);
   else
     checks(end+1) = mkcheck('variant_spread', spread, NaN, NaN, NaN, true);
