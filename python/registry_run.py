@@ -23,6 +23,8 @@ ROOT = Path(__file__).resolve().parent.parent
 REG_ATTRA = ROOT / "registries" / "attractors.json"
 REG_POTE = ROOT / "registries" / "potentials.json"
 REG_ENERGY = ROOT / "registries" / "energy_drift.json"
+REG_DSP = ROOT / "registries" / "goertzel_fft.json"
+REG_ARCH = ROOT / "registries" / "archimedes_pi.json"
 OUTDIR = ROOT / "results"
 
 
@@ -383,7 +385,143 @@ def eval_energy_drift(e: dict) -> dict:
     }
 
 
-def selected(e: dict, sel: str) -> bool:
+def eval_dsp_bin(e: dict) -> dict:
+    """Goertzel single-bin DFT (K, alpha, beta) vs analytic |X[k]| = N*A/2."""
+    N = int(e["N"])
+    nn = np.arange(N, dtype=float)
+    ks, As, phs = e["tone_k"], e["tone_A"], e["tone_phi"]
+    x = np.zeros(N)
+    for k, A, ph in zip(ks, As, phs):
+        x = x + A * np.cos(2 * np.pi * k * nn / N + ph)
+    xs = x.tolist()
+    names = ["K", "alpha", "beta"]
+    checks = []
+    rt = e["ref"]["magnitude"]["rel_tol"]
+    spread = 0.0
+    for k, A in zip(ks, As):
+        w = 2 * np.pi * k / N
+        c = 2 * np.cos(w)
+        s1 = s2 = 0.0
+        for v in xs:
+            s0 = v + c * s1 - s2
+            s2 = s1
+            s1 = s0
+        mK = np.sqrt(s1 * s1 + s2 * s2 - c * s1 * s2)
+        s = d = 0.0
+        a = c - 2
+        for v in xs:
+            d = d + v + a * s
+            s = s + d
+        sN, sP = s, s - d
+        mA = np.sqrt(sN * sN + sP * sP - c * sN * sP)
+        s = ee = 0.0
+        b = c + 2
+        for v in xs:
+            ee = v + b * s - ee
+            s = ee - s
+        sN, sP = s, ee - s
+        mB = np.sqrt(sN * sN + sP * sP - c * sN * sP)
+        refv = N * A / 2
+        for nm, m in zip(names, (mK, mA, mB)):
+            rel = abs(m - refv) / refv
+            checks.append(mkcheck(f"{nm}_k{k}", m, refv, rt * refv, rel, rel <= rt))
+        spread = max(spread, abs(mA - mK) / refv, abs(mB - mK) / refv)
+    st = e["ref"]["variant_spread"]["abs_tol"]
+    checks.append(mkcheck("variant_spread", spread, 0.0, st, spread, spread <= st))
+    return {
+        "name": e["name"], "family": e["family"],
+        "pass": all(c["pass"] for c in checks), "checks": checks,
+    }
+
+
+def eval_archimedes_pi(e: dict) -> dict:
+    """Pi de Arquimedes: polígono circunscrito + extrapolación Liu Hui/Romberg.
+    Compara forma estable t/(sqrt(1+t^2)+1) vs ingenua (sqrt(1+t^2)-1)/t."""
+    import math
+
+    params = e.get("params", {})
+    iterations = int(params.get("iterations", 10))
+    levels = int(params.get("levels", 3))
+    ref = e.get("ref") or {}
+    pi_ref = ref.get("pi", {}).get("value", math.pi)
+    tol = ref.get("pi", {}).get("abs_tol", 1e-12)
+
+    checks = []
+
+    for variant in ("stable", "naive"):
+        t = 1.0 / math.sqrt(3.0)
+        n = 6
+        A = []
+        for _ in range(iterations + 1):
+            A.append(n * t)
+            if variant == "stable":
+                t = t / (math.sqrt(1.0 + t * t) + 1.0)
+            else:
+                t = (math.sqrt(1.0 + t * t) - 1.0) / t
+            n = 2 * n
+
+        # Extrapolación Romberg/Liu Hui
+        R = list(A)
+        for j in range(1, levels + 1):
+            denom = 4.0 ** j - 1.0
+            R = [R[i + 1] + (R[i + 1] - R[i]) / denom for i in range(len(R) - 1)]
+
+        pi_est = R[-1]
+        rel_err = abs(pi_est - pi_ref) / abs(pi_ref)
+        ok = abs(pi_est - pi_ref) <= tol
+        checks.append(
+            mkcheck(
+                f"pi_{variant}",
+                pi_est,
+                pi_ref,
+                tol,
+                rel_err,
+                ok,
+            )
+        )
+
+    # Spread between variants
+    # Re-run both to capture values cleanly
+    def _run(variant):
+        t = 1.0 / math.sqrt(3.0)
+        n = 6
+        A = []
+        for _ in range(iterations + 1):
+            A.append(n * t)
+            if variant == "stable":
+                t = t / (math.sqrt(1.0 + t * t) + 1.0)
+            else:
+                t = (math.sqrt(1.0 + t * t) - 1.0) / t
+            n = 2 * n
+        R = list(A)
+        for j in range(1, levels + 1):
+            denom = 4.0 ** j - 1.0
+            R = [R[i + 1] + (R[i + 1] - R[i]) / denom for i in range(len(R) - 1)]
+        return R[-1]
+
+    pi_stable = _run("stable")
+    pi_naive = _run("naive")
+    spread = abs(pi_stable - pi_naive) / abs(pi_ref)
+    spread_tol = ref.get("variant_spread", {}).get("abs_tol", 1e-8)
+    checks.append(
+        mkcheck(
+            "variant_spread",
+            spread,
+            0.0,
+            spread_tol,
+            spread,
+            spread <= spread_tol,
+        )
+    )
+
+    return {
+        "name": e["name"],
+        "family": e["family"],
+        "pass": all(c["pass"] for c in checks),
+        "checks": checks,
+        "pi_stable": pi_stable,
+        "pi_naive": pi_naive,
+    }
     if sel == "all":
         return True
     if sel == "attractors":
@@ -400,6 +538,8 @@ EVALUATORS = {
     "neural": eval_neural,
     "potential": eval_potential,
     "energy_drift": eval_energy_drift,
+    "dsp_bin": eval_dsp_bin,
+    "archimedes_pi": eval_archimedes_pi,
 }
 
 
@@ -456,6 +596,32 @@ def run(selector: str = "all") -> dict:
         print(f"[{e['family']}] {e['name']}")
         try:
             r = EVALUATORS["energy_drift"](e)
+        except Exception as exc:  # noqa: BLE001
+            r = {"name": e["name"], "family": e["family"], "pass": False,
+                 "checks": [mkcheck("error", None, None, None, None, False)],
+                 "error": str(exc)}
+        printrun(r)
+        runs.append(r)
+
+    for e in load_registry(REG_DSP):
+        if not selected(e, selector):
+            continue
+        print(f"[{e['family']}] {e['name']}")
+        try:
+            r = EVALUATORS["dsp_bin"](e)
+        except Exception as exc:  # noqa: BLE001
+            r = {"name": e["name"], "family": e["family"], "pass": False,
+                 "checks": [mkcheck("error", None, None, None, None, False)],
+                 "error": str(exc)}
+        printrun(r)
+        runs.append(r)
+
+    for e in load_registry(REG_ARCH):
+        if not selected(e, selector):
+            continue
+        print(f"[{e['family']}] {e['name']}")
+        try:
+            r = EVALUATORS["archimedes_pi"](e)
         except Exception as exc:  # noqa: BLE001
             r = {"name": e["name"], "family": e["family"], "pass": False,
                  "checks": [mkcheck("error", None, None, None, None, False)],

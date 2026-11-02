@@ -1,0 +1,32 @@
+{
+  "schema_version": 1,
+  "description": "Pi de Arquimedes (polígono circunscrito, hexágono inicial) con dobled de lados y extrapolación de Liu Hui/Romberg. Compara la forma ingenua (sqrt(1+t^2)-1)/t, que colapsa por cancelación catastrófica para t pequeño, contra la forma estable t/(sqrt(1+t^2)+1), que elimina la resta mediante el conjugado. Los invariantes son precisión, no tiempo.",
+  "tolerance_defaults": {
+    "pi_abs_tol": 1e-12
+  },
+  "entries": [
+    {
+      "name": "archimedes_pi",
+      "family": "archimedes_pi",
+      "dim": 1,
+      "equations": "t = tan(pi/6) = 1/sqrt(3); n = 6; repetir: t_estable = t/(sqrt(1+t^2)+1), t_ingenuo = (sqrt(1+t^2)-1)/t; n = 2*n; A = n*t. Extrapolación Romberg/Liu Hui: R <- R(k+1) + (R(k+1)-R(k))/(4^j-1). |X| = n*t aproxima pi desde arriba.",
+      "params": {
+        "iterations": 10,
+        "levels": 3,
+        "stable": true
+      },
+      "ref": {
+        "pi": {
+          "value": 3.141592653589793,
+          "abs_tol": 1e-12,
+          "source": "Valor de double de pi. La forma estable converge a ~3.6e-15 (≈8 ulps) y se mantiene; la ingenua colapsa a 0/NaN a partir de k≈21 (t pequeño, sqrt(1+t^2) redondea a 1, cancelación en el numerador)."
+        },
+        "variant_spread": {
+          "abs_tol": 1e-8,
+          "source": "max over k of |pi_estable - pi_ingenuo| relative to pi; debe ser ~0 para k pequeño donde ambos son válidos, y crece drásticamente para k>=15 donde la ingenua se descompone."
+        }
+      },
+      "notes": "Octave doble precisión verificado: estable da error 3.6e-15 sin NaN hasta k=27; ingenuo da 1.8e-08 en k=12, 1.6e-03 en k=21, 8.3e-02 en k=24, 0 en k=26, NaN en k>=27. Taylor t/2 - t^3/8 da referencia para t>=1e-3; debajo de eso la ingenua da 0 (cancelación) y la estable da 0 error relativo."
+    }
+  ]
+}

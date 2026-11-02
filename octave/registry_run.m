@@ -11,6 +11,8 @@ function out = registry_run(selector)
   att = registry_load(fullfile(root, 'registries', 'attractors.json'));
   pot = registry_load(fullfile(root, 'registries', 'potentials.json'));
   eng = registry_load(fullfile(root, 'registries', 'energy_drift.json'));
+  dsp = registry_load(fullfile(root, 'registries', 'goertzel_fft.json'));
+  arc = registry_load(fullfile(root, 'registries', 'archimedes_pi.json'));
 
   runs = {};
   for i = 1:numel(att.entries)
@@ -53,6 +55,36 @@ function out = registry_run(selector)
     fprintf('[%s] %s\n', e.family, e.name);
     try
       r = registry_eval_energy(e);
+    catch err
+      r = struct('name', e.name, 'family', e.family, 'pass', false, ...
+                 'checks', mkcheck('error', NaN, NaN, NaN, NaN, false), ...
+                 'error', err.message);
+    end
+    printrun(r);
+    runs{end + 1} = r;
+  end
+
+  for i = 1:numel(dsp.entries)
+    e = dsp.entries{i};
+    if ~selected(e, selector), continue; end
+    fprintf('[%s] %s\n', e.family, e.name);
+    try
+      r = registry_eval_dsp(e);
+    catch err
+      r = struct('name', e.name, 'family', e.family, 'pass', false, ...
+                 'checks', mkcheck('error', NaN, NaN, NaN, NaN, false), ...
+                 'error', err.message);
+    end
+    printrun(r);
+    runs{end + 1} = r;
+  end
+
+  for i = 1:numel(arc.entries)
+    e = arc.entries{i};
+    if ~selected(e, selector), continue; end
+    fprintf('[%s] %s\n', e.family, e.name);
+    try
+      r = registry_eval_archimedes(e);
     catch err
       r = struct('name', e.name, 'family', e.family, 'pass', false, ...
                  'checks', mkcheck('error', NaN, NaN, NaN, NaN, false), ...
