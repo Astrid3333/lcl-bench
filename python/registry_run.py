@@ -672,6 +672,16 @@ def eval_archimedes_pi(e: dict) -> dict:
     return sel == e["name"] or sel == e["family"]
 
 
+def selected(e: dict, sel: str) -> bool:
+    if sel == "all":
+        return True
+    if sel == "attractors":
+        return e["family"] != "potential"
+    if sel == "potentials":
+        return e["family"] == "potential"
+    return sel == e["name"] or sel == e["family"]
+
+
 EVALUATORS = {
     "map": eval_map,
     "ifs": eval_ifs,
