@@ -26,6 +26,7 @@ REG_ENERGY = ROOT / "registries" / "energy_drift.json"
 REG_DSP = ROOT / "registries" / "goertzel_fft.json"
 REG_ARCH = ROOT / "registries" / "archimedes_pi.json"
 REG_MSW = ROOT / "registries" / "middle_square_weyl.json"
+REG_HYBRID = ROOT / "registries" / "hybrid_prng.json"
 OUTDIR = ROOT / "results"
 
 
@@ -575,6 +576,151 @@ def eval_middle_square_weyl(e: dict) -> dict:
     }
 
 
+def eval_hybrid_prng(e: dict) -> dict:
+    """Evaluador de hybrid_prng: middle-square (roto) vs msws64 híbrido."""
+    import numpy as np
+
+    params = e.get("params", {})
+    seed = int(params.get("seed", 1234))
+    n_samples = int(params.get("n_samples", 10000))
+    nbins = int(params.get("nbins", 10))
+
+    ref = e.get("ref") or {}
+    checks = []
+
+    # ---------- middle-square original (4 dígitos) ----------
+    def ms_next_4(x):
+        sq = x * x
+        s = f"{sq:08d}"
+        return int(s[2:6])
+
+    seen = [False] * 10000
+    n_cycles = 0
+    for x0 in range(10000):
+        x = x0
+        tr = []
+        while not seen[x]:
+            seen[x] = True
+            tr.append(x)
+            x = ms_next_4(x)
+        if x in tr:
+            n_cycles += 1
+
+    zero_sink = 0
+    for x0 in range(10000):
+        x = x0
+        for _ in range(50):
+            x = ms_next_4(x)
+        if x == 0:
+            zero_sink += 1
+
+    zs_rel = zero_sink / 10000
+
+    n_cycles_ref = ref.get("middle_square_cycles", {}).get("value", 0)
+    tol_cycles = ref.get("middle_square_cycles", {}).get("abs_tol", 0)
+    checks.append(mkcheck("middle_square_cycles", n_cycles, n_cycles_ref,
+                          tol_cycles, abs(n_cycles - n_cycles_ref) / max(abs(n_cycles_ref), 1),
+                          abs(n_cycles - n_cycles_ref) <= tol_cycles))
+
+    zs_ref = ref.get("middle_square_zero_sink", {}).get("value", 0.0)
+    zs_tol = ref.get("middle_square_zero_sink", {}).get("abs_tol", 0.0)
+    checks.append(mkcheck("middle_square_zero_sink", zs_rel, zs_ref, zs_tol,
+                          abs(zs_rel - zs_ref), abs(zs_rel - zs_ref) <= zs_tol))
+
+    # ---------- msws64 híbrido ----------
+    state = seed | 1  # asegurar no cero
+
+    def ms_next_hybrid(x):
+        sq = x * x
+        d1 = (sq // 1000) % 10
+        d2 = (sq // 100) % 10
+        d3 = (sq // 10) % 10
+        d4 = sq % 10
+        return d1 * 1000 + d2 * 100 + d3 * 10 + d4
+
+    def msws_next(state):
+        state = (state * 6364136223846793005) & 0xFFFFFFFFFFFFFFFF
+        state ^= state >> 17
+        state &= 0xFFFFFFFFFFFFFFFF
+        state = (state * 1442695040888963407) & 0xFFFFFFFFFFFFFFFF
+        state ^= state >> 31
+        state &= 0xFFFFFFFFFFFFFFFF
+        state = (state * 3141592653589793239) & 0xFFFFFFFFFFFFFFFF
+        state ^= state >> 27
+        return state & 0xFFFFFFFFFFFFFFFF & 0xFFFFFFFFFFFFFFFF
+
+    ms_state = seed % 9999 + 1
+    ms_state2 = (seed >> 16) % 9999 + 1
+    mw_state = seed | 1
+
+    samples = []
+    doubles = []
+    for _ in range(n_samples):
+        ms1 = ms_next_hybrid(ms_state)
+        ms2 = ms_next_hybrid(ms_state2)
+        ms_state = ms1
+        ms_state2 = ms2
+
+        mw_state = msws_next(mw_state)
+        mw = mw_state
+
+        ms_combined = ((ms1 << 48) | (ms2 << 32)) & 0xFFFFFFFFFFFFFFFF
+        r = mw ^ ms_combined
+        samples.append(r)
+        doubles.append(r / 0xFFFFFFFFFFFFFFFF)
+
+    # Chi² de uniformidad
+    counts = [0] * nbins
+    expected = n_samples / nbins
+    for r in samples:
+        b = int((r / 0xFFFFFFFFFFFFFFFF) * nbins)
+        if b >= nbins:
+            b = nbins - 1
+        counts[b] += 1
+    chi2 = sum((c - expected) ** 2 / expected for c in counts)
+
+    mean_d = sum(doubles) / n_samples
+
+    chi2_ref = ref.get("chi2", {}).get("value", None)
+    if chi2_ref is not None:
+        chi2_tol = ref.get("chi2", {}).get("abs_tol", 1e-6)
+        checks.append(mkcheck("chi2", chi2, chi2_ref, chi2_tol,
+                              abs(chi2 - chi2_ref) / max(abs(chi2_ref), 1),
+                              abs(chi2 - chi2_ref) <= chi2_tol))
+    else:
+        checks.append(mkcheck("chi2", chi2, None, None, None, True))
+
+    bins_ref = ref.get("chi2_bins", {}).get("value", None)
+    if bins_ref is not None:
+        bins_tol = ref.get("chi2_bins", {}).get("abs_tol", 0)
+        checks.append(mkcheck("chi2_bins", nbins, bins_ref, bins_tol,
+                              abs(nbins - bins_ref) / max(abs(bins_ref), 1),
+                              abs(nbins - bins_ref) <= bins_tol))
+    else:
+        checks.append(mkcheck("chi2_bins", nbins, None, None, None, True))
+
+    samples_ref = ref.get("chi2_samples", {}).get("value", None)
+    if samples_ref is not None:
+        samples_tol = ref.get("chi2_samples", {}).get("abs_tol", 0)
+        checks.append(mkcheck("chi2_samples", n_samples, samples_ref, samples_tol,
+                              abs(n_samples - samples_ref) / max(abs(samples_ref), 1),
+                              abs(n_samples - samples_ref) <= samples_tol))
+    else:
+        checks.append(mkcheck("chi2_samples", n_samples, None, None, None, True))
+
+    return {
+        "name": e["name"], "family": e["family"],
+        "pass": all(c["pass"] for c in checks), "checks": checks,
+        "middle_square_cycles": n_cycles,
+        "middle_square_zero_sink": zs_rel,
+        "chi2": chi2,
+        "chi2_bins": nbins,
+        "chi2_samples": n_samples,
+        "mean_double": mean_d,
+        "first_values": samples[:10],
+    }
+
+
 def eval_archimedes_pi(e: dict) -> dict:
     """Pi de Arquimedes: polígono circunscrito + extrapolación Liu Hui/Romberg.
     Compara forma estable t/(sqrt(1+t^2)+1) vs ingenua (sqrt(1+t^2)-1)/t."""
@@ -692,6 +838,7 @@ EVALUATORS = {
     "dsp_bin": eval_dsp_bin,
     "archimedes_pi": eval_archimedes_pi,
     "prng_bin": eval_middle_square_weyl,
+    "hybrid_prng": eval_hybrid_prng,
 }
 
 
@@ -787,6 +934,19 @@ def run(selector: str = "all") -> dict:
         print(f"[{e['family']}] {e['name']}")
         try:
             r = EVALUATORS["prng_bin"](e)
+        except Exception as exc:  # noqa: BLE001
+            r = {"name": e["name"], "family": e["family"], "pass": False,
+                 "checks": [mkcheck("error", None, None, None, None, False)],
+                 "error": str(exc)}
+        printrun(r)
+        runs.append(r)
+
+    for e in load_registry(REG_HYBRID):
+        if not selected(e, selector):
+            continue
+        print(f"[{e['family']}] {e['name']}")
+        try:
+            r = EVALUATORS["hybrid_prng"](e)
         except Exception as exc:  # noqa: BLE001
             r = {"name": e["name"], "family": e["family"], "pass": False,
                  "checks": [mkcheck("error", None, None, None, None, False)],

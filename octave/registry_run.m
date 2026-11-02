@@ -14,6 +14,7 @@ function out = registry_run(selector)
   dsp = registry_load(fullfile(root, 'registries', 'goertzel_fft.json'));
   arc = registry_load(fullfile(root, 'registries', 'archimedes_pi.json'));
   msw = registry_load(fullfile(root, 'registries', 'middle_square_weyl.json'));
+  hyr = registry_load(fullfile(root, 'registries', 'hybrid_prng.json'));
 
   runs = {};
   for i = 1:numel(att.entries)
@@ -101,6 +102,21 @@ function out = registry_run(selector)
     fprintf('[%s] %s\n', e.family, e.name);
     try
       r = registry_eval_middle_square_weyl(e);
+    catch err
+      r = struct('name', e.name, 'family', e.family, 'pass', false, ...
+                 'checks', mkcheck('error', NaN, NaN, NaN, NaN, false), ...
+                 'error', err.message);
+    end
+    printrun(r);
+    runs{end + 1} = r;
+  end
+
+  for i = 1:numel(hyr.entries)
+    e = hyr.entries{i};
+    if ~selected(e, selector), continue; end
+    fprintf('[%s] %s\n', e.family, e.name);
+    try
+      r = registry_eval_hybrid_prng(e);
     catch err
       r = struct('name', e.name, 'family', e.family, 'pass', false, ...
                  'checks', mkcheck('error', NaN, NaN, NaN, NaN, false), ...

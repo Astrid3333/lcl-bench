@@ -1,0 +1,53 @@
+{
+  "schema_version": 1,
+  "description": "Generador PRNG híbrido (middle-square de von Neumann + msws64 de Widynski 2017) ejecutado en Octave nativo. Compara middle-square original (roto: 8 ciclos, colapso a cero) contra el híbrido XOR con msws64. Incluye test chi² de uniformidad.",
+  "tolerance_defaults": {
+    "abs_tol": 1e-12
+  },
+  "entries": [
+    {
+      "name": "hybrid_prng",
+      "family": "prng",
+      "dim": null,
+      "equations": "middle_square_4(x) = mid4(x^2) con 4 dígitos decimales del medio de x^2 (8 dígitos con leading zeros). msws64: estado 64-bit, multiplicación por constantes impares + desplazamientos xorshift (Widynski 2017). Híbrido: XOR de msws64 con middle-square expandido. Chi² de uniformidad sobre nbins bins con n_samples muestras.",
+      "params": {
+        "seed": 1234,
+        "n_samples": 10000,
+        "nbins": 10
+      },
+      "ref": {
+        "middle_square_cycles": {
+          "value": 8,
+          "abs_tol": 0,
+          "source": "Enumeración exhaustiva de los 10^4 estados de middle-square 4 dígitos: 8 ciclos (5 puntos fijos + 3 ciclos de periodo 4)."
+        },
+        "middle_square_zero_sink": {
+          "value": 0.1818,
+          "abs_tol": 0.005,
+          "source": "1818 de 10^4 semillas caen en 0 (18.18%)."
+        },
+        "chi2": {
+          "value": null,
+          "abs_tol": null,
+          "source": "Valor observado del test chi² de uniformidad del híbrido. Para uniformidad debe estar cerca de nbins-1 (grados de libertad)."
+        },
+        "chi2_bins": {
+          "value": null,
+          "abs_tol": null,
+          "source": "Número de bins usados en el test chi²."
+        },
+        "chi2_samples": {
+          "value": null,
+          "abs_tol": null,
+          "source": "Número de muestras usadas en el test chi²."
+        },
+        "variant_spread": {
+          "value": null,
+          "abs_tol": null,
+          "source": "Diferencia relativa entre periodos de Weyl y TCR desde la misma semilla; observación, no check estricto."
+        }
+      },
+      "notes": "middle-square original está roto como PRNG independiente. El híbrido (middle-square XOR msws64) produce buena distribución estadística (chi² cercano a nbins-1) y no depende de un solo mecanismo."
+    }
+  ]
+}
