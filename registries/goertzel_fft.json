@@ -1,0 +1,26 @@
+{
+  "schema_version": 1,
+  "description": "Goertzel single-bin DFT vs analytic magnitude. Three recurrences (K classic, alpha difference form for w near 0, beta sum form for w near pi) evaluated on a deterministic multi-tone signal whose bin magnitudes are known analytically: |X[k]| = N*A/2 for an integer-bin cosine of amplitude A (0<k<N/2). Cross-language invariants are accuracy, not timing.",
+  "entries": [
+    {
+      "name": "goertzel_vs_fft",
+      "family": "dsp_bin",
+      "equations": "x[n] = sum_i A_i*cos(2*pi*k_i*n/N + phi_i), n=0..N-1. K: s=x+c*s1-s2, c=2cos(w). alpha: d=d+x+(c-2)*s; s=s+d. beta: e=x+(c+2)*s-e; s=e-s. |X|^2 = sN^2 + s(N-1)^2 - c*sN*s(N-1).",
+      "N": 8192,
+      "tone_k": [1, 1000, 4095],
+      "tone_A": [1.0, 0.5, 0.25],
+      "tone_phi": [0.3, 1.1, -0.7],
+      "ref": {
+        "magnitude": {
+          "rel_tol": 1e-8,
+          "source": "Analytic: orthogonality of integer-bin cosines gives |X[k_i]| = N*A_i/2. Calibrated at N=8192 in float64: observed max rel err 2.9e-11 (alpha and beta at k=1, from sqrt of a subtractive sum), 0 for K; rel_tol 1e-8 leaves >300x margin for libm cos differences across languages."
+        },
+        "variant_spread": {
+          "abs_tol": 1e-8,
+          "source": "max over tones of |mag_alpha-mag_K|, |mag_beta-mag_K| relative to N*A/2; must be ~0 since all three recurrences realise the same filter."
+        }
+      },
+      "notes": "Timing is not a cross-language invariant and is not checked. Octave, N=131072, interpreted for-loop: K 513 ms, alpha 488 ms, beta 490 ms vs FFT 1.0 ms (alpha/beta ~5% faster than K in the interpreter, not 23% slower). Fortran evaluator not implemented yet."
+    }
+  ]
+}

@@ -31,7 +31,8 @@ VARIANTS = ("reference", "float32", "euler", "euler_large", "euler_single")
 
 def _load_entries() -> list[dict]:
     out = []
-    for reg in ("attractors.json", "potentials.json", "energy_drift.json"):
+    for reg in ("attractors.json", "potentials.json", "energy_drift.json",
+                "goertzel_fft.json"):
         with open(REGISTRIES / reg) as f:
             out.extend(json.load(f)["entries"])
     return out
