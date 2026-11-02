@@ -25,6 +25,7 @@ REG_POTE = ROOT / "registries" / "potentials.json"
 REG_ENERGY = ROOT / "registries" / "energy_drift.json"
 REG_DSP = ROOT / "registries" / "goertzel_fft.json"
 REG_ARCH = ROOT / "registries" / "archimedes_pi.json"
+REG_MSW = ROOT / "registries" / "middle_square_weyl.json"
 OUTDIR = ROOT / "results"
 
 
@@ -434,6 +435,146 @@ def eval_dsp_bin(e: dict) -> dict:
     }
 
 
+def _mid4(x: int, digits: int = 4, modulus: int = 10000) -> int:
+    """Extrae `digits` dígitos del medio de x^2 (middle-square de von Neumann)."""
+    s = f"{x * x:0{digits * 2}d}"
+    start = (len(s) - digits) // 2
+    return int(s[start:start + digits])
+
+
+def eval_middle_square_weyl(e: dict) -> dict:
+    """Compara middle-square original vs Weyl vs TCR (Teorema Chino del Resto)."""
+    digits = int(e.get("params", {}).get("digits", 4))
+    modulus = int(e.get("params", {}).get("modulus", 10 ** digits))
+    weyl_s = int(e.get("params", {}).get("weyl_s", 6329))
+    p1 = int(e.get("params", {}).get("tcr_p1", 9973))
+    p2 = int(e.get("params", {}).get("tcr_p2", 9967))
+    max_iter = int(e.get("params", {}).get("max_iter", 1000000))
+
+    ref = e.get("ref") or {}
+    checks = []
+
+    # ---------- Middle-square original ----------
+    def ms_next(x):
+        return _mid4(x, digits, modulus)
+
+    seen = [False] * modulus
+    cycles = []
+    for x0 in range(modulus):
+        x = x0
+        tr = []
+        while not seen[x]:
+            seen[x] = True
+            tr.append(x)
+            x = ms_next(x)
+        if x in tr:
+            idx = tr.index(x)
+            cycles.append(tr[idx:])
+
+    n_cycles = len(cycles)
+
+    zero_sink = 0
+    for x0 in range(modulus):
+        x = x0
+        for _ in range(50):
+            x = ms_next(x)
+        if x == 0:
+            zero_sink += 1
+
+    n_cycles_ref = ref.get("middle_square_cycles", {}).get("value", 0)
+    tol_cycles = ref.get("middle_square_cycles", {}).get("abs_tol", 0)
+    checks.append(mkcheck("middle_square_cycles", n_cycles, n_cycles_ref,
+                          tol_cycles, abs(n_cycles - n_cycles_ref) / max(abs(n_cycles_ref), 1),
+                          abs(n_cycles - n_cycles_ref) <= tol_cycles))
+
+    zs_ref = ref.get("middle_square_zero_sink", {}).get("value", 0.0)
+    zs_tol = ref.get("middle_square_zero_sink", {}).get("abs_tol", 0.0)
+    zs_rel = zero_sink / modulus
+    checks.append(mkcheck("middle_square_zero_sink", zs_rel, zs_ref, zs_tol,
+                          abs(zs_rel - zs_ref), abs(zs_rel - zs_ref) <= zs_tol))
+
+    # ---------- Weyl ----------
+    def weyl_next(x, w, s):
+        w = (w + s) % modulus
+        x = _mid4(x * x + w, digits, modulus)
+        return x, w
+
+    s = weyl_s
+    w = 0
+    x = 1234
+    trw = []
+    seenw = [False] * modulus
+    weyl_period = 0
+    for i in range(1, max_iter + 1):
+        x, w = weyl_next(x, w, s)
+        if seenw[x]:
+            j = trw.index(x)
+            weyl_period = i - j
+            break
+        seenw[x] = True
+        trw.append(x)
+
+    wp_ref = ref.get("weyl_period", {}).get("value", None)
+    wp_tol = ref.get("weyl_period", {}).get("abs_tol", 0)
+    if wp_ref is None:
+        checks.append(mkcheck("weyl_period", weyl_period, None, None, None, True))
+    else:
+        checks.append(mkcheck("weyl_period", weyl_period, wp_ref, wp_tol,
+                              abs(weyl_period - wp_ref) / max(abs(wp_ref), 1),
+                              abs(weyl_period - wp_ref) <= wp_tol))
+
+    # ---------- TCR ----------
+    M = p1 * p2
+    w1 = 0
+    w2 = 0
+    x = 1234
+    trcrt = []
+    seen_crt = [False] * modulus
+    tcr_period = 0
+    for i in range(1, max_iter + 1):
+        w1 = (w1 + weyl_s) % p1
+        w2 = (w2 + weyl_s) % p2
+        # reconstruir w via TCR: w ≡ w1 (mod p1), w ≡ w2 (mod p2)
+        inv_p1_mod_p2 = pow(p1 % p2, -1, p2)
+        k = ((w2 - w1) * inv_p1_mod_p2) % p2
+        w = (w1 + p1 * k) % M
+        x = _mid4(x * x + w, digits, modulus)
+        if seen_crt[x]:
+            j = trcrt.index(x)
+            tcr_period = i - j
+            break
+        seen_crt[x] = True
+        trcrt.append(x)
+
+    tp_ref = ref.get("tcr_period", {}).get("value", None)
+    tp_tol = ref.get("tcr_period", {}).get("abs_tol", 0)
+    if tp_ref is None:
+        checks.append(mkcheck("tcr_period", tcr_period, None, None, None, True))
+    else:
+        checks.append(mkcheck("tcr_period", tcr_period, tp_ref, tp_tol,
+                              abs(tcr_period - tp_ref) / max(abs(tp_ref), 1),
+                              abs(tcr_period - tp_ref) <= tp_tol))
+
+    # ---------- Variant spread ----------
+    st = ref.get("variant_spread", {}).get("abs_tol", 1e-6)
+    vs_ref = ref.get("variant_spread", {}).get("value", None)
+    spread = abs(weyl_period - tcr_period) / max(abs(tcr_period), 1)
+    if vs_ref is None:
+        checks.append(mkcheck("variant_spread", spread, None, None, None, True))
+    else:
+        checks.append(mkcheck("variant_spread", spread, vs_ref, st, spread, spread <= st))
+
+    return {
+        "name": e["name"], "family": e["family"],
+        "pass": all(c["pass"] for c in checks), "checks": checks,
+        "middle_square_cycles": n_cycles,
+        "middle_square_zero_sink": zs_rel,
+        "weyl_period": weyl_period,
+        "tcr_period": tcr_period,
+        "tcr_modulus_M": M,
+    }
+
+
 def eval_archimedes_pi(e: dict) -> dict:
     """Pi de Arquimedes: polígono circunscrito + extrapolación Liu Hui/Romberg.
     Compara forma estable t/(sqrt(1+t^2)+1) vs ingenua (sqrt(1+t^2)-1)/t."""
@@ -540,6 +681,7 @@ EVALUATORS = {
     "energy_drift": eval_energy_drift,
     "dsp_bin": eval_dsp_bin,
     "archimedes_pi": eval_archimedes_pi,
+    "prng_bin": eval_middle_square_weyl,
 }
 
 
@@ -622,6 +764,19 @@ def run(selector: str = "all") -> dict:
         print(f"[{e['family']}] {e['name']}")
         try:
             r = EVALUATORS["archimedes_pi"](e)
+        except Exception as exc:  # noqa: BLE001
+            r = {"name": e["name"], "family": e["family"], "pass": False,
+                 "checks": [mkcheck("error", None, None, None, None, False)],
+                 "error": str(exc)}
+        printrun(r)
+        runs.append(r)
+
+    for e in load_registry(REG_MSW):
+        if not selected(e, selector):
+            continue
+        print(f"[{e['family']}] {e['name']}")
+        try:
+            r = EVALUATORS["prng_bin"](e)
         except Exception as exc:  # noqa: BLE001
             r = {"name": e["name"], "family": e["family"], "pass": False,
                  "checks": [mkcheck("error", None, None, None, None, False)],

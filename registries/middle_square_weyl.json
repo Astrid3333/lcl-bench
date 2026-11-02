@@ -1,0 +1,51 @@
+{
+  "schema_version": 1,
+  "description": "Middle-square de von Neumann (4 dígitos) comparado contra dos arreglos: secuencia de Weyl (contador aditivo) y TCR (Teorema Chino del Resto con primos coprimos). Los invariantes son periodo de ciclo y fracción de semillas que colapsan a 0. Timing no se compara.",
+  "tolerance_defaults": {
+    "abs_tol": 1e-12
+  },
+  "entries": [
+    {
+      "name": "middle_square_weyl",
+      "family": "prng_bin",
+      "dim": null,
+      "equations": "middle_square_4(x) = mid4(x^2) con 4 dígitos decimales del medio de x^2 (8 dígitos con leading zeros). Weyl: w <- (w + s) mod 10^4, x <- mid4(x^2 + w). TCR: w se lleva como restos independientes mod p1 y mod p2 (p1=9973, p2=9967 coprimos), reconstruido w mod M, M = p1*p2 = 99,400,891.",
+      "params": {
+        "digits": 4,
+        "modulus": 10000,
+        "weyl_s": 6329,
+        "tcr_p1": 9973,
+        "tcr_p2": 9967,
+        "max_iter": 1000000
+      },
+      "ref": {
+        "middle_square_cycles": {
+          "value": 8,
+          "abs_tol": 0,
+          "source": "Enumeración exhaustiva de los 10^4 estados: 8 ciclos (5 puntos fijos + 3 ciclos de periodo 4)."
+        },
+        "middle_square_zero_sink": {
+          "value": 0.1818,
+          "abs_tol": 0.005,
+          "source": "1818 de 10^4 semillas caen en 0 (18.18%)."
+        },
+        "weyl_period": {
+          "value": null,
+          "abs_tol": 0,
+          "source": "Valor observado desde semilla x0=1234, w0=0, s=6329. Reportado en pasted-14: periodo 10^4 sobre las 10^4 semillas; desde una semilla unica puede ser menor."
+        },
+        "tcr_period": {
+          "value": null,
+          "abs_tol": 0,
+          "source": "M = 9973 * 9967 = 99,400,891 = periodo teórico del contador TCR. Desde una semilla unica el periodo observado puede ser menor."
+        },
+        "variant_spread": {
+          "value": null,
+          "abs_tol": 1e-6,
+          "source": "Diferencia relativa entre periodos de Weyl y TCR desde la misma semilla; reportada como observacion, no como check estricto."
+        }
+      },
+      "notes": "Middle-square original es un PRNG roto (ciclos cortos, colapso a 0). Weyl alarga el periodo pero mantiene sesgo de salida. TCR alarga el periodo a ~10^8 pero no arregla la uniformidad. Ninguno pasa tests de uniformidad (chi²)."
+    }
+  ]
+}
