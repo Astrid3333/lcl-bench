@@ -1,6 +1,6 @@
 {
   "files": {
-    "octave": "registry_run_octave_20261030T124737.json",
+    "octave": "registry_run_20261105T010530.json",
     "python": "registry_run_py_20261105T005420.json",
     "fortran": "registry_run_f_20261028T231326.json"
   },
@@ -26,7 +26,7 @@
       "name": "archimedes_pi",
       "status": "MISSING",
       "present": {
-        "octave": false,
+        "octave": true,
         "python": true,
         "fortran": false
       }
@@ -140,7 +140,7 @@
       "name": "goertzel_vs_fft",
       "status": "MISSING",
       "present": {
-        "octave": false,
+        "octave": true,
         "python": true,
         "fortran": false
       }
@@ -194,7 +194,7 @@
       "name": "hybrid_prng",
       "status": "MISSING",
       "present": {
-        "octave": false,
+        "octave": true,
         "python": true,
         "fortran": false
       }
@@ -278,7 +278,7 @@
       "name": "middle_square_weyl",
       "status": "MISSING",
       "present": {
-        "octave": false,
+        "octave": true,
         "python": true,
         "fortran": false
       }
