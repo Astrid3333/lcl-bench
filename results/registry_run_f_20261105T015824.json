@@ -1,0 +1,95 @@
+{
+  "timestamp": "20261105T015824",
+  "selector": "all",
+  "n_pass": 10,
+  "n_total": 10,
+  "runs": [
+    {
+      "name": "goertzel_vs_fft",
+      "family": "dsp_bin",
+      "pass": true,
+      "checks": [
+        {
+          "quantity": "K_k1",
+          "computed": 4096.0,
+          "reference": 4096.0,
+          "tol": 4.096e-05,
+          "rel_err": 0.0,
+          "pass": true
+        },
+        {
+          "quantity": "alpha_k1",
+          "computed": 4095.9999998807907,
+          "reference": 4096.0,
+          "tol": 4.096e-05,
+          "rel_err": 2.9103830456733704e-11,
+          "pass": true
+        },
+        {
+          "quantity": "beta_k1",
+          "computed": 4095.9999998807907,
+          "reference": 4096.0,
+          "tol": 4.096e-05,
+          "rel_err": 2.9103830456733704e-11,
+          "pass": true
+        },
+        {
+          "quantity": "K_k1000",
+          "computed": 2047.999999999998,
+          "reference": 2048.0,
+          "tol": 2.048e-05,
+          "rel_err": 9.992007221626409e-16,
+          "pass": true
+        },
+        {
+          "quantity": "alpha_k1000",
+          "computed": 2047.9999999999975,
+          "reference": 2048.0,
+          "tol": 2.048e-05,
+          "rel_err": 1.2212453270876722e-15,
+          "pass": true
+        },
+        {
+          "quantity": "beta_k1000",
+          "computed": 2047.9999999999955,
+          "reference": 2048.0,
+          "tol": 2.048e-05,
+          "rel_err": 2.220446049250313e-15,
+          "pass": true
+        },
+        {
+          "quantity": "K_k4095",
+          "computed": 1024.0,
+          "reference": 1024.0,
+          "tol": 1.024e-05,
+          "rel_err": 0.0,
+          "pass": true
+        },
+        {
+          "quantity": "alpha_k4095",
+          "computed": 1024.0,
+          "reference": 1024.0,
+          "tol": 1.024e-05,
+          "rel_err": 0.0,
+          "pass": true
+        },
+        {
+          "quantity": "beta_k4095",
+          "computed": 1024.0,
+          "reference": 1024.0,
+          "tol": 1.024e-05,
+          "rel_err": 0.0,
+          "pass": true
+        },
+        {
+          "quantity": "variant_spread",
+          "computed": 2.9104e-11,
+          "reference": 0.0,
+          "tol": 1e-08,
+          "rel_err": 2.9104e-11,
+          "pass": true
+        }
+      ]
+    }
+  ]
+}
