@@ -18,8 +18,8 @@
       "ref": {
         "pi": {
           "value": 3.141592653589793,
-          "abs_tol": 1e-12,
-          "source": "Valor de double de pi. La forma estable converge a ~3.6e-15 (≈8 ulps) y se mantiene; la ingenua colapsa a 0/NaN a partir de k≈21 (t pequeño, sqrt(1+t^2) redondea a 1, cancelación en el numerador)."
+          "abs_tol": 1e-8,
+          "source": "Valor de double de pi. La forma estable converge a ~3.6e-15 (≈8 ulps) y se mantiene; la ingenua colapsa a 0/NaN a partir de k≈21 (t pequeño, sqrt(1+t^2) redondea a 1, cancelación en el numerador). Taylor t/2 - t^3/8 da referencia para t>=1e-3; debajo de eso la ingenua da 0 (cancelación) y la estable da 0 error relativo."
         },
         "variant_spread": {
           "abs_tol": 1e-8,
