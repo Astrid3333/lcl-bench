@@ -31,7 +31,8 @@ back to the synthetic-equivalent diagnosis):
     the same trajectory (guard re-evaluated on the unchanged state).
   - do var = a, b ... end do, nested to any depth; loop counters MAY be
     read in the body (e.g. as array indices) but must NOT be assigned to;
-    classic labelled `do L var = a, b` is NOT supported, and a GOTO anywhere
+    classic labelled `do L var = a, b ... L continue` is rewritten to
+    do/end do (terminator must be CONTINUE, no GOTO to it); a GOTO anywhere
     in the source together with a nested do-loop is unsupported
   - write(*,*) name|name(i)|name, ...  (evaluated at the end, informational)
 The translated source is exposed as ns["__source"]; ns["MODE"] is
@@ -521,13 +522,53 @@ def _pc_emit(blocks):
     return src
 
 
+def _expand_labelled_do(lines):
+    """Rewrite classic labelled loops `do L var = a, b ... L continue`
+    into `do var = a, b ... end do` so the structured translator accepts
+    them. Rules (anything else raises TranslationError):
+      - the terminator statement must be CONTINUE carrying label L
+      - several loops may share one terminator (do 10 i / do 10 j / 10 continue)
+      - no GOTO may target L (a jump to the terminator means "next
+        iteration", which the strict subset does not model)
+    """
+    goto_targets = set()
+    for _ln, _lab, st in lines:
+        gm = re.match(r"^(?:go\s*to)\s+([0-9]+)\s*$", st.strip(), re.I)
+        if gm:
+            goto_targets.add(int(gm.group(1)))
+    out, pending = [], []
+    for ln, label, st in lines:
+        hm = re.match(r"^do\s+([0-9]+)\s*,?\s*([A-Za-z].*)$", st.strip(), re.I)
+        if hm:
+            pending.append((int(hm.group(1)), ln))
+            out.append((ln, label, "do " + hm.group(2)))
+            continue
+        if label is not None and pending and pending[-1][0] == label:
+            if st.strip().lower() != "continue":
+                raise TranslationError(
+                    ln, f"labelled do {label} must end with continue")
+            if label in goto_targets:
+                raise TranslationError(
+                    ln, f"goto to do-terminator label {label} unsupported")
+            first = True
+            while pending and pending[-1][0] == label:
+                pending.pop()
+                out.append((ln, None, "end do"))
+            continue
+        out.append((ln, label, st))
+    if pending:
+        raise TranslationError(pending[-1][1],
+                               f"labelled do {pending[-1][0]} never closed")
+    return out
+
+
 def translate(text, dim=None):
     """Translate strict-subset F77 source -> executable Python source.
 
     `dim` = expected state dimension (entry["dim"]); the recorded/observed
     variables are then the first `dim` state floats in declaration order.
     """
-    lines = logical_lines(text)
+    lines = _expand_labelled_do(logical_lines(text))
     types, decl_order = {}, []
     arrays = {}
     init_codes, init_names = [], []     # init_codes kept for order reference
