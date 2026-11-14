@@ -48,6 +48,9 @@ class Client:
 
 
 def main():
+    sys.path.insert(0, str(ROOT / "mcp"))
+    import bench_server
+
     c = Client()
     try:
         r = c.request("initialize", {
@@ -71,10 +74,16 @@ def main():
                       {"name": "registry_list", "arguments": {}})
         check("registry_list isError", r["result"]["isError"], False)
         payload = json.loads(r["result"]["content"][0]["text"])
-        check("registry_list n_entries", payload["n_entries"], 24)
+        check("registry_list n_entries", payload["n_entries"],
+              len(bench_server._load_entries()))
         check("registry_list names",
               [e["name"] for e in payload["entries"]][:3],
               ["logistic", "henon", "clifford"])
+        listed = {e["name"] for e in payload["entries"]}
+        check("registry_list new entries",
+              sorted(listed & {"cordic_sincos", "hastings_poly",
+                               "lcg_spectral", "ancestral_math"}),
+              ["ancestral_math", "cordic_sincos", "hastings_poly", "lcg_spectral"])
 
         r = c.request("tools/call",
                       {"name": "registry_get", "arguments": {"name": "lorenz"}})
