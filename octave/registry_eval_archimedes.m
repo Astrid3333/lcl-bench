@@ -2,11 +2,13 @@ function res = registry_eval_archimedes(e)
   % Pi de Arquimedes: polígono circunscrito + extrapolación Liu Hui/Romberg.
   % Compara forma estable t/(sqrt(1+t^2)+1) vs ingenua (sqrt(1+t^2)-1)/t.
   params = e.params;
-  iterations = str2double(params.iterations);
-  levels = str2double(params.levels);
+  % jsondecode ya entrega los numeros como double: str2double sobre un
+  % double devuelve NaN en Octave 11 y rompe la entrada entera.
+  iterations = double(params.iterations);
+  levels = double(params.levels);
   ref = e.ref;
-  pi_ref = str2double(ref.pi.value);
-  tol = str2double(ref.pi.abs_tol);
+  pi_ref = double(ref.pi.value);
+  tol = double(ref.pi.abs_tol);
 
   checks = emptychecks();
 
@@ -59,7 +61,7 @@ function res = registry_eval_archimedes(e)
   pi_stable = run_variant('stable');
   pi_naive = run_variant('naive');
   spread = abs(pi_stable - pi_naive) / abs(pi_ref);
-  spread_tol = str2double(ref.variant_spread.abs_tol);
+  spread_tol = double(ref.variant_spread.abs_tol);
   checks(end + 1) = mkcheck('variant_spread', spread, 0, ...
                             spread_tol, spread, spread <= spread_tol);
 

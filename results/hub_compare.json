@@ -1,14 +1,23 @@
 {
   "files": {
-    "octave": "registry_run_20261105T010530.json",
-    "python": "registry_run_py_20261105T005420.json",
+    "octave": "registry_run_20261114T165520.json",
+    "python": "registry_run_py_20261114T161528.json",
     "fortran": "registry_run_f_20261105T022324.json"
   },
-  "n_entries": 28,
+  "n_entries": 32,
   "all_pass": 1,
   "rows": [
     {
       "name": "aizawa",
+      "status": "MISSING",
+      "present": {
+        "octave": true,
+        "python": true,
+        "fortran": false
+      }
+    },
+    {
+      "name": "ancestral_math",
       "status": "MISSING",
       "present": {
         "octave": true,
@@ -36,6 +45,15 @@
     },
     {
       "name": "clifford",
+      "status": "MISSING",
+      "present": {
+        "octave": true,
+        "python": true,
+        "fortran": false
+      }
+    },
+    {
+      "name": "cordic_sincos",
       "status": "MISSING",
       "present": {
         "octave": true,
@@ -113,6 +131,15 @@
       }
     },
     {
+      "name": "hastings_poly",
+      "status": "MISSING",
+      "present": {
+        "octave": true,
+        "python": true,
+        "fortran": false
+      }
+    },
+    {
       "name": "henon",
       "status": "MISSING",
       "present": {
@@ -141,6 +168,15 @@
     },
     {
       "name": "hydrogen",
+      "status": "MISSING",
+      "present": {
+        "octave": true,
+        "python": true,
+        "fortran": false
+      }
+    },
+    {
+      "name": "lcg_spectral",
       "status": "MISSING",
       "present": {
         "octave": true,

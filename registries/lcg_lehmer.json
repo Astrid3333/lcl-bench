@@ -1,0 +1,42 @@
+{
+  "schema_version": 1,
+  "description": "Calidad espectral de generadores congruentes lineales de Lehmer (1949): secuencia exacta de RANDU (a=65539, m=2^31) y MINSTD (a=16807, m=2^31-1), numero de planos de Marsaglia en 3D, busqueda de normales enteras minimas h con h1 + h2*a + h3*a^2 = 0 (mod m) y periodo del ciclo. RANDU es deliberadamente malo (15 planos en 3D) y MINSTD deliberadamente bueno (sin normales cortos).",
+  "tolerance_defaults": {
+    "abs_tol": 1e-12
+  },
+  "entries": [
+    {
+      "name": "lcg_spectral",
+      "family": "lcg",
+      "dim": 3,
+      "equations": "LCG: x_{n+1} = (a*x_n + c) mod m. Planos de Marsaglia para RANDU en 3D: k = (9*x_n - 6*x_{n+1} + x_{n+2})/2^31 es entero y toma 15 valores distintos (-5..9), que son los planos paralelos donde caen las ternas. Normales: enteros h = (h1,h2,h3) con h1 + h2*a + h3*a^2 = 0 (mod m); el plano h1*x + h2*y + h3*z = 0 (mod m) contiene las ternas. Periodo: longitud del ciclo de x_{n+1} = (a*x_n + c) mod m.",
+      "params": {
+        "randu": {"a": 65539, "c": 0, "m": 2147483648},
+        "minstd": {"a": 16807, "c": 0, "m": 2147483647},
+        "normal_box_h": 50,
+        "marsaglia_coeffs": [9, -6, 1],
+        "marsaglia_samples": 20000,
+        "period_case": {"a": 65539, "c": 0, "m": 1024, "x0": 1},
+        "period_case_minstd": {"a": 16807, "c": 0, "m": 1024, "x0": 1}
+      },
+      "ref": {
+        "randu_x1": {"value": 65539, "abs_tol": 0, "source": "65539*1 mod 2^31 = 65539."},
+        "randu_x2": {"value": 393225, "abs_tol": 0, "source": "65539^2 mod 2^31 = 393225."},
+        "randu_x3": {"value": 1769499, "abs_tol": 0, "source": "65539^3 mod 2^31 = 1769499."},
+        "randu_x4": {"value": 7077969, "abs_tol": 0, "source": "65539^4 mod 2^31 = 7077969."},
+        "minstd_x1": {"value": 16807, "abs_tol": 0, "source": "16807*1 mod (2^31-1) = 16807."},
+        "minstd_x2": {"value": 282475249, "abs_tol": 0, "source": "16807^2 mod (2^31-1) = 282475249."},
+        "minstd_x3": {"value": 1622650073, "abs_tol": 0, "source": "16807^3 mod (2^31-1) = 1622650073."},
+        "minstd_x4": {"value": 984943658, "abs_tol": 0, "source": "16807^4 mod (2^31-1) = 984943658."},
+        "randu_plane_count": {"value": 15, "abs_tol": 0, "source": "Numero de planos de Marsaglia para RANDU: k = (9x-6y+z)/2^31 recorre los enteros -5..9, es decir 15 planos paralelos. Verificado empiricamente con 20000 ternas consecutivas."},
+        "marsaglia_integrality": {"abs_tol": 1e-09, "source": "Desviacion maxima entre k = (9x-6y+z)/2^31 y el entero mas cercano. Para RANDU el numerador es multiplo exacto de 2^31 (9*65539 - 6*393225 + 1769499 = 0), luego k es siempre entero. Medido: 0."},
+        "randu_normal_count": {"value": 10, "abs_tol": 0, "source": "Normales enteras con |h_i| <= 50 que satisfacen h1 + 65539*h2 + 65539^2*h3 = 0 (mod 2^31): los multiplplos t*(9,-6,1) con t = +-1..+-5, es decir 10 normales."},
+        "randu_min_normal_norm": {"value": 10.862780491200215, "abs_tol": 1e-12, "source": "Norma euclidea del normal de menor norma: ||(9,-6,1)|| = sqrt(118) = 10.862780491200215."},
+        "minstd_normal_count": {"value": 0, "abs_tol": 0, "source": "MINSTD no tiene normales con |h_i| <= 50: la busqueda exhaustiva sobre la caja no encuentra ninguna, porque el normal primitivo mas corto tiene norma del orden de m^(1/3) ~ 1290."},
+        "randu_period": {"value": 256, "abs_tol": 0, "source": "Periodo de x_{n+1} = 65539*x_n mod 1024 desde x0 = 1: el orden multiplicativo de 65539 modulo 2^10 es 2^8 = 256."},
+        "minstd_period": {"value": 128, "abs_tol": 0, "source": "Periodo de x_{n+1} = 16807*x_n mod 1024 desde x0 = 1: el orden multiplicativo de 16807 modulo 2^10 es 2^7 = 128."}
+      },
+      "notes": "Las 15 familias de planos de RANDU no son 15 normales: hay 10 normales en la caja |h_i| <= 50 y un unico normal primitivo (9,-6,1) cuyas permitas multiples t dan los planos. Se mide el periodo con modulos pequenos (2^10) porque el periodo real de RANDU modulo 2^31 es 2^29 = 536870912 pasos, inviable de enumerar. msws64 no se incluye aqui: sus salidas de 64 bits no son representables de forma exacta en doble precision y ya esta cubierto por la entrada hybrid_prng."
+    }
+  ]
+}

@@ -8,6 +8,7 @@ so both languages independently hit the same ground truth.
 from __future__ import annotations
 
 import json
+import math
 import sys
 import time
 from pathlib import Path
@@ -27,6 +28,10 @@ REG_DSP = ROOT / "registries" / "goertzel_fft.json"
 REG_ARCH = ROOT / "registries" / "archimedes_pi.json"
 REG_MSW = ROOT / "registries" / "middle_square_weyl.json"
 REG_HYBRID = ROOT / "registries" / "hybrid_prng.json"
+REG_CORDIC = ROOT / "registries" / "cordic.json"
+REG_HASTINGS = ROOT / "registries" / "hastings.json"
+REG_LCG = ROOT / "registries" / "lcg_lehmer.json"
+REG_ANCESTRAL = ROOT / "registries" / "matematica_ancestral.json"
 OUTDIR = ROOT / "results"
 
 
@@ -818,6 +823,557 @@ def eval_archimedes_pi(e: dict) -> dict:
     return sel == e["name"] or sel == e["family"]
 
 
+def eval_cordic(e: dict) -> dict:
+    """CORDIC (Volder 1959): rotacion de (1,0) con tabla atan(2^-i) y ganancia K."""
+    params = e["params"]
+    n_iter = int(params["iterations"])
+    mults = [float(m) for m in params["angle_multipliers"]]
+    n_samples = int(params["samples"])
+    ref = e["ref"]
+    checks = []
+
+    atan_tab = [math.atan(2.0 ** (-i)) for i in range(n_iter)]
+    K = 1.0
+    for i in range(n_iter):
+        K *= math.sqrt(1.0 + 2.0 ** (-2 * i))
+
+    def cordic_rot(theta: float):
+        x, y = 1.0, 0.0
+        t = theta
+        while t > math.pi:
+            t -= 2.0 * math.pi
+        while t < -math.pi:
+            t += 2.0 * math.pi
+        sign_cos = 1.0
+        if t > math.pi / 2:
+            t = math.pi - t
+            sign_cos = -1.0
+        elif t < -math.pi / 2:
+            t = -math.pi - t
+            sign_cos = -1.0
+        z = t
+        for i in range(n_iter):
+            sigma = 1.0 if z >= 0.0 else -1.0
+            f = 2.0 ** (-i)
+            xn = x - sigma * y * f
+            yn = y + sigma * x * f
+            z = z - sigma * atan_tab[i]
+            x, y = xn, yn
+        return x * sign_cos, y, z
+
+    k_ref = float(ref["gain_K"]["value"])
+    k_tol = float(ref["gain_K"]["abs_tol"])
+    checks.append(mkcheck("gain_K", K, k_ref, k_tol,
+                          abs(K - k_ref) / max(abs(k_ref), 1),
+                          abs(K - k_ref) <= k_tol))
+
+    cos_tol = float(ref["cos_err_max"]["abs_tol"])
+    sin_tol = float(ref["sin_err_max"]["abs_tol"])
+    res_tol = float(ref["residual_max"]["abs_tol"])
+    q15_tol = float(ref["q15_err_max"]["abs_tol"])
+
+    max_cos = max_sin = max_res = max_q15 = 0.0
+    for m in mults:
+        theta = m * math.pi
+        xr, yr, _z = cordic_rot(theta)
+        ec = abs(xr / K - math.cos(theta))
+        es = abs(yr / K - math.sin(theta))
+        tag = f"m{m:g}"
+        checks.append(mkcheck(f"cos_err_{tag}", ec, 0, cos_tol, ec, ec <= cos_tol))
+        checks.append(mkcheck(f"sin_err_{tag}", es, 0, sin_tol, es, es <= sin_tol))
+        theta_f = int(theta / math.pi * 32768)
+        theta_r = (theta_f / 32768.0) * math.pi
+        xq, yq, _z = cordic_rot(theta_r)
+        xq = int(xq * 32768)
+        yq = int(yq * 32768)
+        eq = max(abs(xq / (32768.0 * K) - math.cos(theta_r)),
+                 abs(yq / (32768.0 * K) - math.sin(theta_r)))
+        max_q15 = max(max_q15, eq)
+
+    for k in range(n_samples):
+        theta = -math.pi + 2 * math.pi * k / (n_samples - 1)
+        xr, yr, z = cordic_rot(theta)
+        max_cos = max(max_cos, abs(xr / K - math.cos(theta)))
+        max_sin = max(max_sin, abs(yr / K - math.sin(theta)))
+        max_res = max(max_res, abs(z))
+
+    checks.append(mkcheck("cos_err_max", max_cos, 0, cos_tol, max_cos,
+                          max_cos <= cos_tol))
+    checks.append(mkcheck("sin_err_max", max_sin, 0, sin_tol, max_sin,
+                          max_sin <= sin_tol))
+    checks.append(mkcheck("residual_max", max_res, 0, res_tol, max_res,
+                          max_res <= res_tol))
+    checks.append(mkcheck("q15_err_max", max_q15, 0, q15_tol, max_q15,
+                          max_q15 <= q15_tol))
+    return {
+        "name": e["name"], "family": e["family"],
+        "pass": all(c["pass"] for c in checks),
+        "checks": checks, "gain_K": K,
+    }
+
+
+def _hastings_poly(c, x: float) -> float:
+    r = c[-1]
+    for v in reversed(c[:-1]):
+        r = r * x + v
+    return r
+
+
+def _hastings_sin(x: float) -> float:
+    c = [1.0, -1 / 6, 1 / 120, -1 / 5040, 1 / 362880, -1 / 39916800]
+    sign = 1.0
+    if x < 0:
+        sign = -1.0
+        x = -x
+    k = math.floor(x / (2 * math.pi))
+    x = x - k * 2 * math.pi
+    if x > math.pi:
+        x = math.pi - x
+    if x > math.pi / 2:
+        x = math.pi - x
+    return sign * x * _hastings_poly(c, x * x)
+
+
+def _hastings_atan(x: float) -> float:
+    c = [1.0, -1 / 3, 1 / 5, -1 / 7, 1 / 9, -1 / 11]
+    sign = 1.0
+    if x < 0:
+        sign = -1.0
+        x = -x
+    if 0.5 <= x <= 2.0:
+        t = (x - 1.0) / (x + 1.0)
+        return sign * (math.pi / 4 + t * _hastings_poly(c, t * t))
+    if x > 1.0:
+        inv = 1.0 / x
+        return sign * (math.pi / 2 - inv * _hastings_poly(c, inv * inv))
+    return sign * x * _hastings_poly(c, x * x)
+
+
+def _hastings_exp(x: float) -> float:
+    c = [1.0, 1 / 2, 1 / 6, 1 / 24, 1 / 120, 1 / 720]
+    if x > 1.0:
+        k = math.floor(x / 0.6931471805599453)
+        rem = x - k * 0.6931471805599453
+        return 2.0 ** k * (1.0 + rem * _hastings_poly(c, rem))
+    if x < 0.0:
+        return 1.0 / _hastings_exp(-x)
+    k = 0
+    r = x
+    while r > 0.25:
+        r /= 2.0
+        k += 1
+    y = 1.0 + r * _hastings_poly(c, r)
+    for _ in range(k):
+        y *= y
+    return y
+
+
+def _hastings_log1p(x: float) -> float:
+    c = [1.0, -1 / 2, 1 / 3, -1 / 4, 1 / 5, -1 / 6, 1 / 7, -1 / 8, 1 / 9, -1 / 10]
+    if x > 1.0:
+        t = (x - 1.0) / (x + 1.0)
+        return 0.6931471805599453 + t * _hastings_poly(c, t)
+    if x >= 0.25:
+        t = (x - 1.0) / 2.0
+        return 0.6931471805599453 + t * _hastings_poly(c, t)
+    return x * _hastings_poly(c, x)
+
+
+def eval_hastings(e: dict) -> dict:
+    """Polinomios de Hastings (1955) para sin, atan, exp y log1p."""
+    params = e["params"]
+    n_samples = int(params["samples"])
+    sin_range = [float(v) for v in params["sin_range"]]
+    atan_range = [float(v) for v in params["atan_range"]]
+    exp_range = [float(v) for v in params["exp_range"]]
+    log_range = [float(v) for v in params["log1p_range"]]
+    ref = e["ref"]
+    checks = []
+
+    def range_max_err(f, g, a, b):
+        err = 0.0
+        for k in range(n_samples):
+            x = a + (b - a) * k / (n_samples - 1)
+            err = max(err, abs(f(x) - g(x)))
+        return err
+
+    err = range_max_err(_hastings_sin, math.sin, sin_range[0], sin_range[1])
+    tol = float(ref["sin_err_max"]["abs_tol"])
+    checks.append(mkcheck("sin_err_max", err, 0, tol, err, err <= tol))
+
+    e6 = abs(_hastings_sin(math.pi / 6) - math.sin(math.pi / 6))
+    tol = float(ref["sin_err_pi6"]["abs_tol"])
+    checks.append(mkcheck("sin_err_pi6", e6, 0, tol, e6, e6 <= tol))
+
+    e2 = abs(_hastings_sin(math.pi / 2) - math.sin(math.pi / 2))
+    tol = float(ref["sin_err_pi2"]["abs_tol"])
+    checks.append(mkcheck("sin_err_pi2", e2, 0, tol, e2, e2 <= tol))
+
+    v = _hastings_sin(math.pi / 2)
+    vref = float(ref["sin_val_pi2"]["value"])
+    vtol = float(ref["sin_val_pi2"]["abs_tol"])
+    checks.append(mkcheck("sin_val_pi2", v, vref, vtol,
+                          abs(v - vref) / max(abs(vref), 1), abs(v - vref) <= vtol))
+
+    err = range_max_err(_hastings_atan, math.atan, atan_range[0], atan_range[1])
+    tol = float(ref["atan_err_max"]["abs_tol"])
+    checks.append(mkcheck("atan_err_max", err, 0, tol, err, err <= tol))
+
+    e1 = abs(_hastings_atan(1.0) - math.atan(1.0))
+    tol = float(ref["atan_err_one"]["abs_tol"])
+    checks.append(mkcheck("atan_err_one", e1, 0, tol, e1, e1 <= tol))
+
+    err = 0.0
+    for k in range(n_samples):
+        x = exp_range[0] + (exp_range[1] - exp_range[0]) * k / (n_samples - 1)
+        err = max(err, abs(_hastings_exp(x) - math.exp(x)) / math.exp(x))
+    tol = float(ref["exp_rel_err_max"]["abs_tol"])
+    checks.append(mkcheck("exp_rel_err_max", err, 0, tol, err, err <= tol))
+
+    e1 = abs(_hastings_exp(1.0) - math.exp(1.0))
+    tol = float(ref["exp_err_one"]["abs_tol"])
+    checks.append(mkcheck("exp_err_one", e1, 0, tol, e1, e1 <= tol))
+
+    v = _hastings_exp(1.0)
+    vref = float(ref["exp_val_one"]["value"])
+    vtol = float(ref["exp_val_one"]["abs_tol"])
+    checks.append(mkcheck("exp_val_one", v, vref, vtol,
+                          abs(v - vref) / max(abs(vref), 1), abs(v - vref) <= vtol))
+
+    err = range_max_err(_hastings_log1p, math.log1p, log_range[0], log_range[1])
+    tol = float(ref["log1p_err_max"]["abs_tol"])
+    checks.append(mkcheck("log1p_err_max", err, 0, tol, err, err <= tol))
+
+    e1 = abs(_hastings_log1p(1.0) - math.log1p(1.0))
+    tol = float(ref["log1p_err_one"]["abs_tol"])
+    checks.append(mkcheck("log1p_err_one", e1, 0, tol, e1, e1 <= tol))
+
+    v = _hastings_log1p(1.0)
+    vref = float(ref["log1p_val_one"]["value"])
+    vtol = float(ref["log1p_val_one"]["abs_tol"])
+    checks.append(mkcheck("log1p_val_one", v, vref, vtol,
+                          abs(v - vref) / max(abs(vref), 1), abs(v - vref) <= vtol))
+    return {
+        "name": e["name"], "family": e["family"],
+        "pass": all(c["pass"] for c in checks), "checks": checks,
+    }
+
+
+def eval_lcg(e: dict) -> dict:
+    """Calidad espectral de los LCG de Lehmer: secuencia, planos, normales, periodo."""
+    params = e["params"]
+    randu = params["randu"]
+    minstd = params["minstd"]
+    box_h = int(params["normal_box_h"])
+    mcoef = [float(c) for c in params["marsaglia_coeffs"]]
+    n_samples = int(params["marsaglia_samples"])
+    pc = params["period_case"]
+    pcm = params["period_case_minstd"]
+    ref = e["ref"]
+    checks = []
+
+    def lcg_seq(a, c, m, x0, n):
+        out = []
+        x = x0 % m
+        for _ in range(n):
+            x = (a * x + c) % m
+            out.append(x)
+        return out
+
+    def lcg_normals(a, m, box):
+        a2 = (a * a) % m
+        count = 0
+        min_norm = math.inf
+        for h3 in range(-box, box + 1):
+            for h2 in range(-box, box + 1):
+                h1 = (-(h2 * a + h3 * a2)) % m
+                if h1 > m / 2:
+                    h1 -= m
+                if abs(h1) <= box and not (h1 == 0 and h2 == 0 and h3 == 0):
+                    count += 1
+                    min_norm = min(min_norm, math.sqrt(h1 * h1 + h2 * h2 + h3 * h3))
+        return count, min_norm
+
+    def lcg_period(a, c, m, x0):
+        x = x0 % m
+        seen = set()
+        p = 0
+        while x not in seen and p < m:
+            seen.add(x)
+            x = (a * x + c) % m
+            p += 1
+        return p
+
+    seq_r = lcg_seq(int(randu["a"]), int(randu["c"]), int(randu["m"]), 1, 4)
+    seq_m = lcg_seq(int(minstd["a"]), int(minstd["c"]), int(minstd["m"]), 1, 4)
+    for k in range(4):
+        for label, value in (("randu_x", seq_r[k]), ("minstd_x", seq_m[k])):
+            name = f"{label}{k + 1}"
+            vref = float(ref[name]["value"])
+            tol = float(ref[name]["abs_tol"])
+            checks.append(mkcheck(name, value, vref, tol,
+                                  abs(value - vref) / max(abs(vref), 1),
+                                  abs(value - vref) <= tol))
+
+    m_r = int(randu["m"])
+    seq = lcg_seq(int(randu["a"]), int(randu["c"]), m_r, 1, n_samples + 2)
+    ks = []
+    max_dev = 0.0
+    for i in range(n_samples):
+        k = (mcoef[0] * seq[i] + mcoef[1] * seq[i + 1] + mcoef[2] * seq[i + 2]) / m_r
+        ki = round(k)
+        ks.append(ki)
+        max_dev = max(max_dev, abs(k - ki))
+    n_planes = len(set(ks))
+    vref = float(ref["randu_plane_count"]["value"])
+    tol = float(ref["randu_plane_count"]["abs_tol"])
+    checks.append(mkcheck("randu_plane_count", n_planes, vref, tol,
+                          abs(n_planes - vref) / max(abs(vref), 1),
+                          abs(n_planes - vref) <= tol))
+    tol = float(ref["marsaglia_integrality"]["abs_tol"])
+    checks.append(mkcheck("marsaglia_integrality", max_dev, 0, tol, max_dev,
+                          max_dev <= tol))
+
+    n_norm_r, min_norm_r = lcg_normals(int(randu["a"]), m_r, box_h)
+    n_norm_m, _min_norm_m = lcg_normals(int(minstd["a"]), int(minstd["m"]), box_h)
+    for name, value in (("randu_normal_count", n_norm_r),
+                        ("minstd_normal_count", n_norm_m)):
+        vref = float(ref[name]["value"])
+        tol = float(ref[name]["abs_tol"])
+        checks.append(mkcheck(name, value, vref, tol,
+                              abs(value - vref) / max(abs(vref), 1),
+                              abs(value - vref) <= tol))
+    vref = float(ref["randu_min_normal_norm"]["value"])
+    tol = float(ref["randu_min_normal_norm"]["abs_tol"])
+    checks.append(mkcheck("randu_min_normal_norm", min_norm_r, vref, tol,
+                          abs(min_norm_r - vref) / max(abs(vref), 1),
+                          abs(min_norm_r - vref) <= tol))
+
+    per_r = lcg_period(int(pc["a"]), int(pc["c"]), int(pc["m"]), int(pc["x0"]))
+    per_m = lcg_period(int(pcm["a"]), int(pcm["c"]), int(pcm["m"]), int(pcm["x0"]))
+    for name, value in (("randu_period", per_r), ("minstd_period", per_m)):
+        vref = float(ref[name]["value"])
+        tol = float(ref[name]["abs_tol"])
+        checks.append(mkcheck(name, value, vref, tol,
+                              abs(value - vref) / max(abs(vref), 1),
+                              abs(value - vref) <= tol))
+    return {
+        "name": e["name"], "family": e["family"],
+        "pass": all(c["pass"] for c in checks), "checks": checks,
+        "randu_plane_count": n_planes, "randu_normal_count": n_norm_r,
+        "minstd_normal_count": n_norm_m, "randu_period": per_r,
+        "minstd_period": per_m,
+    }
+
+
+def _egyptian_mult(a: int, b: int) -> int:
+    res = 0
+    neg = False
+    if a < 0:
+        a, neg = -a, not neg
+    if b < 0:
+        b, neg = -b, not neg
+    while b > 0:
+        if b & 1:
+            res += a
+        a <<= 1
+        b >>= 1
+    return -res if neg else res
+
+
+def _egyptian_fraction(num: int, den: int, max_terms: int):
+    dens = []
+    while num > 0 and len(dens) < max_terms:
+        m = -(-den // num)
+        dens.append(m)
+        nn = num * m - den
+        nd = den * m
+        g = math.gcd(nn, nd)
+        num, den = nn // g, nd // g
+    return dens
+
+
+def _babilonian_sqrt(x: float, iterations: int) -> float:
+    if x < 0:
+        return -1.0
+    if x == 0:
+        return 0.0
+    v = x / 2.0
+    if v == 0.0:
+        v = 1.0
+    for _ in range(iterations):
+        v = 0.5 * (v + x / v)
+    return v
+
+
+def _aryabhata_sin(theta: float, pasos: int) -> float:
+    while theta < 0.0:
+        theta += 2.0 * math.pi
+    while theta > 2.0 * math.pi:
+        theta -= 2.0 * math.pi
+    n = pasos if pasos > 0 else 360
+    paso = 2.0 * math.pi / n
+    indice = int(theta / paso)
+    indice = max(0, min(n, indice))
+    k = 2.0 * (1.0 - math.cos(paso))
+    s_prev, s_actual = 0.0, math.sin(paso)
+    if indice == 0:
+        return 0.0
+    if indice == 1:
+        return s_actual
+    for _ in range(1, indice):
+        s_siguiente = 2.0 * s_actual - s_prev - k * s_actual
+        s_prev, s_actual = s_actual, s_siguiente
+    return s_actual
+
+
+def _extended_gcd(a: int, b: int):
+    if b == 0:
+        return a, 1, 0
+    g, x1, y1 = _extended_gcd(b, a % b)
+    return g, y1, x1 - (a // b) * y1
+
+
+def _chinese_remainder(residues, moduli):
+    M = 1
+    for m in moduli:
+        M *= m
+    x = 0
+    for r, m in zip(residues, moduli):
+        Mi = M // m
+        g, inv, _y = _extended_gcd(Mi % m, m)
+        if g != 1:
+            raise ValueError("modulos no coprimos")
+        x += r * Mi * (inv % m)
+    return x % M, M
+
+
+def _chinese_elimination(A, b):
+    n = len(b)
+    A = [row[:] for row in A]
+    b = list(b)
+    for col in range(n):
+        piv = max(range(col, n), key=lambda r: abs(A[r][col]))
+        if abs(A[piv][col]) < 1e-14:
+            return [0.0] * n
+        if piv != col:
+            A[col], A[piv] = A[piv], A[col]
+            b[col], b[piv] = b[piv], b[col]
+        for fila in range(col + 1, n):
+            factor = A[fila][col] / A[col][col]
+            for k in range(col, n):
+                A[fila][k] -= factor * A[col][k]
+            b[fila] -= factor * b[col]
+    x = [0.0] * n
+    for i in range(n - 1, -1, -1):
+        acc = b[i]
+        for j in range(i + 1, n):
+            acc -= A[i][j] * x[j]
+        x[i] = acc / A[i][i]
+    return x
+
+
+def _vigesimal(valor: int, max_digitos: int):
+    digs = []
+    v = valor
+    if v == 0:
+        return [0]
+    while v > 0 and len(digs) < max_digitos:
+        digs.append(v % 20)
+        v //= 20
+    return digs
+
+
+def eval_ancestral(e: dict) -> dict:
+    """Algoritmos matematicos de tradiciones ancestrales."""
+    params = e["params"]
+    mult = [int(v) for v in params["egyptian_multiply"]]
+    frac = [int(v) for v in params["egyptian_fraction"]]
+    sqrtp = params["babylonian_sqrt"]
+    aryp = params["aryabhata"]
+    tcrp = params["tcr"]
+    vig = int(params["vigesimal"])
+    lins = params["linear_system"]
+    ref = e["ref"]
+    checks = []
+
+    def value_check(label, computed, refname):
+        vref = float(ref[refname]["value"])
+        tol = float(ref[refname]["abs_tol"])
+        return mkcheck(label, computed, vref, tol,
+                       abs(computed - vref) / max(abs(vref), 1),
+                       abs(computed - vref) <= tol)
+
+    checks.append(value_check("egyptian_product", _egyptian_mult(mult[0], mult[1]),
+                              "egyptian_product"))
+    checks.append(value_check("egyptian_product_signed",
+                              _egyptian_mult(-mult[0], mult[1]),
+                              "egyptian_product_signed"))
+
+    dens = _egyptian_fraction(frac[0], frac[1], 32)
+    for k in range(min(len(dens), 2)):
+        checks.append(value_check(f"egyptian_den_{k + 1}", dens[k],
+                                  f"egyptian_den_{k + 1}"))
+    vref = float(ref["egyptian_terms"]["value"])
+    tol = float(ref["egyptian_terms"]["abs_tol"])
+    checks.append(mkcheck("egyptian_terms", len(dens), vref, tol,
+                          abs(len(dens) - vref) / max(abs(vref), 1),
+                          abs(len(dens) - vref) <= tol))
+    err = abs(sum(1.0 / d for d in dens) - frac[0] / frac[1])
+    tol = float(ref["egyptian_sum_err"]["abs_tol"])
+    checks.append(mkcheck("egyptian_sum_err", err, 0, tol, err, err <= tol))
+
+    sq = _babilonian_sqrt(float(sqrtp["x"]), int(sqrtp["iterations"]))
+    err = abs(sq - math.sqrt(float(sqrtp["x"])))
+    tol = float(ref["babylonian_sqrt_err"]["abs_tol"])
+    checks.append(mkcheck("babylonian_sqrt_err", err, 0, tol, err, err <= tol))
+
+    theta = float(aryp["theta"])
+    pasos = int(aryp["steps"])
+    s_ary = _aryabhata_sin(theta, pasos)
+    paso = 2.0 * math.pi / pasos
+    indice = int(theta / paso)
+    err_tab = abs(s_ary - math.sin(indice * paso))
+    tol = float(ref["aryabhata_table_err"]["abs_tol"])
+    checks.append(mkcheck("aryabhata_table_err", err_tab, 0, tol, err_tab,
+                          err_tab <= tol))
+    err_sin = abs(s_ary - math.sin(theta))
+    tol = float(ref["aryabhata_sin_err"]["abs_tol"])
+    checks.append(mkcheck("aryabhata_sin_err", err_sin, 0, tol, err_sin,
+                          err_sin <= tol))
+
+    residues = [int(v) for v in tcrp["residues"]]
+    moduli = [int(v) for v in tcrp["moduli"]]
+    x_crt, M = _chinese_remainder(residues, moduli)
+    checks.append(value_check("tcr_x", x_crt, "tcr_x"))
+    checks.append(value_check("tcr_M", M, "tcr_M"))
+
+    digs = _vigesimal(vig, 16)
+    for k in range(min(len(digs), 3)):
+        checks.append(value_check(f"vigesimal_d{k}", digs[k], f"vigesimal_d{k}"))
+    vref = float(ref["vigesimal_digits"]["value"])
+    tol = float(ref["vigesimal_digits"]["abs_tol"])
+    checks.append(mkcheck("vigesimal_digits", len(digs), vref, tol,
+                          abs(len(digs) - vref) / max(abs(vref), 1),
+                          abs(len(digs) - vref) <= tol))
+    vrecon = sum(d * 20 ** i for i, d in enumerate(digs))
+    checks.append(value_check("vigesimal_value", vrecon, "vigesimal_value"))
+
+    A = [[float(v) for v in row] for row in lins["A"]]
+    b = [float(v) for v in lins["b"]]
+    x = _chinese_elimination(A, b)
+    for k in range(len(b)):
+        checks.append(value_check(f"linear_x{k + 1}", x[k], f"linear_x{k + 1}"))
+    resid = max(abs(sum(A[i][j] * x[j] for j in range(len(b))) - b[i])
+                for i in range(len(b)))
+    tol = float(ref["linear_residual_max"]["abs_tol"])
+    checks.append(mkcheck("linear_residual_max", resid, 0, tol, resid, resid <= tol))
+    return {
+        "name": e["name"], "family": e["family"],
+        "pass": all(c["pass"] for c in checks), "checks": checks,
+    }
+
+
 def selected(e: dict, sel: str) -> bool:
     if sel == "all":
         return True
@@ -839,6 +1395,10 @@ EVALUATORS = {
     "archimedes_pi": eval_archimedes_pi,
     "prng_bin": eval_middle_square_weyl,
     "hybrid_prng": eval_hybrid_prng,
+    "cordic": eval_cordic,
+    "hastings": eval_hastings,
+    "lcg": eval_lcg,
+    "ancestral": eval_ancestral,
 }
 
 
@@ -953,6 +1513,21 @@ def run(selector: str = "all") -> dict:
                  "error": str(exc)}
         printrun(r)
         runs.append(r)
+
+    for reg, family in ((REG_CORDIC, "cordic"), (REG_HASTINGS, "hastings"),
+                        (REG_LCG, "lcg"), (REG_ANCESTRAL, "ancestral")):
+        for e in load_registry(reg):
+            if not selected(e, selector):
+                continue
+            print(f"[{e['family']}] {e['name']}")
+            try:
+                r = EVALUATORS[family](e)
+            except Exception as exc:  # noqa: BLE001
+                r = {"name": e["name"], "family": e["family"], "pass": False,
+                     "checks": [mkcheck("error", None, None, None, None, False)],
+                     "error": str(exc)}
+            printrun(r)
+            runs.append(r)
 
     npass = sum(1 for r in runs if r["pass"])
     print(f"\nSummary: {npass}/{len(runs)} entries PASS")

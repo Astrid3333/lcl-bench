@@ -1,0 +1,45 @@
+{
+  "schema_version": 1,
+  "description": "CORDIC (Volder 1959): rotacion de (1,0) por un angulo usando solo sumas, restas y desplazamientos binarios, con tabla atan(2^-i) y ganancia K = prod sqrt(1+2^-2i). El vector roteado queda escalado por K; normalizando (x/K, y/K) se obtienen cos y sin. Se miden el error absoluto frente a las funciones trigonometricas nativas, el residuo angular final y la version en punto fijo Q15.",
+  "tolerance_defaults": {
+    "abs_tol": 1e-12
+  },
+  "entries": [
+    {
+      "name": "cordic_sincos",
+      "family": "cordic",
+      "dim": 1,
+      "equations": "z = theta; x = 1; y = 0; para i = 0..N-1: sigma = sign(z) (sigma=+1 si z>=0); (x,y) <- (x - sigma*y*2^-i, y + sigma*x*2^-i); z <- z - sigma*atan(2^-i). Resultado (x,y) = (K*cos(theta), K*sin(theta)) con K = prod_{i=0}^{N-1} sqrt(1+2^-2i); cos = x/K, sin = y/K. Reduccion previa de theta a [-pi,pi] y luego a [-pi/2,pi/2] con cambio de signo del coseno: theta' = pi-theta (theta>pi/2), theta' = -pi-theta (theta<-pi/2). Version Q15: theta truncado a Q15 (theta_f = trunc(theta/pi*32768)), x truncado a Q15 (x_f = trunc(x*32768)) y cos = x_f/(32768*K).",
+      "params": {
+        "iterations": 16,
+        "angle_multipliers": [0.0, 0.25, 0.5, 0.75, 1.0, 1.25, 1.5, 2.0, -0.75, -1.5, -2.0],
+        "samples": 401,
+        "marsaglia_coeffs": [9, -6, 1]
+      },
+      "ref": {
+        "gain_K": {
+          "value": 1.6467602578654548,
+          "abs_tol": 1e-12,
+          "source": "Producto exacto K = prod_{i=0}^{15} sqrt(1+2^-2i) evaluado en doble precision."
+        },
+        "cos_err_max": {
+          "abs_tol": 3.5e-05,
+          "source": "Cota del error absoluto max |cos_CORDIC - cos| sobre la grilla de angle_multipliers y la grilla densa de samples puntos. Con 16 iteraciones el residuo angular maximo es atan(2^-15) = 3.049e-05, luego el error en cos/sin es del mismo orden. Medido: 2.964e-05."
+        },
+        "sin_err_max": {
+          "abs_tol": 3.5e-05,
+          "source": "Cota del error absoluto max |sin_CORDIC - sin|; mismo justificativo que cos_err_max. Medido: 2.964e-05."
+        },
+        "residual_max": {
+          "abs_tol": 3.5e-05,
+          "source": "Cota del residuo angular |z| tras las 16 iteraciones (z es el angulo aun no compensado). Teorico: |z| <= atan(2^-15) = 3.049e-05. Medido: 3.049e-05."
+        },
+        "q15_err_max": {
+          "abs_tol": 6e-05,
+          "source": "Cota del error de la version Q15 con truncamiento: error de truncamiento (1 LSB = 3.052e-05) mas error de CORDIC. Medido: 4.509e-05."
+        }
+      },
+      "notes": "Los checks por angulo (cos_err_m<mult>, sin_err_m<mult>) usan la misma cota que cos_err_max/sin_err_max. La tabla atan(2^-i) se calcula con atan nativo, no con literales redondeados: una tabla truncada a 15 digitos introduce errores de hasta 1e-13 en los ultimos terminos, que no afectan el residuo final pero ensucian la comparacion entre lenguajes."
+    }
+  ]
+}

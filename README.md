@@ -130,6 +130,14 @@ preregistered verdict table (25 assertions / 13 artefacts).
 | `registries/attractors.json` | maps, IFS, ODEs, neural entries |
 | `registries/potentials.json` | physical potential entries |
 | `registries/energy_drift.json` | Verlet-vs-RK4 energy-drift test |
+| `registries/goertzel_fft.json` | Goertzel vs radix-2 FFT (`dsp_bin`) |
+| `registries/archimedes_pi.json` | Archimedes polygon pi + Liu Hui/Romberg |
+| `registries/middle_square_weyl.json` | von Neumann middle-square + Weyl PRNG |
+| `registries/hybrid_prng.json` | middle-square + msws64 hybrid |
+| `registries/cordic.json` | CORDIC rotation (sin/cos) and Q15 version |
+| `registries/hastings.json` | Hastings polynomials (sin, atan, exp, log1p) |
+| `registries/lcg_lehmer.json` | Lehmer LCG spectral quality (RANDU, MINSTD) |
+| `registries/matematica_ancestral.json` | ancestral algorithms (Egyptian, Babylonian, Aryabhata, CRT, Mayan, Chinese) |
 | `octave/` | Octave runner + kernels |
 | `python/` | Python runner + kernels + hub |
 | `fortran/` | Fortran runner + kernels + fjson parser + Makefile |
@@ -159,6 +167,19 @@ preregistered verdict table (25 assertions / 13 artefacts).
 - **Energy drift** (`double_well_verlet_rk4`): velocity-Verlet vs RK4 on
   V(x)=x⁴−x², x0=0.5, v0=0.4, h=0.01, T=1000; checks Verlet drift ≈0
   (rel_tol 1e-12), RK4 drift ≈0, and drift ratios (rel_tol 1e-5).
+- **CORDIC** (`cordic_sincos`): rotation of (1,0) with 16 iterations; error
+  of cos/sin vs libm ≤3.5e-05, angular residual ≤3.5e-05, gain K vs the exact
+  product (abs_tol 1e-12), and the Q15 variant ≤6e-05.
+- **Hastings** (`hastings_poly`): degree-5 Taylor polynomials with argument
+  reduction; sin error ≤1e-07 on [0, π/2], atan ≤1e-05 on [0.05, 4], exp
+  relative error ≤1.5e-05 on [-5, 5], log1p ≤1e-05 on [0, 1].
+- **LCG-Lehmer** (`lcg_spectral`): exact iterates of RANDU and MINSTD,
+  15 Marsaglia planes for RANDU, 10 short normals in |h|≤50 (vs 0 for
+  MINSTD), shortest normal norm √118, and cycle lengths 256/128 mod 2¹⁰.
+- **Ancestral** (`ancestral_math`): Egyptian multiplication and unit
+  fractions, Babylonian sqrt, Aryabhata sine table, Chinese remainder
+  theorem, Mayan vigesimal and Chinese elimination, each against its exact
+  mathematical result.
 
 Hénon additionally reports the **Grassberger-Procaccia correlation
 dimension** under the fixed protocol in `ref.corr_dim.protocol`.
@@ -169,13 +190,17 @@ Observed-only quantities (no citable reference yet) are reported with
 ## Adding an entry
 
 1. Append a JSON object to the right registry (`family` ∈
-   `map|ifs|ode|neural|potential`).
+   `map|ifs|ode|neural|potential|energy_drift|dsp_bin|archimedes_pi|prng_bin|
+   hybrid_prng|cordic|hastings|lcg|ancestral`).
 2. Provide `ref` fields with `value`, tolerance, and `source`
    (cite the literature; for exact formulas the source is the formula).
 3. Run `./run_all.sh <name>` — no code changes needed unless the entry
    introduces a new equation (then add one branch to `octave/registry_rhs.m`
    or `registry_map_step.m`, the mirror in `python/handles.py`, and in
-   `fortran/fhandles.f90`).
+   `fortran/fhandles.f90`). A new `family` needs an evaluator in
+   `octave/registry_eval_<family>.m` **and** in `python/registry_run.py`
+   (both are registered in the dispatch), plus the registry file listed in
+   `mcp/bench_server.py::_load_entries()`.
 
 ## Reproducibility notes
 

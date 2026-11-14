@@ -33,7 +33,8 @@ def _load_entries() -> list[dict]:
     out = []
     for reg in ("attractors.json", "potentials.json", "energy_drift.json",
                 "goertzel_fft.json", "archimedes_pi.json", "middle_square_weyl.json",
-                "hybrid_prng.json"):
+                "hybrid_prng.json", "cordic.json", "hastings.json",
+                "lcg_lehmer.json", "matematica_ancestral.json"):
         with open(REGISTRIES / reg) as f:
             out.extend(json.load(f)["entries"])
     return out

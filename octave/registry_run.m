@@ -15,6 +15,10 @@ function out = registry_run(selector)
   arc = registry_load(fullfile(root, 'registries', 'archimedes_pi.json'));
   msw = registry_load(fullfile(root, 'registries', 'middle_square_weyl.json'));
   hyr = registry_load(fullfile(root, 'registries', 'hybrid_prng.json'));
+  cor = registry_load(fullfile(root, 'registries', 'cordic.json'));
+  hast = registry_load(fullfile(root, 'registries', 'hastings.json'));
+  lcg = registry_load(fullfile(root, 'registries', 'lcg_lehmer.json'));
+  anc = registry_load(fullfile(root, 'registries', 'matematica_ancestral.json'));
 
   runs = {};
   for i = 1:numel(att.entries)
@@ -126,6 +130,11 @@ function out = registry_run(selector)
     runs{end + 1} = r;
   end
 
+  runs = run_registry_file(cor, selector, @registry_eval_cordic, runs);
+  runs = run_registry_file(hast, selector, @registry_eval_hastings, runs);
+  runs = run_registry_file(lcg, selector, @registry_eval_lcg, runs);
+  runs = run_registry_file(anc, selector, @registry_eval_ancestral, runs);
+
   npass = 0;
   for i = 1:numel(runs)
     if runs{i}.pass, npass = npass + 1; end
@@ -139,6 +148,24 @@ function out = registry_run(selector)
   fprintf(fid, '%s', jsonencode(out));
   fclose(fid);
   fprintf('Saved: %s\n', jpath);
+end
+
+function runs = run_registry_file(reg, selector, evalfh, runs)
+  % Evalua las entradas de un registry con el evaluador indicado.
+  for i = 1:numel(reg.entries)
+    e = reg.entries{i};
+    if ~selected(e, selector), continue; end
+    fprintf('[%s] %s\n', e.family, e.name);
+    try
+      r = evalfh(e);
+    catch err
+      r = struct('name', e.name, 'family', e.family, 'pass', false, ...
+                 'checks', mkcheck('error', NaN, NaN, NaN, NaN, false), ...
+                 'error', err.message);
+    end
+    printrun(r);
+    runs{end + 1} = r;
+  end
 end
 
 function tf = selected(e, sel)
