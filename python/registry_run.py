@@ -32,6 +32,7 @@ REG_CORDIC = ROOT / "registries" / "cordic.json"
 REG_HASTINGS = ROOT / "registries" / "hastings.json"
 REG_LCG = ROOT / "registries" / "lcg_lehmer.json"
 REG_ANCESTRAL = ROOT / "registries" / "matematica_ancestral.json"
+REG_PRNG_LEGACY = ROOT / "registries" / "prng_legacy.json"
 OUTDIR = ROOT / "results"
 
 
@@ -1374,6 +1375,126 @@ def eval_ancestral(e: dict) -> dict:
     }
 
 
+def _ms_step(x: int, digits: int) -> int:
+    s = str(x * x).zfill(2 * digits)
+    return int(s[digits // 2: digits // 2 + digits])
+
+
+def _wh16(a: int, b: int, c: int, mults, mods):
+    s1 = mults[0] * (a % 177) - 2 * (a // 177)
+    s2 = mults[1] * (b % 176) - 35 * (b // 176)
+    s3 = mults[2] * (c % 178) - 63 * (c // 178)
+    return s1, s2, s3
+
+
+def eval_prng_legacy(e: dict) -> dict:
+    """PRNG obsoletos: medio del cuadrado de von Neumann y Wichmann-Hill."""
+    params = e["params"]
+    ref = e["ref"]
+    checks = []
+
+    def value_check(label, computed, refname):
+        vref = float(ref[refname]["value"])
+        tol = float(ref[refname]["abs_tol"])
+        return mkcheck(label, computed, vref, tol,
+                       abs(computed - vref) / max(abs(vref), 1),
+                       abs(computed - vref) <= tol)
+
+    if e["name"] == "middle_square_vn":
+        digits = int(params["digits"])
+        seed = int(params["seed"])
+        nseq = int(params["seq_values"])
+        n_states = 10 ** digits
+        x = seed
+        for k in range(nseq):
+            x = _ms_step(x, digits)
+            checks.append(value_check(f"seq_{k + 1}", x, f"seq_{k + 1}"))
+        fixed = [s for s in range(n_states) if _ms_step(s, digits) == s]
+        nonzero = [s for s in fixed if s != 0]
+        checks.append(value_check("fixed_points_nonzero_count", len(nonzero),
+                                  "fixed_points_nonzero_count"))
+        checks.append(value_check("zero_is_fixed", 1 if 0 in fixed else 0,
+                                  "zero_is_fixed"))
+        outs = {_ms_step(s, digits) for s in range(n_states)}
+        checks.append(value_check(f"distinct_outputs_n{digits}", len(outs),
+                                  f"distinct_outputs_n{digits}"))
+        seen = set()
+        x = seed
+        p = 0
+        while x not in seen:
+            seen.add(x)
+            x = _ms_step(x, digits)
+            p += 1
+        checks.append(value_check("period_from_seed", p, "period_from_seed"))
+        bad = set(int(v) for v in params["bad_two_digit_targets"])
+        best = 0
+        best_seed = -1
+        for s in range(int(params["two_digit_seeds"])):
+            x = s
+            n = 0
+            seen = set()
+            while x not in bad and x not in seen:
+                seen.add(x)
+                x = _ms_step(x, 2)
+                n += 1
+            if n > best:
+                best = n
+                best_seed = s
+        checks.append(value_check("two_digit_max_length", best,
+                                  "two_digit_max_length"))
+        checks.append(value_check("two_digit_max_length_seed", best_seed,
+                                  "two_digit_max_length_seed"))
+    elif e["name"] == "wichmann_hill":
+        seeds = [int(v) for v in params["seeds"]]
+        mults = [int(v) for v in params["multipliers"]]
+        mods = [int(v) for v in params["moduli"]]
+        n_samples = int(params["samples"])
+        periods = []
+        for i in range(3):
+            x = 1
+            seen = set()
+            p = 0
+            while x not in seen:
+                seen.add(x)
+                x = (mults[i] * x) % mods[i]
+                p += 1
+            periods.append(p)
+            checks.append(value_check(f"sub_period_{i + 1}", p, f"sub_period_{i + 1}"))
+        lcm = periods[0]
+        for p in periods[1:]:
+            lcm = lcm * p // math.gcd(lcm, p)
+        checks.append(value_check("combined_period_lcm", lcm,
+                                  "combined_period_lcm"))
+        s1, s2, s3 = seeds
+        p1, p2, p3 = seeds
+        rs = []
+        max_diff = 0.0
+        for i in range(n_samples):
+            s1 = (mults[0] * s1) % mods[0]
+            s2 = (mults[1] * s2) % mods[1]
+            s3 = (mults[2] * s3) % mods[2]
+            r = (s1 / mods[0] + s2 / mods[1] + s3 / mods[2]) % 1.0
+            rs.append(r)
+            p1, p2, p3 = _wh16(p1, p2, p3, mults, mods)
+            r16 = (p1 / mods[0] + p2 / mods[1] + p3 / mods[2]) % 1.0
+            max_diff = max(max_diff, abs(r - r16))
+            if i < 4:
+                checks.append(value_check(f"r_{i}", r, f"r_{i}"))
+        checks.append(value_check("r_min", min(rs), "r_min"))
+        checks.append(value_check("r_max", max(rs), "r_max"))
+        viol = max(max(0.0, r - 1.0) + max(0.0, -r) for r in rs)
+        checks.append(value_check("r_range_violation", viol, "r_range_violation"))
+        checks.append(value_check("variant16_max_diff", max_diff,
+                                  "variant16_max_diff"))
+    else:
+        raise ValueError(f"unknown prng_legacy entry: {e['name']}")
+
+    return {
+        "name": e["name"], "family": e["family"],
+        "pass": all(c["pass"] for c in checks), "checks": checks,
+    }
+
+
 def selected(e: dict, sel: str) -> bool:
     if sel == "all":
         return True
@@ -1399,6 +1520,7 @@ EVALUATORS = {
     "hastings": eval_hastings,
     "lcg": eval_lcg,
     "ancestral": eval_ancestral,
+    "prng_legacy": eval_prng_legacy,
 }
 
 
@@ -1515,7 +1637,8 @@ def run(selector: str = "all") -> dict:
         runs.append(r)
 
     for reg, family in ((REG_CORDIC, "cordic"), (REG_HASTINGS, "hastings"),
-                        (REG_LCG, "lcg"), (REG_ANCESTRAL, "ancestral")):
+                        (REG_LCG, "lcg"), (REG_ANCESTRAL, "ancestral"),
+                        (REG_PRNG_LEGACY, "prng_legacy")):
         for e in load_registry(reg):
             if not selected(e, selector):
                 continue

@@ -12,6 +12,7 @@ module fmath
   public :: egyptian_mult, egyptian_fraction, igcd
   public :: babylonian_sqrt, aryabhata_sin
   public :: ext_gcd, chinese_remainder, chinese_elimination, vigesimal
+  public :: ms_step, wh_step, wh_step16
 
 contains
 
@@ -466,6 +467,46 @@ contains
       digs(nd) = modulo(v, 20_i8)
       v = v / 20_i8
     end do
+  end subroutine
+
+  pure function ms_step(x, digits) result(y)
+    integer(i8), intent(in) :: x
+    integer, intent(in) :: digits
+    integer(i8) :: y, p
+    p = 10_i8 ** (digits / 2)
+    y = modulo((x * x) / p, 10_i8 ** digits)
+  end function
+
+  subroutine wh_step(s, mults, mods, r)
+    integer(i8), intent(inout) :: s(3)
+    integer(i8), intent(in) :: mults(3), mods(3)
+    real(dp), intent(out) :: r
+    integer :: i
+    do i = 1, 3
+      s(i) = modulo(mults(i) * s(i), mods(i))
+    end do
+    r = modulo(s(1) / real(mods(1), dp) + s(2) / real(mods(2), dp) + &
+               s(3) / real(mods(3), dp), 1.0_dp)
+  end subroutine
+
+  pure function floor_div(a, b) result(q)
+    integer(i8), intent(in) :: a, b
+    integer(i8) :: q
+    q = a / b
+    if (modulo(a, b) /= 0_i8) then
+      if ((a < 0_i8) .neqv. (b < 0_i8)) q = q - 1_i8
+    end if
+  end function
+
+  subroutine wh_step16(s, mults, mods, r)
+    integer(i8), intent(inout) :: s(3)
+    integer(i8), intent(in) :: mults(3), mods(3)
+    real(dp), intent(out) :: r
+    s(1) = mults(1) * modulo(s(1), 177_i8) - 2_i8 * floor_div(s(1), 177_i8)
+    s(2) = mults(2) * modulo(s(2), 176_i8) - 35_i8 * floor_div(s(2), 176_i8)
+    s(3) = mults(3) * modulo(s(3), 178_i8) - 63_i8 * floor_div(s(3), 178_i8)
+    r = modulo(s(1) / real(mods(1), dp) + s(2) / real(mods(2), dp) + &
+               s(3) / real(mods(3), dp), 1.0_dp)
   end subroutine
 
 end module fmath

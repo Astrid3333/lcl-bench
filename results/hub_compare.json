@@ -1,11 +1,11 @@
 {
   "files": {
-    "octave": "registry_run_20261114T165520.json",
-    "python": "registry_run_py_20261114T225219.json",
-    "fortran": "registry_run_f_20261114T224927.json"
+    "octave": "registry_run_20261115T122220.json",
+    "python": "registry_run_py_20261115T121353.json",
+    "fortran": "registry_run_f_20261115T121506.json"
   },
-  "n_entries": 32,
-  "all_pass": 28,
+  "n_entries": 34,
+  "all_pass": 30,
   "rows": [
     {
       "name": "aizawa",
@@ -335,6 +335,21 @@
       }
     },
     {
+      "name": "middle_square_vn",
+      "status": "ALL_PASS",
+      "passes": {
+        "octave": true,
+        "python": true,
+        "fortran": true
+      },
+      "obs_rel_diff": null,
+      "obs": {
+        "octave": null,
+        "python": null,
+        "fortran": null
+      }
+    },
+    {
       "name": "middle_square_weyl",
       "status": "MISSING",
       "present": {
@@ -446,6 +461,21 @@
         "octave": 0.19947732135732588,
         "python": 0.19947732135732588,
         "fortran": 0.19819339729812538
+      }
+    },
+    {
+      "name": "wichmann_hill",
+      "status": "ALL_PASS",
+      "passes": {
+        "octave": true,
+        "python": true,
+        "fortran": true
+      },
+      "obs_rel_diff": null,
+      "obs": {
+        "octave": null,
+        "python": null,
+        "fortran": null
       }
     },
     {

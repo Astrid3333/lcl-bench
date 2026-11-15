@@ -138,6 +138,7 @@ preregistered verdict table (25 assertions / 13 artefacts).
 | `registries/hastings.json` | Hastings polynomials (sin, atan, exp, log1p) |
 | `registries/lcg_lehmer.json` | Lehmer LCG spectral quality (RANDU, MINSTD) |
 | `registries/matematica_ancestral.json` | ancestral algorithms (Egyptian, Babylonian, Aryabhata, CRT, Mayan, Chinese) |
+| `registries/prng_legacy.json` | von Neumann middle-square + Wichmann-Hill legacy PRNGs |
 | `octave/` | Octave runner + kernels |
 | `python/` | Python runner + kernels + hub |
 | `fortran/` | Fortran runner + kernels + fjson parser + fmath (CORDIC/Hastings/LCG/ancestral) + Makefile |
@@ -197,25 +198,25 @@ Observed-only quantities (no citable reference yet) are reported with
 3. Run `./run_all.sh <name>` — no code changes needed unless the entry
    introduces a new equation (then add one branch to `octave/registry_rhs.m`
    or `registry_map_step.m`, the mirror in `python/handles.py`, and in
-   `fortran/fhandles.f90`). A new `family` needs an evaluator in
-   `octave/registry_eval_<family>.m` **and** in `python/registry_run.py`
-   (both are registered in the dispatch), plus the registry file listed in
-   `mcp/bench_server.py::_load_entries()`. The Fortran runner covers the
-   `map|ifs|ode|neural|potential|energy_drift|cordic|hastings|lcg|ancestral`
-   families: a new family also needs a `case` in `fortran/frunner.f90` and
-   the registry file loaded there, otherwise the hub reports it as
-   `MISSING in fortran` (the hub tolerates missing languages, it does not
-   fail).
+    `fortran/fhandles.f90`). A new `family` needs an evaluator in
+    `octave/registry_eval_<family>.m` **and** in `python/registry_run.py`
+    (both are registered in the dispatch), plus the registry file listed in
+    `mcp/bench_server.py::_load_entries()`. The Fortran runner covers the
+    `map|ifs|ode|neural|potential|energy_drift|cordic|hastings|lcg|ancestral|
+    prng_legacy` families: a new family also needs a `case` in
+    `fortran/frunner.f90` and the registry file loaded there, otherwise the
+    hub reports it as `MISSING in fortran` (the hub tolerates missing
+    languages, it does not fail).
 
 ## Reproducibility notes
 
 - All three languages compare against the **registry references**, not against
   each other; the hub only diffs the three result files afterwards.
-- Language coverage: Octave and Python evaluate all 32 entries; Fortran
-  evaluates the 28 entries whose family it implements (`map|ifs|ode|neural|
-  potential|energy_drift|cordic|hastings|lcg|ancestral`). The remaining four
-  (`goertzel_vs_fft`, `archimedes_pi`, `middle_square_weyl`, `hybrid_prng`)
-  are reported by the hub as `MISSING in fortran`.
+- Language coverage: Octave and Python evaluate all 34 entries; Fortran
+  evaluates the 30 entries whose family it implements (`map|ifs|ode|neural|
+  potential|energy_drift|cordic|hastings|lcg|ancestral|prng_legacy`). The
+  remaining four (`goertzel_vs_fft`, `archimedes_pi`, `middle_square_weyl`,
+  `hybrid_prng`) are reported by the hub as `MISSING in fortran`.
 - IFS chaos-game RNG differs per language (Python `default_rng(0)`,
   Octave unseeded, Fortran `random_seed` base 20261023+37j); box dims agree
   within rel_tol, not bit-exactly.

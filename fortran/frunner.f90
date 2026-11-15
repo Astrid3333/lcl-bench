@@ -39,7 +39,7 @@ program f_runner
 
   character(len=64) :: sel
   character(len=512) :: outdir, emsg, jpath
-  type(jval) :: reg1, reg2, reg3, reg4, reg5, reg6, reg7, ents, ent, top, ra
+  type(jval) :: reg1, reg2, reg3, reg4, reg5, reg6, reg7, reg8, ents, ent, top, ra
   type(run_t) :: runs(MAXRUN)
   logical :: ok, ok2
   integer :: nrun, npass, ei, ri, nent, u, ios
@@ -94,6 +94,12 @@ program f_runner
     write(*, '(a)') 'ERROR: ' // trim(emsg)
     error stop 1
   end if
+  call jload('registries/prng_legacy.json', reg8, ok2, emsg)
+  if (.not. ok2) call jload('../registries/prng_legacy.json', reg8, ok2, emsg)
+  if (.not. ok2) then
+    write(*, '(a)') 'ERROR: ' // trim(emsg)
+    error stop 1
+  end if
 
   call execute_command_line('mkdir -p "' // trim(outdir) // '"', exitstat=ios)
 
@@ -135,6 +141,12 @@ program f_runner
     if (selected(ent, sel)) call run_one(ent, outdir, runs, nrun)
   end do
   call jcopy(ents, jget(reg7, 'entries'))
+  nent = jalen(ents)
+  do ei = 1, nent
+    call jcopy(ent, jat(ents, ei))
+    if (selected(ent, sel)) call run_one(ent, outdir, runs, nrun)
+  end do
+  call jcopy(ents, jget(reg8, 'entries'))
   nent = jalen(ents)
   do ei = 1, nent
     call jcopy(ent, jat(ents, ei))
@@ -540,6 +552,8 @@ contains
       call eval_lcg(ent, r, ok, emsg)
     case ('ancestral')
       call eval_ancestral(ent, r, ok, emsg)
+    case ('prng_legacy')
+      call eval_prng_legacy(ent, r, ok, emsg)
     case default
       ok = .false.
       emsg = 'unknown family: ' // trim(fam)
@@ -1669,6 +1683,169 @@ contains
     tol = ref_tol(ref, 'linear_residual_max')
     call add_check(r, 'linear_residual_max', resid_max, 0.0_dp, tol, resid_max, &
                    resid_max <= tol)
+    ok = .true.
+    emsg = ''
+  end subroutine
+
+  subroutine eval_prng_legacy(e, r, ok, emsg)
+    type(jval), intent(in) :: e
+    type(run_t), intent(inout) :: r
+    logical, intent(out) :: ok
+    character(len=*), intent(out) :: emsg
+    type(jval) :: pr, ref, arr
+    integer(i8) :: x, y, seed, mults(3), mods(3), sstate(3), pstate(3)
+    integer(i8) :: bad(16), periods(3), lcmv, g
+    integer :: digits, nseq, nstates, nseeds, nsamples, i, k, s, nbad, n
+    integer :: nfixed_nz, nout, best, best_seed
+    logical :: isbad, zero_fixed
+    logical, allocatable :: seen(:), seen2(:), seenout(:)
+    real(dp) :: rval, r16, rmin, rmax, maxdiff, viol
+    character(len=64) :: eno, nmx
+
+    call jcopy(pr, jget(e, 'params'))
+    call jcopy(ref, jget(e, 'ref'))
+    eno = jstr(e, 'name', '')
+
+    if (trim(eno) == 'middle_square_vn') then
+      digits = jint(pr, 'digits', 4)
+      seed = int(jnum_req(pr, 'seed'), i8)
+      nseq = jint(pr, 'seq_values', 0)
+      nstates = 10 ** digits
+      x = seed
+      do k = 1, nseq
+        x = ms_step(x, digits)
+        write(nmx, '("seq_",i0)') k
+        call check_ref(r, ref, trim(nmx), real(x, dp))
+      end do
+
+      nfixed_nz = 0
+      zero_fixed = .false.
+      do s = 0, nstates - 1
+        y = ms_step(int(s, i8), digits)
+        if (y == int(s, i8) .and. s /= 0) nfixed_nz = nfixed_nz + 1
+      end do
+      if (ms_step(0_i8, digits) == 0_i8) zero_fixed = .true.
+      call check_ref(r, ref, 'fixed_points_nonzero_count', real(nfixed_nz, dp))
+      call check_ref(r, ref, 'zero_is_fixed', merge(1.0_dp, 0.0_dp, zero_fixed))
+
+      allocate(seenout(nstates))
+      seenout = .false.
+      nout = 0
+      do s = 0, nstates - 1
+        y = ms_step(int(s, i8), digits)
+        if (.not. seenout(int(y) + 1)) then
+          seenout(int(y) + 1) = .true.
+          nout = nout + 1
+        end if
+      end do
+      write(nmx, '("distinct_outputs_n",i0)') digits
+      call check_ref(r, ref, trim(nmx), real(nout, dp))
+
+      allocate(seen(nstates))
+      seen = .false.
+      x = seed
+      k = 0
+      do while (.not. seen(int(x) + 1))
+        seen(int(x) + 1) = .true.
+        x = ms_step(x, digits)
+        k = k + 1
+      end do
+      call check_ref(r, ref, 'period_from_seed', real(k, dp))
+
+      call jcopy(arr, jget(pr, 'bad_two_digit_targets'))
+      nbad = jalen(arr)
+      do i = 1, nbad
+        bad(i) = int(atnum(arr, i), i8)
+      end do
+      nseeds = jint(pr, 'two_digit_seeds', 0)
+      allocate(seen2(100))
+      best = 0
+      best_seed = -1
+      do s = 0, nseeds - 1
+        x = int(s, i8)
+        seen2 = .false.
+        n = 0
+        do while (.true.)
+          isbad = .false.
+          do i = 1, nbad
+            if (x == bad(i)) isbad = .true.
+          end do
+          if (isbad) exit
+          if (seen2(int(x) + 1)) exit
+          seen2(int(x) + 1) = .true.
+          x = ms_step(x, 2)
+          n = n + 1
+        end do
+        if (n > best) then
+          best = n
+          best_seed = s
+        end if
+      end do
+      call check_ref(r, ref, 'two_digit_max_length', real(best, dp))
+      call check_ref(r, ref, 'two_digit_max_length_seed', real(best_seed, dp))
+    else if (trim(eno) == 'wichmann_hill') then
+      call jcopy(arr, jget(pr, 'seeds'))
+      do i = 1, 3
+        sstate(i) = int(atnum(arr, i), i8)
+      end do
+      call jcopy(arr, jget(pr, 'multipliers'))
+      do i = 1, 3
+        mults(i) = int(atnum(arr, i), i8)
+      end do
+      call jcopy(arr, jget(pr, 'moduli'))
+      do i = 1, 3
+        mods(i) = int(atnum(arr, i), i8)
+      end do
+      nsamples = jint(pr, 'samples', 0)
+
+      do i = 1, 3
+        allocate(seen(int(mods(i))))
+        seen = .false.
+        x = 1_i8
+        k = 0
+        do while (.not. seen(int(x) + 1))
+          seen(int(x) + 1) = .true.
+          x = modulo(mults(i) * x, mods(i))
+          k = k + 1
+        end do
+        periods(i) = int(k, i8)
+        write(nmx, '("sub_period_",i0)') i
+        call check_ref(r, ref, trim(nmx), real(periods(i), dp))
+        deallocate(seen)
+      end do
+      lcmv = periods(1)
+      do i = 2, 3
+        g = igcd(lcmv, periods(i))
+        lcmv = (lcmv / g) * periods(i)
+      end do
+      call check_ref(r, ref, 'combined_period_lcm', real(lcmv, dp))
+
+      pstate = sstate
+      rmin = huge(1.0_dp)
+      rmax = -huge(1.0_dp)
+      maxdiff = 0.0_dp
+      viol = 0.0_dp
+      do k = 1, nsamples
+        call wh_step(sstate, mults, mods, rval)
+        call wh_step16(pstate, mults, mods, r16)
+        maxdiff = max(maxdiff, abs(rval - r16))
+        rmin = min(rmin, rval)
+        rmax = max(rmax, rval)
+        viol = max(viol, max(0.0_dp, rval - 1.0_dp) + max(0.0_dp, -rval))
+        if (k <= 4) then
+          write(nmx, '("r_",i0)') k - 1
+          call check_ref(r, ref, trim(nmx), rval)
+        end if
+      end do
+      call check_ref(r, ref, 'r_min', rmin)
+      call check_ref(r, ref, 'r_max', rmax)
+      call check_ref(r, ref, 'r_range_violation', viol)
+      call check_ref(r, ref, 'variant16_max_diff', maxdiff)
+    else
+      ok = .false.
+      emsg = 'unknown prng_legacy entry: ' // trim(eno)
+      return
+    end if
     ok = .true.
     emsg = ''
   end subroutine

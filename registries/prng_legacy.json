@@ -1,0 +1,63 @@
+{
+  "schema_version": 1,
+  "description": "PRNG obsoletos con defectos historicos cuantificables: el metodo del medio del cuadrado de von Neumann (1946, 4 digitos) y el Wichmann-Hill (1982, Algorithm AS 183). Cada invariante tiene una fuente canonica o se deriva por enumeracion exhaustiva en los tres lenguajes.",
+  "tolerance_defaults": {
+    "abs_tol": 1e-12
+  },
+  "entries": [
+    {
+      "name": "middle_square_vn",
+      "family": "prng_legacy",
+      "dim": 1,
+      "equations": "Medio del cuadrado: x_{n+1} = floor(x_n^2 / 100) mod 10000 (los 4 digitos centrales de x_n^2, con relleno de ceros a la izquierda, es decir str(x_n^2).zfill(8)[2:6]). Con 4 digitos el generador se queda atrapado en los puntos fijos 0100, 2500, 3792 y 7600 (y en 0000), y desde la semilla 1234 la secuencia degenera al cero en 57 pasos. Con 2 digitos ninguna de las 100 semillas genera mas de 14 iteraciones antes de volver a 0, 10, 50, 60 o al ciclo 24 <-> 57.",
+      "params": {
+        "digits": 4,
+        "seed": 1234,
+        "seq_values": 5,
+        "two_digit_seeds": 100,
+        "bad_two_digit_targets": [0, 10, 50, 60, 24, 57]
+      },
+      "ref": {
+        "seq_1": {"value": 5227, "abs_tol": 0, "source": "1234^2 = 1522756 -> digitos centrales 5227."},
+        "seq_2": {"value": 3215, "abs_tol": 0, "source": "5227^2 = 27321529 -> digitos centrales 3215."},
+        "seq_3": {"value": 3362, "abs_tol": 0, "source": "3215^2 = 10336225 -> digitos centrales 3362."},
+        "seq_4": {"value": 3030, "abs_tol": 0, "source": "3362^2 = 11303044 -> digitos centrales 3030."},
+        "seq_5": {"value": 1809, "abs_tol": 0, "source": "3030^2 = 9180900 -> digitos centrales 1809."},
+        "fixed_points_nonzero_count": {"value": 4, "abs_tol": 0, "source": "Puntos fijos de 4 digitos distintos de cero: 0100, 2500, 3792 y 7600. Fuente canonica: Wikipedia, 'Middle-square method' (seccion 'The method'), que los lista explicitamente como los valores en los que el generador queda atrapado."},
+        "zero_is_fixed": {"value": 1, "abs_tol": 0, "source": "0000 -> 0000: el metodo produce ceros para siempre si el estado llega a cero."},
+        "distinct_outputs_n4": {"value": 6110, "abs_tol": 0, "source": "Salidas distintas alcanzables al enumerar los 10000 estados de 4 digitos: solo 6110 de los 10000 estados pueden aparecer. Verificado por enumeracion exhaustiva en los tres lenguajes."},
+        "period_from_seed": {"value": 57, "abs_tol": 0, "source": "Numero de estados distintos visitados desde la semilla 1234 antes de repetir: 57 pasos, al cabo de los cuales la secuencia llega al absorbing 0000. Verificado por enumeracion exhaustiva."},
+        "two_digit_max_length": {"value": 14, "abs_tol": 0, "source": "Con 2 digitos, ninguna de las 100 semillas genera mas de 14 iteraciones antes de volver a 0, 10, 50, 60 o al ciclo 24 <-> 57. Fuente canonica: Wikipedia, 'Middle-square method'."},
+        "two_digit_max_length_seed": {"value": 42, "abs_tol": 0, "source": "Semilla de 2 digitos que alcanza esa longitud maxima de 14 iteraciones. Verificado por enumeracion exhaustiva de las 100 semillas."}
+      },
+      "notes": "Es el metodo original de von Neumann (1949; publicado en NBS Applied Mathematics Series 12, 'Various techniques used in connection with random digits', 1951, pp. 36-38). Su fragilidad es detectable y por eso von Neumann lo defendia: 'one always fears the appearance of undetected short cycles'. Se contrasta con la entrada middle_square_weyl (Weyl de 64 bits) y con hybrid_prng."
+    },
+    {
+      "name": "wichmann_hill",
+      "family": "prng_legacy",
+      "dim": 1,
+      "equations": "Wichmann-Hill (Algorithm AS 183, 1982): tres generadores congruenciales multiplicativos s1 := mod(171*s1, 30269), s2 := mod(172*s2, 30307), s3 := mod(170*s3, 30323), y r := mod(s1/30269 + s2/30307 + s3/30323, 1). Variante de 16 bits equivalente: s1 := 171*mod(s1,177) - 2*floor(s1/177), s2 := 172*mod(s2,176) - 35*floor(s2/176), s3 := 170*mod(s3,178) - 63*floor(s3/178).",
+      "params": {
+        "seeds": [1, 2, 3],
+        "samples": 1000,
+        "multipliers": [171, 172, 170],
+        "moduli": [30269, 30307, 30323]
+      },
+      "ref": {
+        "sub_period_1": {"value": 30268, "abs_tol": 0, "source": "Periodo del LCG multiplicativo s1 := mod(171*s1, 30269). Fuente canonica: Wichmann & Hill (1982), Algorithm AS 183, y la correccion de 1984 (periodos 30268, 30306, 30322)."},
+        "sub_period_2": {"value": 30306, "abs_tol": 0, "source": "Periodo del LCG multiplicativo s2 := mod(172*s2, 30307)."},
+        "sub_period_3": {"value": 30322, "abs_tol": 0, "source": "Periodo del LCG multiplicativo s3 := mod(170*s3, 30323)."},
+        "combined_period_lcm": {"value": 6953607871644, "abs_tol": 0, "source": "Periodo combinado = mcm(30268, 30306, 30322) = 30268*30306*30322/4 = 6953607871644 (6.95e12). Fuente canonica: Wichmann & Hill (1982) y correccion de 1984; confirmado por busqueda de fuerza bruta segun la literatura."},
+        "r_0": {"value": 0.03381877363047378, "abs_tol": 1e-15, "source": "Primer valor de r con las semillas (1,2,3): mod(171/30269 + 344/30307 + 510/30323, 1)."},
+        "r_1": {"value": 0.7775418875596665, "abs_tol": 1e-15, "source": "Segundo valor de la secuencia con las semillas (1,2,3)."},
+        "r_2": {"value": 0.05273524613909042, "abs_tol": 1e-15, "source": "Tercer valor de la secuencia con las semillas (1,2,3)."},
+        "r_3": {"value": 0.7446240744053352, "abs_tol": 1e-15, "source": "Cuarto valor de la secuencia con las semillas (1,2,3)."},
+        "r_min": {"value": 0.000597686633597716, "abs_tol": 1e-15, "source": "Menor de los 1000 valores de r generados con las semillas (1,2,3). Verificado por enumeracion en los tres lenguajes."},
+        "r_max": {"value": 0.9984793580436673, "abs_tol": 1e-15, "source": "Mayor de los 1000 valores de r generados con las semillas (1,2,3). Verificado por enumeracion en los tres lenguajes."},
+        "r_range_violation": {"value": 0, "abs_tol": 0, "source": "Mayor violacion del rango (0,1) en los 1000 valores de r: debe ser 0. Wichmann & Hill (1982) garantizan que r es estrictamente mayor que 0 y menor que 1; McLeod (1985, AS R58) documenta que en simple precision el redondeo puede producir ceros."},
+        "variant16_max_diff": {"value": 0, "abs_tol": 1e-15, "source": "Diferencia maxima entre el r de la version de 32 bits y el de la variante de 16 bits (que usa multiplicacion sin desbordamiento). Debe ser 0 salvo redondeo: la fuente canonica presenta ambas como 'equivalent code'."}
+      },
+      "notes": "Wichmann, B. A. y Hill, I. D. (1982), 'Algorithm AS 183: An Efficient and Portable Pseudo-Random Number Generator', Journal of the Royal Statistical Society C 31(2):188-190, con la correccion de 1984 (vol. 33(1):123) y la observacion AS R58 de McLeod (1985). El defecto historico que el entry cuantifica es el redondeo a cero en simple precision (documentado por McLeod) y la dependencia de la aritmetica de 32 bits: la variante de 16 bits existe justamente para evitar desbordamiento en maquinas pequenas."
+    }
+  ]
+}

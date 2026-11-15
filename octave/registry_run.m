@@ -19,6 +19,7 @@ function out = registry_run(selector)
   hast = registry_load(fullfile(root, 'registries', 'hastings.json'));
   lcg = registry_load(fullfile(root, 'registries', 'lcg_lehmer.json'));
   anc = registry_load(fullfile(root, 'registries', 'matematica_ancestral.json'));
+  prl = registry_load(fullfile(root, 'registries', 'prng_legacy.json'));
 
   runs = {};
   for i = 1:numel(att.entries)
@@ -134,6 +135,7 @@ function out = registry_run(selector)
   runs = run_registry_file(hast, selector, @registry_eval_hastings, runs);
   runs = run_registry_file(lcg, selector, @registry_eval_lcg, runs);
   runs = run_registry_file(anc, selector, @registry_eval_ancestral, runs);
+  runs = run_registry_file(prl, selector, @registry_eval_prng_legacy, runs);
 
   npass = 0;
   for i = 1:numel(runs)
