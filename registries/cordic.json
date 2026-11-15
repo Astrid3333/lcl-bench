@@ -36,7 +36,7 @@
         },
         "q15_err_max": {
           "abs_tol": 6e-05,
-          "source": "Cota del error de la version Q15 con truncamiento: error de truncamiento (1 LSB = 3.052e-05) mas error de CORDIC. Medido: 4.509e-05."
+          "source": "Cota del error de la version Q15 con truncamiento: error de truncamiento (1 LSB = 3.052e-05) mas error de CORDIC. Medido: 2.256e-05 (Octave, Python y Fortran coinciden bit a bit)."
         }
       },
       "notes": "Los checks por angulo (cos_err_m<mult>, sin_err_m<mult>) usan la misma cota que cos_err_max/sin_err_max. La tabla atan(2^-i) se calcula con atan nativo, no con literales redondeados: una tabla truncada a 15 digitos introduce errores de hasta 1e-13 en los ultimos terminos, que no afectan el residuo final pero ensucian la comparacion entre lenguajes."

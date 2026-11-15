@@ -3,6 +3,7 @@ program f_runner
   use fjson
   use fhandles
   use fkernels
+  use fmath
   use, intrinsic :: ieee_arithmetic, only: ieee_is_nan, ieee_is_finite, &
        ieee_quiet_nan, ieee_value
   implicit none
@@ -38,7 +39,7 @@ program f_runner
 
   character(len=64) :: sel
   character(len=512) :: outdir, emsg, jpath
-  type(jval) :: reg1, reg2, reg3, ents, ent, top, ra
+  type(jval) :: reg1, reg2, reg3, reg4, reg5, reg6, reg7, ents, ent, top, ra
   type(run_t) :: runs(MAXRUN)
   logical :: ok, ok2
   integer :: nrun, npass, ei, ri, nent, u, ios
@@ -69,6 +70,30 @@ program f_runner
     write(*, '(a)') 'ERROR: ' // trim(emsg)
     error stop 1
   end if
+  call jload('registries/cordic.json', reg4, ok2, emsg)
+  if (.not. ok2) call jload('../registries/cordic.json', reg4, ok2, emsg)
+  if (.not. ok2) then
+    write(*, '(a)') 'ERROR: ' // trim(emsg)
+    error stop 1
+  end if
+  call jload('registries/hastings.json', reg5, ok2, emsg)
+  if (.not. ok2) call jload('../registries/hastings.json', reg5, ok2, emsg)
+  if (.not. ok2) then
+    write(*, '(a)') 'ERROR: ' // trim(emsg)
+    error stop 1
+  end if
+  call jload('registries/lcg_lehmer.json', reg6, ok2, emsg)
+  if (.not. ok2) call jload('../registries/lcg_lehmer.json', reg6, ok2, emsg)
+  if (.not. ok2) then
+    write(*, '(a)') 'ERROR: ' // trim(emsg)
+    error stop 1
+  end if
+  call jload('registries/matematica_ancestral.json', reg7, ok2, emsg)
+  if (.not. ok2) call jload('../registries/matematica_ancestral.json', reg7, ok2, emsg)
+  if (.not. ok2) then
+    write(*, '(a)') 'ERROR: ' // trim(emsg)
+    error stop 1
+  end if
 
   call execute_command_line('mkdir -p "' // trim(outdir) // '"', exitstat=ios)
 
@@ -86,6 +111,30 @@ program f_runner
     if (selected(ent, sel)) call run_one(ent, outdir, runs, nrun)
   end do
   call jcopy(ents, jget(reg3, 'entries'))
+  nent = jalen(ents)
+  do ei = 1, nent
+    call jcopy(ent, jat(ents, ei))
+    if (selected(ent, sel)) call run_one(ent, outdir, runs, nrun)
+  end do
+  call jcopy(ents, jget(reg4, 'entries'))
+  nent = jalen(ents)
+  do ei = 1, nent
+    call jcopy(ent, jat(ents, ei))
+    if (selected(ent, sel)) call run_one(ent, outdir, runs, nrun)
+  end do
+  call jcopy(ents, jget(reg5, 'entries'))
+  nent = jalen(ents)
+  do ei = 1, nent
+    call jcopy(ent, jat(ents, ei))
+    if (selected(ent, sel)) call run_one(ent, outdir, runs, nrun)
+  end do
+  call jcopy(ents, jget(reg6, 'entries'))
+  nent = jalen(ents)
+  do ei = 1, nent
+    call jcopy(ent, jat(ents, ei))
+    if (selected(ent, sel)) call run_one(ent, outdir, runs, nrun)
+  end do
+  call jcopy(ents, jget(reg7, 'entries'))
   nent = jalen(ents)
   do ei = 1, nent
     call jcopy(ent, jat(ents, ei))
@@ -483,6 +532,14 @@ contains
       call eval_potential(ent, r, ok, emsg)
     case ('energy_drift')
       call eval_energy_drift(ent, r, ok, emsg)
+    case ('cordic')
+      call eval_cordic(ent, r, ok, emsg)
+    case ('hastings')
+      call eval_hastings(ent, r, ok, emsg)
+    case ('lcg')
+      call eval_lcg(ent, r, ok, emsg)
+    case ('ancestral')
+      call eval_ancestral(ent, r, ok, emsg)
     case default
       ok = .false.
       emsg = 'unknown family: ' // trim(fam)
@@ -1131,6 +1188,487 @@ contains
       call add_check(r, trim(keys(k)), vals(k), val, tol, rel, &
                      abs(vals(k) - val) <= tol)
     end do
+    ok = .true.
+    emsg = ''
+  end subroutine
+
+  function mtag(m) result(s)
+    real(dp), intent(in) :: m
+    character(len=32) :: s
+    character(len=64) :: buf
+    integer :: n
+    write(buf, '(f20.6)') m
+    buf = adjustl(buf)
+    n = len_trim(buf)
+    if (index(buf, '.') > 0) then
+      do while (n > 1)
+        if (buf(n:n) == '0') then
+          n = n - 1
+        else
+          exit
+        end if
+      end do
+      if (n >= 1) then
+        if (buf(n:n) == '.') n = n - 1
+      end if
+    end if
+    s = buf(1:n)
+  end function
+
+  function ref_tol(ref, key) result(tol)
+    type(jval), intent(in) :: ref
+    character(len=*), intent(in) :: key
+    real(dp) :: tol
+    type(jval) :: ck
+    call jcopy(ck, jget(ref, key))
+    if (jhas(ck, 'abs_tol')) then
+      tol = jnum_req(ck, 'abs_tol')
+    else
+      tol = jnum_req(ck, 'rel_tol') * abs(jnum_req(ck, 'value'))
+    end if
+  end function
+
+  subroutine check_ref(r, ref, key, computed)
+    type(run_t), intent(inout) :: r
+    type(jval), intent(in) :: ref
+    character(len=*), intent(in) :: key
+    real(dp), intent(in) :: computed
+    type(jval) :: ck
+    real(dp) :: val, tol, rel
+    call jcopy(ck, jget(ref, key))
+    if (ck%t /= JV_OBJ) then
+      call add_obs(r, trim(key) // '_observed', computed)
+      return
+    end if
+    tol = ref_tol(ref, key)
+    if (jhas(ck, 'value')) then
+      val = jnum_req(ck, 'value')
+      rel = abs(computed - val) / max(abs(val), 1.0_dp)
+      call add_check(r, trim(key), computed, val, tol, rel, &
+                     abs(computed - val) <= tol)
+    else
+      call add_check(r, trim(key), computed, 0.0_dp, tol, computed, computed <= tol)
+    end if
+  end subroutine
+
+  subroutine vec_from(o, v)
+    type(jval), intent(in) :: o
+    real(dp), allocatable, intent(out) :: v(:)
+    type(jval) :: cell
+    integer :: j, n
+    n = jalen(o)
+    allocate(v(max(n, 1)))
+    do j = 1, n
+      call jcopy(cell, jat(o, j))
+      v(j) = cell%v
+    end do
+  end subroutine
+
+  subroutine mat_from(o, m)
+    type(jval), intent(in) :: o
+    real(dp), allocatable, intent(out) :: m(:, :)
+    type(jval) :: row, cell
+    integer :: i, j, nr, nc
+    nr = jalen(o)
+    nc = 0
+    do i = 1, nr
+      call jcopy(row, jat(o, i))
+      nc = max(nc, jalen(row))
+    end do
+    allocate(m(max(nr, 1), max(nc, 1)))
+    do i = 1, nr
+      call jcopy(row, jat(o, i))
+      do j = 1, jalen(row)
+        call jcopy(cell, jat(row, j))
+        m(i, j) = cell%v
+      end do
+    end do
+  end subroutine
+
+  subroutine eval_cordic(e, r, ok, emsg)
+    type(jval), intent(in) :: e
+    type(run_t), intent(inout) :: r
+    logical, intent(out) :: ok
+    character(len=*), intent(out) :: emsg
+    type(jval) :: pr, ref, mv, cell
+    real(dp), allocatable :: atan_tab(:)
+    real(dp) :: kg, xr, yr, zr, theta, theta_r, xq, yq, eq, ec, es
+    real(dp) :: max_cos, max_sin, max_res, max_q15, cos_tol, sin_tol, tol
+    integer :: n_iter, n_samples, nmult, i, k, theta_f
+    character(len=64) :: tag
+
+    call jcopy(pr, jget(e, 'params'))
+    call jcopy(ref, jget(e, 'ref'))
+    n_iter = jint(pr, 'iterations', 0)
+    n_samples = jint(pr, 'samples', 0)
+    call jcopy(mv, jget(pr, 'angle_multipliers'))
+    nmult = jalen(mv)
+    allocate(atan_tab(max(n_iter, 1)))
+    do i = 1, n_iter
+      atan_tab(i) = atan(2.0_dp**(-(i - 1)))
+    end do
+    kg = cordic_gain(n_iter)
+    call check_ref(r, ref, 'gain_K', kg)
+    cos_tol = ref_tol(ref, 'cos_err_max')
+    sin_tol = ref_tol(ref, 'sin_err_max')
+    max_cos = 0.0_dp
+    max_sin = 0.0_dp
+    max_res = 0.0_dp
+    max_q15 = 0.0_dp
+    do i = 1, nmult
+      call jcopy(cell, jat(mv, i))
+      theta = cell%v * pi_value()
+      call cordic_rot(theta, atan_tab, xr, yr, zr)
+      ec = abs(xr / kg - cos(theta))
+      es = abs(yr / kg - sin(theta))
+      tag = 'm' // trim(mtag(cell%v))
+      call add_check(r, 'cos_err_' // trim(tag), ec, 0.0_dp, cos_tol, ec, ec <= cos_tol)
+      call add_check(r, 'sin_err_' // trim(tag), es, 0.0_dp, sin_tol, es, es <= sin_tol)
+      theta_f = int(theta / pi_value() * 32768.0_dp)
+      theta_r = (real(theta_f, dp) / 32768.0_dp) * pi_value()
+      call cordic_rot(theta_r, atan_tab, xq, yq, zr)
+      xq = real(int(xq * 32768.0_dp), dp)
+      yq = real(int(yq * 32768.0_dp), dp)
+      eq = max(abs(xq / (32768.0_dp * kg) - cos(theta_r)), &
+               abs(yq / (32768.0_dp * kg) - sin(theta_r)))
+      if (eq > max_q15) max_q15 = eq
+    end do
+    do k = 0, n_samples - 1
+      theta = -pi_value() + 2.0_dp * pi_value() * real(k, dp) / &
+              real(n_samples - 1, dp)
+      call cordic_rot(theta, atan_tab, xr, yr, zr)
+      max_cos = max(max_cos, abs(xr / kg - cos(theta)))
+      max_sin = max(max_sin, abs(yr / kg - sin(theta)))
+      max_res = max(max_res, abs(zr))
+    end do
+    call add_check(r, 'cos_err_max', max_cos, 0.0_dp, cos_tol, max_cos, max_cos <= cos_tol)
+    call add_check(r, 'sin_err_max', max_sin, 0.0_dp, sin_tol, max_sin, max_sin <= sin_tol)
+    tol = ref_tol(ref, 'residual_max')
+    call add_check(r, 'residual_max', max_res, 0.0_dp, tol, max_res, max_res <= tol)
+    tol = ref_tol(ref, 'q15_err_max')
+    call add_check(r, 'q15_err_max', max_q15, 0.0_dp, tol, max_q15, max_q15 <= tol)
+    ok = .true.
+    emsg = ''
+  end subroutine
+
+  subroutine eval_hastings(e, r, ok, emsg)
+    type(jval), intent(in) :: e
+    type(run_t), intent(inout) :: r
+    logical, intent(out) :: ok
+    character(len=*), intent(out) :: emsg
+    type(jval) :: pr, ref, rr
+    real(dp), allocatable :: rng(:)
+    real(dp) :: err, tol, v, a, b, xx, ex, pi2, pi6
+    integer :: n_samples, k
+
+    call jcopy(pr, jget(e, 'params'))
+    call jcopy(ref, jget(e, 'ref'))
+    n_samples = jint(pr, 'samples', 0)
+    pi2 = pi_value() / 2.0_dp
+    pi6 = pi_value() / 6.0_dp
+
+    call jcopy(rr, jget(pr, 'sin_range'))
+    call vec_from(rr, rng)
+    a = rng(1)
+    b = rng(2)
+    err = 0.0_dp
+    do k = 0, n_samples - 1
+      xx = a + (b - a) * real(k, dp) / real(n_samples - 1, dp)
+      err = max(err, abs(hastings_sin(xx) - sin(xx)))
+    end do
+    tol = ref_tol(ref, 'sin_err_max')
+    call add_check(r, 'sin_err_max', err, 0.0_dp, tol, err, err <= tol)
+
+    err = abs(hastings_sin(pi6) - sin(pi6))
+    tol = ref_tol(ref, 'sin_err_pi6')
+    call add_check(r, 'sin_err_pi6', err, 0.0_dp, tol, err, err <= tol)
+
+    err = abs(hastings_sin(pi2) - sin(pi2))
+    tol = ref_tol(ref, 'sin_err_pi2')
+    call add_check(r, 'sin_err_pi2', err, 0.0_dp, tol, err, err <= tol)
+
+    v = hastings_sin(pi2)
+    call check_ref(r, ref, 'sin_val_pi2', v)
+
+    call jcopy(rr, jget(pr, 'atan_range'))
+    call vec_from(rr, rng)
+    a = rng(1)
+    b = rng(2)
+    err = 0.0_dp
+    do k = 0, n_samples - 1
+      xx = a + (b - a) * real(k, dp) / real(n_samples - 1, dp)
+      err = max(err, abs(hastings_atan(xx) - atan(xx)))
+    end do
+    tol = ref_tol(ref, 'atan_err_max')
+    call add_check(r, 'atan_err_max', err, 0.0_dp, tol, err, err <= tol)
+
+    err = abs(hastings_atan(1.0_dp) - atan(1.0_dp))
+    tol = ref_tol(ref, 'atan_err_one')
+    call add_check(r, 'atan_err_one', err, 0.0_dp, tol, err, err <= tol)
+
+    call jcopy(rr, jget(pr, 'exp_range'))
+    call vec_from(rr, rng)
+    a = rng(1)
+    b = rng(2)
+    err = 0.0_dp
+    do k = 0, n_samples - 1
+      xx = a + (b - a) * real(k, dp) / real(n_samples - 1, dp)
+      ex = exp(xx)
+      err = max(err, abs(hastings_exp(xx) - ex) / ex)
+    end do
+    tol = ref_tol(ref, 'exp_rel_err_max')
+    call add_check(r, 'exp_rel_err_max', err, 0.0_dp, tol, err, err <= tol)
+
+    err = abs(hastings_exp(1.0_dp) - exp(1.0_dp))
+    tol = ref_tol(ref, 'exp_err_one')
+    call add_check(r, 'exp_err_one', err, 0.0_dp, tol, err, err <= tol)
+
+    v = hastings_exp(1.0_dp)
+    call check_ref(r, ref, 'exp_val_one', v)
+
+    call jcopy(rr, jget(pr, 'log1p_range'))
+    call vec_from(rr, rng)
+    a = rng(1)
+    b = rng(2)
+    err = 0.0_dp
+    do k = 0, n_samples - 1
+      xx = a + (b - a) * real(k, dp) / real(n_samples - 1, dp)
+      err = max(err, abs(hastings_log1p(xx) - log(1.0_dp + xx)))
+    end do
+    tol = ref_tol(ref, 'log1p_err_max')
+    call add_check(r, 'log1p_err_max', err, 0.0_dp, tol, err, err <= tol)
+
+    err = abs(hastings_log1p(1.0_dp) - log(1.0_dp + 1.0_dp))
+    tol = ref_tol(ref, 'log1p_err_one')
+    call add_check(r, 'log1p_err_one', err, 0.0_dp, tol, err, err <= tol)
+
+    v = hastings_log1p(1.0_dp)
+    call check_ref(r, ref, 'log1p_val_one', v)
+    ok = .true.
+    emsg = ''
+  end subroutine
+
+  subroutine eval_lcg(e, r, ok, emsg)
+    type(jval), intent(in) :: e
+    type(run_t), intent(inout) :: r
+    logical, intent(out) :: ok
+    character(len=*), intent(out) :: emsg
+    type(jval) :: pr, ref, rc, mc, pco, pcmo
+    integer(i8) :: a_r, c_r, m_r, a_m, c_m, m_m
+    integer(i8) :: x1, x2, x3, seq_r(4), seq_m(4), uniq(256)
+    integer(i8) :: a_p, c_p, m_p, x_p, a_pm, c_pm, m_pm, x_pm
+    integer :: box, n_samples, i, j, k, nuniq, count_r, count_m
+    integer :: per_r, per_m, found
+    real(dp) :: cc0, cc1, cc2, kk, ki, max_dev, min_norm_r, min_norm_m, tol
+    character(len=64) :: nmx
+
+    call jcopy(pr, jget(e, 'params'))
+    call jcopy(ref, jget(e, 'ref'))
+    call jcopy(rc, jget(pr, 'randu'))
+    a_r = int(jnum_req(rc, 'a'), i8)
+    c_r = int(jnum_req(rc, 'c'), i8)
+    m_r = int(jnum_req(rc, 'm'), i8)
+    call jcopy(mc, jget(pr, 'minstd'))
+    a_m = int(jnum_req(mc, 'a'), i8)
+    c_m = int(jnum_req(mc, 'c'), i8)
+    m_m = int(jnum_req(mc, 'm'), i8)
+    box = jint(pr, 'normal_box_h', 0)
+    n_samples = jint(pr, 'marsaglia_samples', 0)
+    call jcopy(pco, jget(pr, 'marsaglia_coeffs'))
+    cc0 = atnum(pco, 1)
+    cc1 = atnum(pco, 2)
+    cc2 = atnum(pco, 3)
+
+    seq_r(1) = lcg_next(a_r, c_r, m_r, 1_i8)
+    do i = 2, 4
+      seq_r(i) = lcg_next(a_r, c_r, m_r, seq_r(i - 1))
+    end do
+    seq_m(1) = lcg_next(a_m, c_m, m_m, 1_i8)
+    do i = 2, 4
+      seq_m(i) = lcg_next(a_m, c_m, m_m, seq_m(i - 1))
+    end do
+    do i = 1, 4
+      write(nmx, '("randu_x",i0)') i
+      call check_ref(r, ref, trim(nmx), real(seq_r(i), dp))
+      write(nmx, '("minstd_x",i0)') i
+      call check_ref(r, ref, trim(nmx), real(seq_m(i), dp))
+    end do
+
+    x1 = lcg_next(a_r, c_r, m_r, 1_i8)
+    x2 = lcg_next(a_r, c_r, m_r, x1)
+    x3 = lcg_next(a_r, c_r, m_r, x2)
+    nuniq = 0
+    max_dev = 0.0_dp
+    do k = 1, n_samples
+      kk = (cc0 * real(x1, dp) + cc1 * real(x2, dp) + cc2 * real(x3, dp)) / &
+           real(m_r, dp)
+      ki = real(nint(kk), dp)
+      max_dev = max(max_dev, abs(kk - ki))
+      found = 0
+      do j = 1, nuniq
+        if (real(uniq(j), dp) == ki) then
+          found = 1
+          exit
+        end if
+      end do
+      if (found == 0 .and. nuniq < 256) then
+        nuniq = nuniq + 1
+        uniq(nuniq) = int(ki, i8)
+      end if
+      x1 = x2
+      x2 = x3
+      x3 = lcg_next(a_r, c_r, m_r, x3)
+    end do
+    call check_ref(r, ref, 'randu_plane_count', real(nuniq, dp))
+    tol = ref_tol(ref, 'marsaglia_integrality')
+    call add_check(r, 'marsaglia_integrality', max_dev, 0.0_dp, tol, max_dev, max_dev <= tol)
+
+    call lcg_normals(a_r, m_r, box, count_r, min_norm_r)
+    call lcg_normals(a_m, m_m, box, count_m, min_norm_m)
+    call check_ref(r, ref, 'randu_normal_count', real(count_r, dp))
+    call check_ref(r, ref, 'minstd_normal_count', real(count_m, dp))
+    call check_ref(r, ref, 'randu_min_normal_norm', min_norm_r)
+
+    call jcopy(pco, jget(pr, 'period_case'))
+    a_p = int(jnum_req(pco, 'a'), i8)
+    c_p = int(jnum_req(pco, 'c'), i8)
+    m_p = int(jnum_req(pco, 'm'), i8)
+    x_p = int(jnum_req(pco, 'x0'), i8)
+    call jcopy(pcmo, jget(pr, 'period_case_minstd'))
+    a_pm = int(jnum_req(pcmo, 'a'), i8)
+    c_pm = int(jnum_req(pcmo, 'c'), i8)
+    m_pm = int(jnum_req(pcmo, 'm'), i8)
+    x_pm = int(jnum_req(pcmo, 'x0'), i8)
+    per_r = lcg_period(a_p, c_p, m_p, x_p)
+    per_m = lcg_period(a_pm, c_pm, m_pm, x_pm)
+    call check_ref(r, ref, 'randu_period', real(per_r, dp))
+    call check_ref(r, ref, 'minstd_period', real(per_m, dp))
+    ok = .true.
+    emsg = ''
+  end subroutine
+
+  subroutine eval_ancestral(e, r, ok, emsg)
+    type(jval), intent(in) :: e
+    type(run_t), intent(inout) :: r
+    logical, intent(out) :: ok
+    character(len=*), intent(out) :: emsg
+    type(jval) :: pr, ref, sqp, arp, tcrp, lins, arr
+    real(dp), allocatable :: amat(:, :), bvec(:), dens(:)
+    real(dp), allocatable :: xvec(:)
+    integer(i8), allocatable :: resid(:), modu(:), densi(:), digs(:)
+    integer(i8) :: mult(2), frac(2), x_crt, mm_crt, vval
+    integer :: nterms, ndig, i, j, n, ndig_max, nres, nmod
+    real(dp) :: xval, sq, err, err_tab, err_sin, theta, paso, s_ary, idx_f
+    real(dp) :: acc, resid_max, sumv, tol
+    logical :: cok
+    character(len=64) :: nmx
+
+    call jcopy(pr, jget(e, 'params'))
+    call jcopy(ref, jget(e, 'ref'))
+    call jcopy(arr, jget(pr, 'egyptian_multiply'))
+    mult(1) = int(atnum(arr, 1), i8)
+    mult(2) = int(atnum(arr, 2), i8)
+    call jcopy(arr, jget(pr, 'egyptian_fraction'))
+    frac(1) = int(atnum(arr, 1), i8)
+    frac(2) = int(atnum(arr, 2), i8)
+
+    call check_ref(r, ref, 'egyptian_product', real(egyptian_mult(mult(1), mult(2)), dp))
+    call check_ref(r, ref, 'egyptian_product_signed', &
+                   real(egyptian_mult(-mult(1), mult(2)), dp))
+
+    allocate(densi(32))
+    call egyptian_fraction(frac(1), frac(2), 32, densi, nterms)
+    allocate(dens(max(nterms, 1)))
+    do i = 1, nterms
+      dens(i) = real(densi(i), dp)
+    end do
+    do i = 1, min(nterms, 2)
+      write(nmx, '("egyptian_den_",i0)') i
+      call check_ref(r, ref, trim(nmx), real(densi(i), dp))
+    end do
+    call check_ref(r, ref, 'egyptian_terms', real(nterms, dp))
+    sumv = 0.0_dp
+    do i = 1, nterms
+      sumv = sumv + 1.0_dp / dens(i)
+    end do
+    err = abs(sumv - real(frac(1), dp) / real(frac(2), dp))
+    tol = ref_tol(ref, 'egyptian_sum_err')
+    call add_check(r, 'egyptian_sum_err', err, 0.0_dp, tol, err, err <= tol)
+
+    call jcopy(sqp, jget(pr, 'babylonian_sqrt'))
+    xval = jnum_req(sqp, 'x')
+    sq = babylonian_sqrt(xval, jint(sqp, 'iterations', 0))
+    err = abs(sq - sqrt(xval))
+    tol = ref_tol(ref, 'babylonian_sqrt_err')
+    call add_check(r, 'babylonian_sqrt_err', err, 0.0_dp, tol, err, err <= tol)
+
+    call jcopy(arp, jget(pr, 'aryabhata'))
+    theta = jnum_req(arp, 'theta')
+    ndig_max = jint(arp, 'steps', 360)
+    paso = 2.0_dp * pi_value() / real(ndig_max, dp)
+    s_ary = aryabhata_sin(theta, ndig_max)
+    idx_f = real(int(theta / paso), dp)
+    err_tab = abs(s_ary - sin(idx_f * paso))
+    tol = ref_tol(ref, 'aryabhata_table_err')
+    call add_check(r, 'aryabhata_table_err', err_tab, 0.0_dp, tol, err_tab, err_tab <= tol)
+    err_sin = abs(s_ary - sin(theta))
+    tol = ref_tol(ref, 'aryabhata_sin_err')
+    call add_check(r, 'aryabhata_sin_err', err_sin, 0.0_dp, tol, err_sin, err_sin <= tol)
+
+    call jcopy(tcrp, jget(pr, 'tcr'))
+    call jcopy(arr, jget(tcrp, 'residues'))
+    nres = jalen(arr)
+    allocate(resid(max(nres, 1)))
+    do i = 1, nres
+      resid(i) = int(atnum(arr, i), i8)
+    end do
+    call jcopy(arr, jget(tcrp, 'moduli'))
+    nmod = jalen(arr)
+    allocate(modu(max(nmod, 1)))
+    do i = 1, nmod
+      modu(i) = int(atnum(arr, i), i8)
+    end do
+    call chinese_remainder(resid(1:nres), modu(1:nmod), x_crt, mm_crt, cok)
+    call check_ref(r, ref, 'tcr_x', real(x_crt, dp))
+    call check_ref(r, ref, 'tcr_M', real(mm_crt, dp))
+
+    vval = int(jnum_req(pr, 'vigesimal'), i8)
+    allocate(digs(16))
+    call vigesimal(vval, 16, digs, ndig)
+    do i = 1, min(ndig, 3)
+      write(nmx, '("vigesimal_d",i0)') i - 1
+      call check_ref(r, ref, trim(nmx), real(digs(i), dp))
+    end do
+    call check_ref(r, ref, 'vigesimal_digits', real(ndig, dp))
+    sumv = 0.0_dp
+    do i = 1, ndig
+      sumv = sumv + real(digs(i), dp) * 20.0_dp**real(i - 1, dp)
+    end do
+    call check_ref(r, ref, 'vigesimal_value', sumv)
+
+    call jcopy(lins, jget(pr, 'linear_system'))
+    call jcopy(arr, jget(lins, 'A'))
+    call mat_from(arr, amat)
+    call jcopy(arr, jget(lins, 'b'))
+    call vec_from(arr, bvec)
+    n = size(bvec)
+    allocate(xvec(max(n, 1)))
+    call chinese_elimination(amat, bvec, xvec)
+    do i = 1, n
+      write(nmx, '("linear_x",i0)') i
+      call check_ref(r, ref, trim(nmx), xvec(i))
+    end do
+    resid_max = 0.0_dp
+    do i = 1, n
+      acc = 0.0_dp
+      do j = 1, n
+        acc = acc + amat(i, j) * xvec(j)
+      end do
+      resid_max = max(resid_max, abs(acc - bvec(i)))
+    end do
+    tol = ref_tol(ref, 'linear_residual_max')
+    call add_check(r, 'linear_residual_max', resid_max, 0.0_dp, tol, resid_max, &
+                   resid_max <= tol)
     ok = .true.
     emsg = ''
   end subroutine

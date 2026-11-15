@@ -140,7 +140,7 @@ preregistered verdict table (25 assertions / 13 artefacts).
 | `registries/matematica_ancestral.json` | ancestral algorithms (Egyptian, Babylonian, Aryabhata, CRT, Mayan, Chinese) |
 | `octave/` | Octave runner + kernels |
 | `python/` | Python runner + kernels + hub |
-| `fortran/` | Fortran runner + kernels + fjson parser + Makefile |
+| `fortran/` | Fortran runner + kernels + fjson parser + fmath (CORDIC/Hastings/LCG/ancestral) + Makefile |
 | `python/discrepancy_report.py` | per-quantity cross-language spread table |
 | `python/sensitivity_aizawa.py` | aizawa λ1 sensitivity experiment |
 | `python/figures_discrepancy.py` | publication figures for the report |
@@ -200,12 +200,22 @@ Observed-only quantities (no citable reference yet) are reported with
    `fortran/fhandles.f90`). A new `family` needs an evaluator in
    `octave/registry_eval_<family>.m` **and** in `python/registry_run.py`
    (both are registered in the dispatch), plus the registry file listed in
-   `mcp/bench_server.py::_load_entries()`.
+   `mcp/bench_server.py::_load_entries()`. The Fortran runner covers the
+   `map|ifs|ode|neural|potential|energy_drift|cordic|hastings|lcg|ancestral`
+   families: a new family also needs a `case` in `fortran/frunner.f90` and
+   the registry file loaded there, otherwise the hub reports it as
+   `MISSING in fortran` (the hub tolerates missing languages, it does not
+   fail).
 
 ## Reproducibility notes
 
 - All three languages compare against the **registry references**, not against
   each other; the hub only diffs the three result files afterwards.
+- Language coverage: Octave and Python evaluate all 32 entries; Fortran
+  evaluates the 28 entries whose family it implements (`map|ifs|ode|neural|
+  potential|energy_drift|cordic|hastings|lcg|ancestral`). The remaining four
+  (`goertzel_vs_fft`, `archimedes_pi`, `middle_square_weyl`, `hybrid_prng`)
+  are reported by the hub as `MISSING in fortran`.
 - IFS chaos-game RNG differs per language (Python `default_rng(0)`,
   Octave unseeded, Fortran `random_seed` base 20261023+37j); box dims agree
   within rel_tol, not bit-exactly.
