@@ -13,6 +13,8 @@ module fmath
   public :: babylonian_sqrt, aryabhata_sin
   public :: ext_gcd, chinese_remainder, chinese_elimination, vigesimal
   public :: ms_step, wh_step, wh_step16
+  public :: goertzel_k, goertzel_alpha, goertzel_beta
+    public :: arch_pi, mid_ext, msws64, itostr
 
 contains
 
@@ -507,6 +509,142 @@ contains
     s(3) = mults(3) * modulo(s(3), 178_i8) - 63_i8 * floor_div(s(3), 178_i8)
     r = modulo(s(1) / real(mods(1), dp) + s(2) / real(mods(2), dp) + &
                s(3) / real(mods(3), dp), 1.0_dp)
+  end subroutine
+
+  pure function goertzel_k(x, c) result(m)
+    real(dp), intent(in) :: x(:), c
+    real(dp) :: m
+    real(dp) :: s1, s2, s0
+    integer :: i
+    s1 = 0.0_dp
+    s2 = 0.0_dp
+    do i = 1, size(x)
+      s0 = x(i) + c * s1 - s2
+      s2 = s1
+      s1 = s0
+    end do
+    m = sqrt(max(s1 * s1 + s2 * s2 - c * s1 * s2, 0.0_dp))
+  end function
+
+  pure function goertzel_alpha(x, c) result(m)
+    real(dp), intent(in) :: x(:), c
+    real(dp) :: m
+    real(dp) :: d, s, sN, sP, a
+    integer :: i
+    a = c - 2.0_dp
+    d = 0.0_dp
+    s = 0.0_dp
+    do i = 1, size(x)
+      d = d + x(i) + a * s
+      s = s + d
+    end do
+    sN = s
+    sP = s - d
+    m = sqrt(max(sN * sN + sP * sP - c * sN * sP, 0.0_dp))
+  end function
+
+  pure function goertzel_beta(x, c) result(m)
+    real(dp), intent(in) :: x(:), c
+    real(dp) :: m
+    real(dp) :: ee, s, sN, sP, b
+    integer :: i
+    b = c + 2.0_dp
+    ee = 0.0_dp
+    s = 0.0_dp
+    do i = 1, size(x)
+      ee = x(i) + b * s - ee
+      s = ee - s
+    end do
+    sN = s
+    sP = ee - s
+    m = sqrt(max(sN * sN + sP * sP - c * sN * sP, 0.0_dp))
+  end function
+
+  function arch_pi(stable, iterations, levels) result(pi_est)
+    logical, intent(in) :: stable
+    integer, intent(in) :: iterations, levels
+    real(dp) :: pi_est
+    real(dp) :: t, r(0:iterations)
+    integer :: n, i, j, m, mm
+    real(dp) :: a
+    t = 1.0_dp / sqrt(3.0_dp)
+    n = 6
+    do i = 0, iterations
+      r(i) = real(n, dp) * t
+      if (stable) then
+        t = t / (sqrt(1.0_dp + t * t) + 1.0_dp)
+      else
+        t = (sqrt(1.0_dp + t * t) - 1.0_dp) / t
+      end if
+      n = 2 * n
+    end do
+    m = iterations + 1
+    do j = 1, levels
+      if (m < 2) exit
+      do i = 0, m - 2
+        a = 4.0_dp ** j
+        mm = m - i - 1
+        r(i) = r(i) + (r(i) - r(i + 1)) / (a - 1.0_dp)
+      end do
+      m = m - 1
+    end do
+    if (m >= 1) then
+      pi_est = r(m - 1)
+    else
+      pi_est = 0.0_dp
+    end if
+  end function
+
+  pure function mid_ext(q, digits) result(d)
+    integer(i8), intent(in) :: q
+    integer, intent(in) :: digits
+    integer(i8) :: d
+    character(len=64) :: raw, pad
+    integer :: L, width, st, i, val
+    d = 0_i8
+    write(raw, '(i0)') q
+    L = len_trim(raw)
+    width = max(L, 2 * digits)
+    pad = repeat('0', width)
+    pad(width - L + 1:width) = raw(1:L)
+    st = (width - digits) / 2
+    do i = 1, digits
+      val = iachar(pad(st + i:st + i)) - iachar('0')
+      d = 10_i8 * d + int(val, i8)
+    end do
+    end function
+
+    ! Convierte un entero a cadena sin signo (para nombres de claves dinamicas).
+    pure function itostr(i) result(s)
+      integer, intent(in) :: i
+      character(len=32) :: s
+      write(s, '(i0)') i
+    end function
+
+    subroutine msws64(state)
+    integer(i8), intent(inout) :: state
+    integer(i8), parameter :: A1 = 6364136223846793005_i8
+    integer(i8), parameter :: A2 = 1442695040888963407_i8
+    integer(i8), parameter :: A3 = 3141592653589793239_i8
+    integer :: r
+    do r = 1, 3
+      select case (r)
+      case (1)
+        state = A1 * state
+      case (2)
+        state = A2 * state
+      case (3)
+        state = A3 * state
+      end select
+      select case (r)
+      case (1)
+        state = ieor(state, ishft(state, -17))
+      case (2)
+        state = ieor(state, ishft(state, -31))
+      case (3)
+        state = ieor(state, ishft(state, -27))
+      end select
+    end do
   end subroutine
 
 end module fmath

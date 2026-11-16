@@ -80,23 +80,96 @@ contains
     ok = .true.
   end subroutine jload
 
+  ! Walk a dotted path "a.b.c" level-by-level.
+  ! Intermediate miss or non-object → JV_NULL.
+  ! Single-segment keys behave exactly as before.
   function jget(o, key) result(v)
     type(jval), intent(in) :: o
     character(len=*), intent(in) :: key
-    type(jval) :: v
-    integer :: k
-    k = jfind(o, key)
+    type(jval) :: v, cur, nxt
+    integer :: k, p, n
+    character(len=len(key)) :: seg, rest
+
+    call jcopy(cur, o)
+    rest = key
+    do
+      n = len_trim(rest)
+      if (n <= 0) then
+        v%t = JV_NULL
+        return
+      end if
+      p = index(rest, '.')
+      if (p <= 0) exit          ! last segment
+      if (p == 1) then          ! empty segment
+        v%t = JV_NULL
+        return
+      end if
+      if (cur%t /= JV_OBJ) then
+        v%t = JV_NULL
+        return
+      end if
+      seg = rest(1:p-1)
+      k = jfind(cur, seg(1:len_trim(seg)))
+      if (k <= 0) then
+        v%t = JV_NULL
+        return
+      end if
+      call jcopy(nxt, cur%kids(k))  ! temp: avoid aliasing cur with cur%kids
+      call jcopy(cur, nxt)
+      rest = rest(p+1:)
+    end do
+    if (cur%t /= JV_OBJ) then
+      v%t = JV_NULL
+      return
+    end if
+    k = jfind(cur, rest(1:n))
     if (k > 0) then
-      call jcopy(v, o%kids(k))
+      call jcopy(v, cur%kids(k))
     else
       v%t = JV_NULL
     end if
   end function jget
 
+  ! True if the final key exists on the dotted path (value may be null).
   logical function jhas(o, key) result(r)
     type(jval), intent(in) :: o
     character(len=*), intent(in) :: key
-    r = jfind(o, key) > 0
+    type(jval) :: cur, nxt
+    integer :: k, p, n
+    character(len=len(key)) :: seg, rest
+    call jcopy(cur, o)
+    rest = key
+    do
+      n = len_trim(rest)
+      if (n <= 0) then
+        r = .false.
+        return
+      end if
+      p = index(rest, '.')
+      if (p <= 0) exit
+      if (p == 1) then
+        r = .false.
+        return
+      end if
+      if (cur%t /= JV_OBJ) then
+        r = .false.
+        return
+      end if
+      seg = rest(1:p-1)
+      k = jfind(cur, seg(1:len_trim(seg)))
+      if (k <= 0) then
+        r = .false.
+        return
+      end if
+      call jcopy(nxt, cur%kids(k))  ! temp: avoid aliasing
+      call jcopy(cur, nxt)
+      rest = rest(p+1:)
+    end do
+    if (cur%t /= JV_OBJ) then
+      r = .false.
+      return
+    end if
+    r = jfind(cur, rest(1:n)) > 0
   end function jhas
 
   real(dp) function jnum(o, key, dflt) result(r)

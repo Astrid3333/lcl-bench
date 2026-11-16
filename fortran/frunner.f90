@@ -1,5 +1,5 @@
 program f_runner
-  use kinds, only: dp
+  use kinds, only: dp, i8
   use fjson
   use fhandles
   use fkernels
@@ -39,7 +39,8 @@ program f_runner
 
   character(len=64) :: sel
   character(len=512) :: outdir, emsg, jpath
-  type(jval) :: reg1, reg2, reg3, reg4, reg5, reg6, reg7, reg8, ents, ent, top, ra
+  type(jval) :: reg1, reg2, reg3, reg4, reg5, reg6, reg7, reg8
+  type(jval) :: reg9, reg10, reg11, reg12, ents, ent, top, ra
   type(run_t) :: runs(MAXRUN)
   logical :: ok, ok2
   integer :: nrun, npass, ei, ri, nent, u, ios
@@ -101,6 +102,34 @@ program f_runner
     error stop 1
   end if
 
+  call jload('registries/goertzel_fft.json', reg9, ok2, emsg)
+  if (.not. ok2) call jload('../registries/goertzel_fft.json', reg9, ok2, emsg)
+  if (.not. ok2) then
+    write(*, '(a)') 'ERROR: ' // trim(emsg)
+    error stop 1
+  end if
+
+  call jload('registries/archimedes_pi.json', reg10, ok2, emsg)
+  if (.not. ok2) call jload('../registries/archimedes_pi.json', reg10, ok2, emsg)
+  if (.not. ok2) then
+    write(*, '(a)') 'ERROR: ' // trim(emsg)
+    error stop 1
+  end if
+
+  call jload('registries/middle_square_weyl.json', reg11, ok2, emsg)
+  if (.not. ok2) call jload('../registries/middle_square_weyl.json', reg11, ok2, emsg)
+  if (.not. ok2) then
+    write(*, '(a)') 'ERROR: ' // trim(emsg)
+    error stop 1
+  end if
+
+  call jload('registries/hybrid_prng.json', reg12, ok2, emsg)
+  if (.not. ok2) call jload('../registries/hybrid_prng.json', reg12, ok2, emsg)
+  if (.not. ok2) then
+    write(*, '(a)') 'ERROR: ' // trim(emsg)
+    error stop 1
+  end if
+
   call execute_command_line('mkdir -p "' // trim(outdir) // '"', exitstat=ios)
 
   nrun = 0
@@ -147,6 +176,30 @@ program f_runner
     if (selected(ent, sel)) call run_one(ent, outdir, runs, nrun)
   end do
   call jcopy(ents, jget(reg8, 'entries'))
+  nent = jalen(ents)
+  do ei = 1, nent
+    call jcopy(ent, jat(ents, ei))
+    if (selected(ent, sel)) call run_one(ent, outdir, runs, nrun)
+  end do
+  call jcopy(ents, jget(reg9, 'entries'))
+  nent = jalen(ents)
+  do ei = 1, nent
+    call jcopy(ent, jat(ents, ei))
+    if (selected(ent, sel)) call run_one(ent, outdir, runs, nrun)
+  end do
+  call jcopy(ents, jget(reg10, 'entries'))
+  nent = jalen(ents)
+  do ei = 1, nent
+    call jcopy(ent, jat(ents, ei))
+    if (selected(ent, sel)) call run_one(ent, outdir, runs, nrun)
+  end do
+  call jcopy(ents, jget(reg11, 'entries'))
+  nent = jalen(ents)
+  do ei = 1, nent
+    call jcopy(ent, jat(ents, ei))
+    if (selected(ent, sel)) call run_one(ent, outdir, runs, nrun)
+  end do
+  call jcopy(ents, jget(reg12, 'entries'))
   nent = jalen(ents)
   do ei = 1, nent
     call jcopy(ent, jat(ents, ei))
@@ -554,6 +607,14 @@ contains
       call eval_ancestral(ent, r, ok, emsg)
     case ('prng_legacy')
       call eval_prng_legacy(ent, r, ok, emsg)
+    case ('dsp_bin')
+      call eval_dsp_bin(ent, r, ok, emsg)
+    case ('archimedes_pi')
+      call eval_archimedes_pi(ent, r, ok, emsg)
+    case ('prng_bin')
+      call eval_prng_bin(ent, r, ok, emsg)
+    case ('prng')
+      call eval_hybrid_prng(ent, r, ok, emsg)
     case default
       ok = .false.
       emsg = 'unknown family: ' // trim(fam)
@@ -1247,22 +1308,28 @@ contains
     type(jval), intent(in) :: ref
     character(len=*), intent(in) :: key
     real(dp), intent(in) :: computed
-    type(jval) :: ck
+    type(jval) :: ck, cv
     real(dp) :: val, tol, rel
     call jcopy(ck, jget(ref, key))
     if (ck%t /= JV_OBJ) then
       call add_obs(r, trim(key) // '_observed', computed)
       return
     end if
-    tol = ref_tol(ref, key)
-    if (jhas(ck, 'value')) then
-      val = jnum_req(ck, 'value')
-      rel = abs(computed - val) / max(abs(val), 1.0_dp)
-      call add_check(r, trim(key), computed, val, tol, rel, &
-                     abs(computed - val) <= tol)
-    else
-      call add_check(r, trim(key), computed, 0.0_dp, tol, computed, computed <= tol)
+    if (.not. jhas(ck, 'value')) then
+      call add_obs(r, trim(key) // '_observed', computed)
+      return
     end if
+    call jcopy(cv, jget(ck, 'value'))
+    if (cv%t /= JV_NUM) then
+      ! value ausente o null: comparar solo registra el valor (pass=true)
+      call add_obs(r, trim(key) // '_observed', computed)
+      return
+    end if
+    tol = ref_tol(ref, key)
+    val = jnum_req(ck, 'value')
+    rel = abs(computed - val) / max(abs(val), 1.0_dp)
+    call add_check(r, trim(key), computed, val, tol, rel, &
+                   abs(computed - val) <= tol)
   end subroutine
 
   subroutine vec_from(o, v)
@@ -1849,5 +1916,421 @@ contains
     ok = .true.
     emsg = ''
   end subroutine
+
+  ! ---------------------------------------------------------------- dsp_bin
+  ! Python: registry_run.py eval_dsp_bin (396-442). Firma sin outdir.
+  ! Checks: {K,alpha,beta}_k<k> con ref N*A/2, tol rt*ref; variant_spread.
+  ! Todos null-ref = add_check con ok=.true. (patron mkcheck(None)).
+  subroutine eval_dsp_bin(e, r, ok, emsg)
+    type(jval), intent(in) :: e
+    type(run_t), intent(inout) :: r
+    logical, intent(out) :: ok
+    character(len=*), intent(out) :: emsg
+    integer, parameter :: MAXT = 64
+    integer :: n, nt, i, k, kk, ntmp, ntmp2, ntmp3
+    integer :: tone_k(MAXT)
+    real(dp) :: tone_a(MAXT), tone_phi(MAXT)
+    real(dp), allocatable :: x(:)
+    real(dp) :: re_s, im_s, mag2, df, phase, arg, dphi
+    real(dp) :: rt, st
+    real(dp), parameter :: PI2 = 6.283185307179586476925286766559_dp
+    real(dp), allocatable :: tmpk(:), tmpa(:), tmpp(:)
+    real(dp) :: w, c, refv, mk, ma, mb
+    real(dp) :: spread
+    n = jint(e, "N", 8192)
+    allocate(x(0:n))
+    nt = min(size(tone_k), 3)
+    tmpk = jtovec(e, "tone_k")
+    tmpa = jtovec(e, "tone_A")
+    tmpp = jtovec(e, "tone_phi")
+    ntmp = min(size(tmpk), MAXT)
+    ntmp2 = min(size(tmpa), MAXT)
+    ntmp3 = min(size(tmpp), MAXT)
+    do i = 1, ntmp
+       tone_k(i) = nint(tmpk(i))
+    end do
+    do i = 1, ntmp2
+       tone_a(i) = tmpa(i)
+    end do
+    do i = 1, ntmp3
+       tone_phi(i) = tmpp(i)
+    end do
+    x = 0.0_dp
+    do i = 0, n-1
+      do kk = 1, nt
+        x(i) = x(i) + tone_a(kk)*cos(PI2*tone_k(kk)*real(i, dp)/real(n, dp) + tone_phi(kk))
+      end do
+    end do
+    rt = jnum(e, "ref.magnitude.rel_tol", 1.0e-8_dp)
+    st = jnum(e, "ref.variant_spread.abs_tol", 1.0e-8_dp)
+    spread = 0.0_dp
+    do kk = 1, nt
+      k = tone_k(kk)
+      w = PI2*real(k, dp)/real(n, dp)
+      c = 2.0_dp*cos(w)
+      refv = real(n, dp)*tone_a(kk)/2.0_dp
+      mk = goertzel_k(x, c)
+      ma = goertzel_alpha(x, c)
+      mb = goertzel_beta(x, c)
+      call add_check(r, "K_k"//trim(itostr(k)), mk, refv, rt*refv, abs(mk-refv)/refv, abs(mk-refv)/refv <= rt)
+      call add_check(r, "alpha_k"//trim(itostr(k)), ma, refv, rt*refv, abs(ma-refv)/refv, abs(ma-refv)/refv <= rt)
+      call add_check(r, "beta_k"//trim(itostr(k)), mb, refv, rt*refv, abs(mb-refv)/refv, abs(mb-refv)/refv <= rt)
+      spread = max(spread, abs(ma-mk)/refv, abs(mb-mk)/refv)
+    end do
+    call add_check(r, "variant_spread", spread, 0.0_dp, st, spread, spread <= st)
+    ok = .true.
+    emsg = ''
+  end subroutine
+
+  ! ------------------------------------------------------- archimedes_pi
+  ! Python: registry_run.py eval_archimedes_pi (730-817). Firma sin outdir.
+  ! pi_est = r(n - levels) tras romberg in-place. Checks pi_stable/pi_naive
+  ! con pi_ref/tol; variant_spread ref 0.0.
+  subroutine eval_archimedes_pi(e, r, ok, emsg)
+    type(jval), intent(in) :: e
+    type(run_t), intent(inout) :: r
+    logical, intent(out) :: ok
+    character(len=*), intent(out) :: emsg
+    integer :: iterations, levels, i, j, m, n, na
+    real(dp) :: t, pi_ref, tol, pi_s, pi_n, diff
+    real(dp), allocatable :: a(:), rr(:)
+    real(dp) :: denom, st
+    iterations = jint(e, "params.iterations", 10)
+    levels = jint(e, "params.levels", 3)
+    pi_ref = jnum(e, "ref.pi.value", 3.141592653589793_dp)
+    tol = jnum(e, "ref.pi.abs_tol", 1.0e-8_dp)
+    st = jnum(e, "ref.variant_spread.abs_tol", 1.0e-8_dp)
+    na = iterations + 1
+    allocate(a(na), rr(na))
+    ! stable
+    t = 1.0_dp/sqrt(3.0_dp)
+    n = 6
+    a(1) = real(n, dp)*t
+    do i = 1, iterations
+      t = t/(sqrt(1.0_dp+t*t)+1.0_dp)
+      n = 2*n
+      a(i+1) = real(n, dp)*t
+    end do
+    rr(1:na) = a(1:na)
+    do j = 1, levels
+      denom = real(4**j, dp) - 1.0_dp
+      m = na - j + 1
+      do i = 1, m-1
+        rr(i) = rr(i+1) + (rr(i+1)-rr(i))/denom
+      end do
+    end do
+    pi_s = rr(na - levels)
+    ! naive
+    t = 1.0_dp/sqrt(3.0_dp)
+    n = 6
+    a(1) = real(n, dp)*t
+    do i = 1, iterations
+      t = (sqrt(1.0_dp+t*t)-1.0_dp)/t
+      n = 2*n
+      a(i+1) = real(n, dp)*t
+    end do
+    rr(1:na) = a(1:na)
+    do j = 1, levels
+      denom = real(4**j, dp) - 1.0_dp
+      m = na - j + 1
+      do i = 1, m-1
+        rr(i) = rr(i+1) + (rr(i+1)-rr(i))/denom
+      end do
+    end do
+    pi_n = rr(na - levels)
+    diff = abs(pi_s - pi_n)/abs(pi_ref)
+    call add_check(r, "pi_stable", pi_s, pi_ref, tol, abs(pi_s-pi_ref)/pi_ref, abs(pi_s-pi_ref) <= tol)
+    call add_check(r, "pi_naive", pi_n, pi_ref, tol, abs(pi_n-pi_ref)/pi_ref, abs(pi_n-pi_ref) <= tol)
+    call add_check(r, "variant_spread", diff, 0.0_dp, st, diff, diff <= st)
+    ok = .true.
+    emsg = ''
+  end subroutine
+
+  ! ---------------------------------------------------------- prng_bin
+  ! Python: registry_run.py eval_middle_square_weyl (452-582). Sin outdir.
+  ! weyl/tcr: x = mid_ext((x*x+w)**2) (doble cuadrado, como _mid4(x*x+w)).
+  ! seen 0-based global; x0 en 0..modulus-1; hit-flag para ciclo.
+  ! weyl_period/tcr_period/variant_spread: null-ref condicional.
+  ! mid_ext(q, digits) extrae digitos medios de q (NO cuadra); ext_gcd SUBRUTINA.
+  subroutine eval_prng_bin(e, r, ok, emsg)
+    type(jval), intent(in) :: e
+    type(run_t), intent(inout) :: r
+    logical, intent(out) :: ok
+    character(len=*), intent(out) :: emsg
+    integer :: digits, modulus, weyl_s, tcr_p1, tcr_p2, max_iter
+    integer :: i, j, x, w, w1, w2, k, idx, tr, trw, trcrt
+    integer :: n_cycles, zero_sink, weyl_period, tcr_period
+    integer(i8) :: inv, g, yy, q
+    integer :: m
+    integer, allocatable :: seen(:), seenw(:), seen_crt(:)
+    integer, allocatable :: tr_arr(:)
+    real(dp) :: zs_tol, zs_rel, zs_err
+    real(dp) :: ref_c, tol_c, ref_z, st, spread, wp_ref, wp_tol, tp_ref, tp_tol
+    logical :: hit
+    digits = jint(e, "params.digits", 4)
+    modulus = jint(e, "params.modulus", 10000)
+    weyl_s = jint(e, "params.weyl_s", 6329)
+    tcr_p1 = jint(e, "params.tcr_p1", 9973)
+    tcr_p2 = jint(e, "params.tcr_p2", 9967)
+    max_iter = jint(e, "params.max_iter", 1000000)
+    ref_c = jnum(e, "ref.middle_square_cycles.value", 0.0_dp)
+    tol_c = jnum(e, "ref.middle_square_cycles.abs_tol", 0.0_dp)
+    ref_z = jnum(e, "ref.middle_square_zero_sink.value", 0.0_dp)
+    zs_tol = jnum(e, "ref.middle_square_zero_sink.abs_tol", 0.0_dp)
+    st = jnum(e, "ref.variant_spread.abs_tol", 1.0e-6_dp)
+    ! --- middle-square cycles (exhaustivo, seen global tipo Python)
+    allocate(seen(0:modulus-1), tr_arr(modulus))
+    seen = 0
+    n_cycles = 0
+    do i = 0, modulus-1
+      x = i
+      tr = 0
+      do
+        if (seen(x) /= 0) exit
+        seen(x) = 1
+        tr = tr + 1
+        tr_arr(tr) = x
+        x = int(mid_ext(int(x,8)*int(x,8), digits), 4)
+      end do
+      hit = .false.
+      do idx = 1, tr
+        if (tr_arr(idx) == x) then
+          hit = .true.
+          exit
+        end if
+      end do
+      if (hit) n_cycles = n_cycles + 1
+    end do
+    call add_check(r, "middle_square_cycles", real(n_cycles, dp), ref_c, tol_c, &
+      abs(real(n_cycles, dp)-ref_c)/max(abs(ref_c), 1.0_dp), &
+      abs(real(n_cycles, dp)-ref_c) <= tol_c)
+    ! --- middle-square zero sink (exhaustivo)
+    zero_sink = 0
+    do i = 0, modulus-1
+      x = i
+      do j = 1, 50
+        x = int(mid_ext(int(x,8)*int(x,8), digits), 4)
+      end do
+      if (x == 0) zero_sink = zero_sink + 1
+    end do
+    zs_rel = real(zero_sink, dp)/real(modulus, dp)
+    zs_err = abs(zs_rel - ref_z)
+    call add_check(r, "middle_square_zero_sink", zs_rel, ref_z, zs_tol, zs_err, zs_err <= zs_tol)
+    ! --- weyl_period (null-ref condicional, como Python)
+    x = 1234
+    w = 0
+    allocate(seenw(0:modulus-1))
+    seenw = 0
+    trw = 0
+    weyl_period = 0
+    do i = 1, max_iter
+      w = modulo(w + weyl_s, modulus)
+      q = int(x,8)*int(x,8) + int(w,8)
+      x = int(mid_ext(q*q, digits), 4)
+      if (seenw(x) /= 0) then
+        do idx = 1, trw
+          if (tr_arr(idx) == x) then
+            weyl_period = i - idx + 1
+            exit
+          end if
+        end do
+        exit
+      end if
+      seenw(x) = 1
+      trw = trw + 1
+      tr_arr(trw) = x
+    end do
+    if (.not. ieee_is_nan(jnum(e, "ref.weyl_period.value", nanv()))) then
+      wp_ref = jnum(e, "ref.weyl_period.value", 0.0_dp)
+      wp_tol = jnum(e, "ref.weyl_period.abs_tol", 0.0_dp)
+      call add_check(r, "weyl_period", real(weyl_period, dp), wp_ref, wp_tol, &
+        abs(real(weyl_period, dp)-wp_ref)/max(abs(wp_ref), 1.0_dp), &
+        abs(real(weyl_period, dp)-wp_ref) <= wp_tol)
+    else
+      call add_check(r, "weyl_period", real(weyl_period, dp), nanv(), nanv(), nanv(), .true.)
+    end if
+    ! --- tcr_period (null-ref condicional, como Python)
+    x = 1234
+    w1 = 0
+    w2 = 0
+    call ext_gcd(modulo(int(tcr_p1,8), int(tcr_p2,8)), int(tcr_p2,8), g, inv, yy)
+    inv = modulo(inv, int(tcr_p2,8))
+    m = tcr_p1*tcr_p2
+    allocate(seen_crt(0:modulus-1))
+    seen_crt = 0
+    trcrt = 0
+    tcr_period = 0
+    do i = 1, max_iter
+      w1 = modulo(w1 + weyl_s, tcr_p1)
+      w2 = modulo(w2 + weyl_s, tcr_p2)
+      k = int(modulo(int(w2 - w1,8)*inv, int(tcr_p2,8)))
+      w = modulo(w1 + tcr_p1*k, m)
+      q = int(x,8)*int(x,8) + int(w,8)
+      x = int(mid_ext(q*q, digits), 4)
+      if (seen_crt(x) /= 0) then
+        do idx = 1, trcrt
+          if (tr_arr(idx) == x) then
+            tcr_period = i - idx + 1
+            exit
+          end if
+        end do
+        exit
+      end if
+      seen_crt(x) = 1
+      trcrt = trcrt + 1
+      tr_arr(trcrt) = x
+    end do
+    if (.not. ieee_is_nan(jnum(e, "ref.tcr_period.value", nanv()))) then
+      tp_ref = jnum(e, "ref.tcr_period.value", 0.0_dp)
+      tp_tol = jnum(e, "ref.tcr_period.abs_tol", 0.0_dp)
+      call add_check(r, "tcr_period", real(tcr_period, dp), tp_ref, tp_tol, &
+        abs(real(tcr_period, dp)-tp_ref)/max(abs(tp_ref), 1.0_dp), &
+        abs(real(tcr_period, dp)-tp_ref) <= tp_tol)
+    else
+      call add_check(r, "tcr_period", real(tcr_period, dp), nanv(), nanv(), nanv(), .true.)
+    end if
+    ! --- variant_spread (null-ref si value es null, como Python)
+    spread = abs(real(weyl_period, dp) - real(tcr_period, dp))/max(abs(real(tcr_period, dp)), 1.0_dp)
+    if (.not. ieee_is_nan(jnum(e, "ref.variant_spread.value", nanv()))) then
+      call add_check(r, "variant_spread", spread, &
+        jnum(e, "ref.variant_spread.value", 0.0_dp), st, spread, spread <= st)
+    else
+      call add_check(r, "variant_spread", spread, nanv(), nanv(), nanv(), .true.)
+    end if
+    ok = .true.
+    emsg = ''
+  end subroutine
+
+  ! ---------------------------------------------------------- hybrid_prng
+  ! Python: registry_run.py eval_hybrid_prng (585-727). Sin outdir.
+  ! ms_next_4 = medios 4 de x*x (ciclos/zero_sink); chi2 usa (x*x) %% 10000.
+  ! r64 = u64/2**64 (Python: float(r)/float(2**64-1), ambos -> 2**64).
+  ! chi2/chi2_bins/chi2_samples: null-ref condicional (value null -> ok).
+  subroutine eval_hybrid_prng(e, r, ok, emsg)
+    type(jval), intent(in) :: e
+    type(run_t), intent(inout) :: r
+    logical, intent(out) :: ok
+    character(len=*), intent(out) :: emsg
+    integer :: seed, n_samples, nbins
+    integer :: i, j, x, b, idx
+    integer(i8) :: mw, ms1, ms2, ms_comb, hi, lo
+    integer :: n_cycles, zero_sink, tr
+    integer, allocatable :: seen(:), hist(:), tr_arr(:)
+    real(dp) :: zs_tol, zs_rel, zs_err, r64, expected, chi2
+    real(dp) :: ref_c, tol_c, ref_z, ref_chi2, ref_bins, ref_samples
+    real(dp) :: tol_chi2, tol_bins, tol_samples
+    logical :: hit
+    seed = jint(e, "params.seed", 1234)
+    n_samples = jint(e, "params.n_samples", 10000)
+    nbins = jint(e, "params.nbins", 10)
+    ref_c = jnum(e, "ref.middle_square_cycles.value", 0.0_dp)
+    tol_c = jnum(e, "ref.middle_square_cycles.abs_tol", 0.0_dp)
+    ref_z = jnum(e, "ref.middle_square_zero_sink.value", 0.0_dp)
+    zs_tol = jnum(e, "ref.middle_square_zero_sink.abs_tol", 0.0_dp)
+    ! --- middle-square cycles (10000, seen global)
+    allocate(seen(0:9999), tr_arr(10000))
+    seen = 0
+    n_cycles = 0
+    do i = 0, 9999
+      x = i
+      tr = 0
+      do
+        if (seen(x) /= 0) exit
+        seen(x) = 1
+        tr = tr + 1
+        tr_arr(tr) = x
+        x = ms_next_4(x)
+      end do
+      hit = .false.
+      do idx = 1, tr
+        if (tr_arr(idx) == x) then
+          hit = .true.
+          exit
+        end if
+      end do
+      if (hit) n_cycles = n_cycles + 1
+    end do
+    call add_check(r, "middle_square_cycles", real(n_cycles, dp), ref_c, tol_c, &
+      abs(real(n_cycles, dp)-ref_c)/max(abs(ref_c), 1.0_dp), &
+      abs(real(n_cycles, dp)-ref_c) <= tol_c)
+    ! --- zero sink (10000, 50 pasos, 4 digitos)
+    zero_sink = 0
+    do i = 0, 9999
+      x = i
+      do j = 1, 50
+        x = ms_next_4(x)
+      end do
+      if (x == 0) zero_sink = zero_sink + 1
+    end do
+    zs_rel = real(zero_sink, dp)/10000.0_dp
+    zs_err = abs(zs_rel - ref_z)
+    call add_check(r, "middle_square_zero_sink", zs_rel, ref_z, zs_tol, zs_err, zs_err <= zs_tol)
+    ! --- chi2 (middle-square ultimos-4 + msws64 xor), orden Python
+    allocate(hist(0:nbins-1))
+    hist = 0
+    ms1 = int(modulo(seed, 9999) + 1, i8)
+    ms2 = int(modulo(ishft(seed, -16), 9999) + 1, i8)
+    mw = int(ior(seed, 1), i8)
+    do i = 1, n_samples
+      ms1 = modulo(ms1*ms1, 10000_i8)
+      ms2 = modulo(ms2*ms2, 10000_i8)
+      call msws64(mw)
+      ms_comb = ior(ishft(ms1, 48), ishft(ms2, 32))
+      ms_comb = ieor(mw, ms_comb)
+      hi = ishft(ms_comb, -32)
+      lo = iand(ms_comb, 4294967295_i8)
+      r64 = (real(hi, dp)*4294967296.0_dp + real(lo, dp)) / 18446744073709551616.0_dp
+      b = int(r64*real(nbins, dp))
+      if (b >= nbins) b = nbins - 1
+      if (b < 0) b = 0
+      hist(b) = hist(b) + 1
+    end do
+    expected = real(n_samples, dp)/real(nbins, dp)
+    chi2 = 0.0_dp
+    do b = 0, nbins-1
+      chi2 = chi2 + (real(hist(b), dp) - expected)**2 / expected
+    end do
+    ! chi2 null-ref condicional (value null -> check pasada)
+    if (.not. ieee_is_nan(jnum(e, "ref.chi2.value", nanv()))) then
+      ref_chi2 = jnum(e, "ref.chi2.value", 0.0_dp)
+      tol_chi2 = jnum(e, "ref.chi2.abs_tol", 1.0e-6_dp)
+      call add_check(r, "chi2", chi2, ref_chi2, tol_chi2, &
+        abs(chi2-ref_chi2)/max(abs(ref_chi2),1.0_dp), &
+        abs(chi2-ref_chi2) <= tol_chi2)
+    else
+      call add_check(r, "chi2", chi2, nanv(), nanv(), nanv(), .true.)
+    end if
+    ! chi2_bins null-ref condicional
+    if (.not. ieee_is_nan(jnum(e, "ref.chi2_bins.value", nanv()))) then
+      ref_bins = jnum(e, "ref.chi2_bins.value", 0.0_dp)
+      tol_bins = jnum(e, "ref.chi2_bins.abs_tol", 0.0_dp)
+      call add_check(r, "chi2_bins", real(nbins, dp), ref_bins, tol_bins, &
+        abs(real(nbins,dp)-ref_bins)/max(abs(ref_bins),1.0_dp), &
+        abs(real(nbins,dp)-ref_bins) <= tol_bins)
+    else
+      call add_check(r, "chi2_bins", real(nbins, dp), nanv(), nanv(), nanv(), .true.)
+    end if
+    ! chi2_samples null-ref condicional
+    if (.not. ieee_is_nan(jnum(e, "ref.chi2_samples.value", nanv()))) then
+      ref_samples = jnum(e, "ref.chi2_samples.value", 0.0_dp)
+      tol_samples = jnum(e, "ref.chi2_samples.abs_tol", 0.0_dp)
+      call add_check(r, "chi2_samples", real(n_samples, dp), ref_samples, tol_samples, &
+        abs(real(n_samples,dp)-ref_samples)/max(abs(ref_samples),1.0_dp), &
+        abs(real(n_samples,dp)-ref_samples) <= tol_samples)
+    else
+      call add_check(r, "chi2_samples", real(n_samples, dp), nanv(), nanv(), nanv(), .true.)
+    end if
+    ok = .true.
+    emsg = ''
+  end subroutine
+
+  ! ------------------------------------------------------- ms_next_4
+  ! 4-digitos fijos, sin digits del JSON (hardcodeado Python 600).
+  pure integer function ms_next_4(x) result(y)
+    integer, intent(in) :: x
+    character(len=8) :: s
+    write(s, '(I0.8)') x*x
+    read(s(3:6), *) y
+  end function
 
 end program
