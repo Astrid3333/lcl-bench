@@ -1,113 +1,29 @@
 {
   "files": {
     "octave": "registry_run_20261115T122220.json",
-    "python": "registry_run_py_20261115T213552.json",
-    "fortran": "registry_run_f_20261116T164254.json"
+    "python": "registry_run_py_20261115T121353.json",
+    "fortran": "registry_run_f_20261115T121506.json"
   },
   "n_entries": 34,
-  "all_pass": 1,
+  "all_pass": 30,
   "rows": [
     {
       "name": "aizawa",
-      "status": "MISSING",
-      "present": {
+      "status": "ALL_PASS",
+      "passes": {
         "octave": true,
-        "python": false,
+        "python": true,
         "fortran": true
+      },
+      "obs_rel_diff": 0.14548938087760846,
+      "obs": {
+        "octave": 0.10733175348719398,
+        "python": 0.10733175348719351,
+        "fortran": 0.09171612312383404
       }
     },
     {
       "name": "ancestral_math",
-      "status": "MISSING",
-      "present": {
-        "octave": true,
-        "python": false,
-        "fortran": true
-      }
-    },
-    {
-      "name": "archimedes_pi",
-      "status": "MISSING",
-      "present": {
-        "octave": true,
-        "python": false,
-        "fortran": true
-      }
-    },
-    {
-      "name": "barnsley_fern",
-      "status": "MISSING",
-      "present": {
-        "octave": true,
-        "python": false,
-        "fortran": true
-      }
-    },
-    {
-      "name": "clifford",
-      "status": "MISSING",
-      "present": {
-        "octave": true,
-        "python": false,
-        "fortran": true
-      }
-    },
-    {
-      "name": "cordic_sincos",
-      "status": "MISSING",
-      "present": {
-        "octave": true,
-        "python": false,
-        "fortran": true
-      }
-    },
-    {
-      "name": "de_jong",
-      "status": "MISSING",
-      "present": {
-        "octave": true,
-        "python": false,
-        "fortran": true
-      }
-    },
-    {
-      "name": "double_well",
-      "status": "MISSING",
-      "present": {
-        "octave": true,
-        "python": false,
-        "fortran": true
-      }
-    },
-    {
-      "name": "double_well_verlet_rk4",
-      "status": "MISSING",
-      "present": {
-        "octave": true,
-        "python": false,
-        "fortran": true
-      }
-    },
-    {
-      "name": "duffing",
-      "status": "MISSING",
-      "present": {
-        "octave": true,
-        "python": false,
-        "fortran": true
-      }
-    },
-    {
-      "name": "fhn",
-      "status": "MISSING",
-      "present": {
-        "octave": true,
-        "python": false,
-        "fortran": true
-      }
-    },
-    {
-      "name": "goertzel_vs_fft",
       "status": "ALL_PASS",
       "passes": {
         "octave": true,
@@ -122,39 +38,201 @@
       }
     },
     {
-      "name": "harmonic",
+      "name": "archimedes_pi",
       "status": "MISSING",
       "present": {
         "octave": true,
-        "python": false,
+        "python": true,
+        "fortran": false
+      }
+    },
+    {
+      "name": "barnsley_fern",
+      "status": "ALL_PASS",
+      "passes": {
+        "octave": true,
+        "python": true,
         "fortran": true
+      },
+      "obs_rel_diff": null,
+      "obs": {
+        "octave": null,
+        "python": null,
+        "fortran": null
+      }
+    },
+    {
+      "name": "clifford",
+      "status": "ALL_PASS",
+      "passes": {
+        "octave": true,
+        "python": true,
+        "fortran": true
+      },
+      "obs_rel_diff": 1.9114129936830205e-16,
+      "obs": {
+        "octave": 0.29041945102767003,
+        "python": 0.2904194510276701,
+        "fortran": 0.2904194510276701
+      }
+    },
+    {
+      "name": "cordic_sincos",
+      "status": "ALL_PASS",
+      "passes": {
+        "octave": true,
+        "python": true,
+        "fortran": true
+      },
+      "obs_rel_diff": null,
+      "obs": {
+        "octave": null,
+        "python": null,
+        "fortran": null
+      }
+    },
+    {
+      "name": "de_jong",
+      "status": "ALL_PASS",
+      "passes": {
+        "octave": true,
+        "python": true,
+        "fortran": true
+      },
+      "obs_rel_diff": 0.0,
+      "obs": {
+        "octave": 0.36155256647279393,
+        "python": 0.36155256647279393,
+        "fortran": 0.36155256647279393
+      }
+    },
+    {
+      "name": "double_well",
+      "status": "ALL_PASS",
+      "passes": {
+        "octave": true,
+        "python": true,
+        "fortran": true
+      },
+      "obs_rel_diff": null,
+      "obs": {
+        "octave": null,
+        "python": null,
+        "fortran": null
+      }
+    },
+    {
+      "name": "double_well_verlet_rk4",
+      "status": "ALL_PASS",
+      "passes": {
+        "octave": true,
+        "python": true,
+        "fortran": true
+      },
+      "obs_rel_diff": null,
+      "obs": {
+        "octave": null,
+        "python": null,
+        "fortran": null
+      }
+    },
+    {
+      "name": "duffing",
+      "status": "ALL_PASS",
+      "passes": {
+        "octave": true,
+        "python": true,
+        "fortran": true
+      },
+      "obs_rel_diff": 0.10553849727378305,
+      "obs": {
+        "octave": 0.09386273470262832,
+        "python": 0.09386273470262804,
+        "fortran": 0.1049377020884019
+      }
+    },
+    {
+      "name": "fhn",
+      "status": "ALL_PASS",
+      "passes": {
+        "octave": true,
+        "python": true,
+        "fortran": true
+      },
+      "obs_rel_diff": 4.8194155416168924e-15,
+      "obs": {
+        "octave": 0.2994740585345928,
+        "python": 0.29947405853459136,
+        "fortran": 0.29947405853459136
+      }
+    },
+    {
+      "name": "goertzel_vs_fft",
+      "status": "MISSING",
+      "present": {
+        "octave": true,
+        "python": true,
+        "fortran": false
+      }
+    },
+    {
+      "name": "harmonic",
+      "status": "ALL_PASS",
+      "passes": {
+        "octave": true,
+        "python": true,
+        "fortran": true
+      },
+      "obs_rel_diff": null,
+      "obs": {
+        "octave": null,
+        "python": null,
+        "fortran": null
       }
     },
     {
       "name": "hastings_poly",
-      "status": "MISSING",
-      "present": {
+      "status": "ALL_PASS",
+      "passes": {
         "octave": true,
-        "python": false,
+        "python": true,
         "fortran": true
+      },
+      "obs_rel_diff": null,
+      "obs": {
+        "octave": null,
+        "python": null,
+        "fortran": null
       }
     },
     {
       "name": "henon",
-      "status": "MISSING",
-      "present": {
+      "status": "ALL_PASS",
+      "passes": {
         "octave": true,
-        "python": false,
+        "python": true,
         "fortran": true
+      },
+      "obs_rel_diff": null,
+      "obs": {
+        "octave": null,
+        "python": null,
+        "fortran": null
       }
     },
     {
       "name": "hopfield_4",
-      "status": "MISSING",
-      "present": {
+      "status": "ALL_PASS",
+      "passes": {
         "octave": true,
-        "python": false,
+        "python": true,
         "fortran": true
+      },
+      "obs_rel_diff": null,
+      "obs": {
+        "octave": null,
+        "python": null,
+        "fortran": null
       }
     },
     {
@@ -162,71 +240,113 @@
       "status": "MISSING",
       "present": {
         "octave": true,
-        "python": false,
-        "fortran": true
+        "python": true,
+        "fortran": false
       }
     },
     {
       "name": "hydrogen",
-      "status": "MISSING",
-      "present": {
+      "status": "ALL_PASS",
+      "passes": {
         "octave": true,
-        "python": false,
+        "python": true,
         "fortran": true
+      },
+      "obs_rel_diff": null,
+      "obs": {
+        "octave": null,
+        "python": null,
+        "fortran": null
       }
     },
     {
       "name": "lcg_spectral",
-      "status": "MISSING",
-      "present": {
+      "status": "ALL_PASS",
+      "passes": {
         "octave": true,
-        "python": false,
+        "python": true,
         "fortran": true
+      },
+      "obs_rel_diff": null,
+      "obs": {
+        "octave": null,
+        "python": null,
+        "fortran": null
       }
     },
     {
       "name": "lennard_jones",
-      "status": "MISSING",
-      "present": {
+      "status": "ALL_PASS",
+      "passes": {
         "octave": true,
-        "python": false,
+        "python": true,
         "fortran": true
+      },
+      "obs_rel_diff": null,
+      "obs": {
+        "octave": null,
+        "python": null,
+        "fortran": null
       }
     },
     {
       "name": "logistic",
-      "status": "MISSING",
-      "present": {
+      "status": "ALL_PASS",
+      "passes": {
         "octave": true,
-        "python": false,
+        "python": true,
         "fortran": true
+      },
+      "obs_rel_diff": null,
+      "obs": {
+        "octave": null,
+        "python": null,
+        "fortran": null
       }
     },
     {
       "name": "lorenz",
-      "status": "MISSING",
-      "present": {
+      "status": "ALL_PASS",
+      "passes": {
         "octave": true,
-        "python": false,
+        "python": true,
         "fortran": true
+      },
+      "obs_rel_diff": null,
+      "obs": {
+        "octave": null,
+        "python": null,
+        "fortran": null
       }
     },
     {
       "name": "lozi",
-      "status": "MISSING",
-      "present": {
+      "status": "ALL_PASS",
+      "passes": {
         "octave": true,
-        "python": false,
+        "python": true,
         "fortran": true
+      },
+      "obs_rel_diff": null,
+      "obs": {
+        "octave": null,
+        "python": null,
+        "fortran": null
       }
     },
     {
       "name": "middle_square_vn",
-      "status": "MISSING",
-      "present": {
+      "status": "ALL_PASS",
+      "passes": {
         "octave": true,
-        "python": false,
+        "python": true,
         "fortran": true
+      },
+      "obs_rel_diff": null,
+      "obs": {
+        "octave": null,
+        "python": null,
+        "fortran": null
       }
     },
     {
@@ -234,89 +354,143 @@
       "status": "MISSING",
       "present": {
         "octave": true,
-        "python": false,
-        "fortran": true
+        "python": true,
+        "fortran": false
       }
     },
     {
       "name": "morse",
-      "status": "MISSING",
-      "present": {
+      "status": "ALL_PASS",
+      "passes": {
         "octave": true,
-        "python": false,
+        "python": true,
         "fortran": true
+      },
+      "obs_rel_diff": null,
+      "obs": {
+        "octave": null,
+        "python": null,
+        "fortran": null
       }
     },
     {
       "name": "poschl_teller",
-      "status": "MISSING",
-      "present": {
+      "status": "ALL_PASS",
+      "passes": {
         "octave": true,
-        "python": false,
+        "python": true,
         "fortran": true
+      },
+      "obs_rel_diff": null,
+      "obs": {
+        "octave": null,
+        "python": null,
+        "fortran": null
       }
     },
     {
       "name": "rossler",
-      "status": "MISSING",
-      "present": {
+      "status": "ALL_PASS",
+      "passes": {
         "octave": true,
-        "python": false,
+        "python": true,
         "fortran": true
+      },
+      "obs_rel_diff": null,
+      "obs": {
+        "octave": null,
+        "python": null,
+        "fortran": null
       }
     },
     {
       "name": "sierpinski",
-      "status": "MISSING",
-      "present": {
+      "status": "ALL_PASS",
+      "passes": {
         "octave": true,
-        "python": false,
+        "python": true,
         "fortran": true
+      },
+      "obs_rel_diff": null,
+      "obs": {
+        "octave": null,
+        "python": null,
+        "fortran": null
       }
     },
     {
       "name": "standard",
-      "status": "MISSING",
-      "present": {
+      "status": "ALL_PASS",
+      "passes": {
         "octave": true,
-        "python": false,
+        "python": true,
         "fortran": true
+      },
+      "obs_rel_diff": null,
+      "obs": {
+        "octave": null,
+        "python": null,
+        "fortran": null
       }
     },
     {
       "name": "thomas",
-      "status": "MISSING",
-      "present": {
+      "status": "ALL_PASS",
+      "passes": {
         "octave": true,
-        "python": false,
+        "python": true,
         "fortran": true
+      },
+      "obs_rel_diff": 2.079026660134488e-14,
+      "obs": {
+        "octave": 0.006466538980289259,
+        "python": 0.006466538980289124,
+        "fortran": 0.006466538980289124
       }
     },
     {
       "name": "tinkerbell",
-      "status": "MISSING",
-      "present": {
+      "status": "ALL_PASS",
+      "passes": {
         "octave": true,
-        "python": false,
+        "python": true,
         "fortran": true
+      },
+      "obs_rel_diff": 0.00643644124787795,
+      "obs": {
+        "octave": 0.19947732135732588,
+        "python": 0.19947732135732588,
+        "fortran": 0.19819339729812538
       }
     },
     {
       "name": "wichmann_hill",
-      "status": "MISSING",
-      "present": {
+      "status": "ALL_PASS",
+      "passes": {
         "octave": true,
-        "python": false,
+        "python": true,
         "fortran": true
+      },
+      "obs_rel_diff": null,
+      "obs": {
+        "octave": null,
+        "python": null,
+        "fortran": null
       }
     },
     {
       "name": "yukawa",
-      "status": "MISSING",
-      "present": {
+      "status": "ALL_PASS",
+      "passes": {
         "octave": true,
-        "python": false,
+        "python": true,
         "fortran": true
+      },
+      "obs_rel_diff": null,
+      "obs": {
+        "octave": null,
+        "python": null,
+        "fortran": null
       }
     }
   ]
