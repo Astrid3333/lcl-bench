@@ -16,3 +16,5 @@ fortran/results/
 .venv/
 pasted-*.txt
 tmp_*
+results/registry_run_*.json
+results/octave_old/
